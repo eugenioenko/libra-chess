@@ -2,6 +2,7 @@ package libra
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
 )
 
@@ -20,26 +21,53 @@ const (
 	BlackKing   = 107 // k
 )
 
+func GenerateZobristTable() [64]map[byte]uint64 {
+	table := [64]map[byte]uint64{}
+	for index := 0; index < 64; index++ {
+		cell := map[byte]uint64{
+			WhitePawn:   rand.Uint64(),
+			WhiteKnight: rand.Uint64(),
+			WhiteBishop: rand.Uint64(),
+			WhiteRook:   rand.Uint64(),
+			WhiteQueen:  rand.Uint64(),
+			WhiteKing:   rand.Uint64(),
+			BlackPawn:   rand.Uint64(),
+			BlackKnight: rand.Uint64(),
+			BlackBishop: rand.Uint64(),
+			BlackRook:   rand.Uint64(),
+			BlackQueen:  rand.Uint64(),
+			BlackKing:   rand.Uint64(),
+		}
+		table[index] = cell
+	}
+	return table
+}
+
+var ZobristTable = GenerateZobristTable()
+
 const BoardInitialFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 type Board struct {
 	position    [64]byte
+	castling    [4]bool
 	whiteToMove bool
 }
 
 func NewBoard() *Board {
 	return &Board{
 		position:    [64]byte{},
+		castling:    [4]bool{true, true, true, true},
 		whiteToMove: true,
 	}
 }
 
-// https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation
+// https://en.wikipedia.org/wiki/Forsyth–Edwards_Notation
 func (board *Board) LoadInitial() (bool, error) {
 	return board.LoadFromFEN(BoardInitialFEN)
 }
 
 func (board *Board) LoadFromFEN(fen string) (bool, error) {
+	board.removePieces(0, 64)
 	parts := strings.Split(fen, " ")
 	if len(parts) != 6 {
 		return false, fmt.Errorf("invalid FEN, missing blocks")
@@ -58,7 +86,7 @@ func (board *Board) LoadFromFEN(fen string) (bool, error) {
 		for _, piece := range pieces {
 			if CharIsNumber(piece) {
 				emptyCount := int(piece - '0')
-				board.RemovePieces(index, emptyCount)
+				board.removePieces(index, emptyCount)
 				index += emptyCount
 			} else {
 				board.position[index] = byte(piece)
@@ -71,21 +99,30 @@ func (board *Board) LoadFromFEN(fen string) (bool, error) {
 	}
 
 	// 2. Active Color
-	if parts[1] == "w" {
-		board.whiteToMove = true
-	} else {
-		board.whiteToMove = false
-	}
+	board.whiteToMove = parts[1] == "w"
 
 	return true, nil
 }
 
-func (board *Board) RemovePieces(start int, count int) (bool, error) {
-	if start+count >= 64 {
+func (board *Board) removePieces(start int, count int) (bool, error) {
+	if start+count > 64 {
 		return false, fmt.Errorf("invalid remove pieces range, out of range")
 	}
 	for index := 0; index < count; index++ {
 		board.position[start+index] = 0
 	}
 	return true, nil
+}
+
+func (board *Board) ZobristHash() uint64 {
+	var hash uint64 = 0
+	for index, piece := range board.position {
+		if piece != 0 {
+			code, ok := ZobristTable[index][piece]
+			if ok {
+				hash ^= code
+			}
+		}
+	}
+	return hash
 }
