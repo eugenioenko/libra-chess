@@ -21,6 +21,21 @@ const (
 	BlackKing   = 107 // k
 )
 
+var PieceCodeToFont = map[byte]string{
+	WhitePawn:   "♟︎",
+	WhiteKnight: "♞",
+	WhiteBishop: "♝",
+	WhiteRook:   "♜",
+	WhiteQueen:  "♛",
+	WhiteKing:   "♚",
+	BlackPawn:   "♙",
+	BlackKnight: "♘",
+	BlackBishop: "♗",
+	BlackRook:   "♖",
+	BlackQueen:  "♕",
+	BlackKing:   "♔",
+}
+
 func GenerateZobristTable() [64]map[byte]uint64 {
 	table := [64]map[byte]uint64{}
 	for index := 0; index < 64; index++ {
@@ -48,8 +63,12 @@ var ZobristTable = GenerateZobristTable()
 const BoardInitialFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 type Board struct {
-	position    [64]byte
-	castling    [4]bool
+	// 0: h1, 63: a8
+	position [64]byte
+	// black king side, black queen side, white king side, white queen side
+	castling [4]bool
+	// white king, black king
+	kings       [2]byte
 	whiteToMove bool
 }
 
@@ -57,6 +76,7 @@ func NewBoard() *Board {
 	return &Board{
 		position:    [64]byte{},
 		castling:    [4]bool{true, true, true, true},
+		kings:       [2]byte{},
 		whiteToMove: true,
 	}
 }
@@ -91,6 +111,11 @@ func (board *Board) LoadFromFEN(fen string) (bool, error) {
 			} else {
 				board.position[index] = byte(piece)
 				index += 1
+				if byte(piece) == WhiteKing {
+					board.kings[0] = byte(index)
+				} else if byte(piece) == BlackKing {
+					board.kings[1] = byte(index)
+				}
 			}
 		}
 	}
@@ -125,4 +150,21 @@ func (board *Board) ZobristHash() uint64 {
 		}
 	}
 	return hash
+}
+
+func (board *Board) Print() {
+	fmt.Println()
+	for index, piece := range board.position {
+
+		if index%8 == 0 {
+			fmt.Print(8 - index/8)
+			fmt.Print(" | ")
+		}
+		fmt.Print(PieceCodeToFont[piece])
+		fmt.Print(" ")
+		if index > 0 && ((index+1)%8) == 0 {
+			fmt.Print("\n")
+		}
+	}
+	fmt.Print("   ----------------\n    A B C D E F G H\n\n")
 }
