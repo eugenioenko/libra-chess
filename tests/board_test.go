@@ -22,9 +22,9 @@ func TestShouldInsertValues(t *testing.T) {
 func TestShouldCalculateZobristHash(t *testing.T) {
 	board := libra.NewBoard()
 	board.LoadFromFEN(libra.BoardInitialFEN)
-	hashA := board.ZobristHash()
+	hashA := libra.ZobristHash(board.Position)
 	board.LoadFromFEN("rnbqkb1r/ppp1p1pp/8/3p1pP1/3Pn3/2N5/PPP1PP1P/R1BQKBNR w KQkq - 1 5")
-	hashB := board.ZobristHash()
+	hashB := libra.ZobristHash(board.Position)
 	board.Print()
 	if hashA == 0 {
 		t.Fail()

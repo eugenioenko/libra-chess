@@ -2,106 +2,20 @@ package libra
 
 import (
 	"fmt"
-	"math/rand"
 	"strings"
 )
 
 // Piece Types
 const (
-	WhitePawn   = 80  // P
-	WhiteKnight = 78  // N
-	WhiteBishop = 66  // B
-	WhiteRook   = 82  // R
-	WhiteQueen  = 81  // Q
-	WhiteKing   = 75  // K
-	BlackPawn   = 112 // p
-	BlackKnight = 110 // n
-	BlackBishop = 98  // b
-	BlackRook   = 114 // r
-	BlackQueen  = 113 // q
-	BlackKing   = 107 // k
-
 	SquareA2 = 48
 	SquareA7 = 8
 )
-
-// Move Types
-const (
-	MoveQuiet = iota
-	MoveCapture
-	MoveCastle
-	MovePromotion
-)
-
-var PieceCodeToFont = map[byte]string{
-	WhitePawn:   "♟︎",
-	WhiteKnight: "♞",
-	WhiteBishop: "♝",
-	WhiteRook:   "♜",
-	WhiteQueen:  "♛",
-	WhiteKing:   "♚",
-	BlackPawn:   "♙",
-	BlackKnight: "♘",
-	BlackBishop: "♗",
-	BlackRook:   "♖",
-	BlackQueen:  "♕",
-	BlackKing:   "♔",
-}
-
-func GenerateZobristTable() [64]map[byte]uint64 {
-	table := [64]map[byte]uint64{}
-	for index := 0; index < 64; index++ {
-		cell := map[byte]uint64{
-			WhitePawn:   rand.Uint64(),
-			WhiteKnight: rand.Uint64(),
-			WhiteBishop: rand.Uint64(),
-			WhiteRook:   rand.Uint64(),
-			WhiteQueen:  rand.Uint64(),
-			WhiteKing:   rand.Uint64(),
-			BlackPawn:   rand.Uint64(),
-			BlackKnight: rand.Uint64(),
-			BlackBishop: rand.Uint64(),
-			BlackRook:   rand.Uint64(),
-			BlackQueen:  rand.Uint64(),
-			BlackKing:   rand.Uint64(),
-		}
-		table[index] = cell
-	}
-	return table
-}
-
-var ZobristTable = GenerateZobristTable()
 
 const BoardInitialFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 type KingLocations struct {
 	White byte
 	Black byte
-}
-
-type Move struct {
-	From byte
-	To   byte
-	Kind byte
-	Code byte
-}
-
-func NewMove(from byte, to byte, kind byte) *Move {
-	return &Move{
-		From: from,
-		To:   to,
-		Kind: kind,
-		Code: 0,
-	}
-}
-
-func NewPromotionMove(from byte, to byte, kind byte, code byte) *Move {
-	return &Move{
-		From: from,
-		To:   to,
-		Kind: kind,
-		Code: code,
-	}
 }
 
 type CastlingAvailability struct {
@@ -196,19 +110,6 @@ func (board *Board) removePieces(start int, count int) (bool, error) {
 	return true, nil
 }
 
-func (board *Board) ZobristHash() uint64 {
-	var hash uint64 = 0
-	for index, piece := range board.Position {
-		if piece != 0 {
-			code, ok := ZobristTable[index][piece]
-			if ok {
-				hash ^= code
-			}
-		}
-	}
-	return hash
-}
-
 func (board *Board) Print() {
 	fmt.Println()
 	for index, piece := range board.Position {
@@ -217,7 +118,7 @@ func (board *Board) Print() {
 			fmt.Print(8 - index/8)
 			fmt.Print(" | ")
 		}
-		fmt.Print(PieceCodeToFont[piece])
+		fmt.Print(PieceCodeToFont(piece))
 		fmt.Print(" ")
 		if index > 0 && ((index+1)%8) == 0 {
 			fmt.Print("\n")
@@ -242,8 +143,8 @@ func (board *Board) IsSquareOccupied(square byte) bool {
 	return board.IsSquareValid(square) && board.Position[square] > 0
 }
 
-func (board *Board) IsPieceAtSquareWhite(square byte) bool {
-	return board.Position[square] < 98
+func (board *Board) IsPieceAtSquareBlack(square byte) bool {
+	return board.Position[square] >= 98
 }
 
 func (board *Board) AddMove(move *Move) {
@@ -288,16 +189,21 @@ func (board *Board) GeneratePawnMoves() {
 		}
 
 		// captures
-		leftSquare := squareToMove - 1
-		rightSquare := squareToMove + 1
-		captureWhite := false
+		var leftCaptureDir int8 = -1
+		var rightCaptureDir int8 = 1
+
 		if board.WhiteToMove {
-			captureWhite = true
+			leftCaptureDir = 1
+			rightCaptureDir = -1
 		}
-		if board.IsSquareOccupied(leftSquare) && board.IsPieceAtSquareWhite(leftSquare) == captureWhite {
+
+		leftSquare := squareToMove + byte(leftCaptureDir)
+		rightSquare := squareToMove + byte(rightCaptureDir)
+
+		if board.IsSquareOccupied(leftSquare) && board.IsPieceAtSquareBlack(leftSquare) == board.WhiteToMove {
 			board.AddMove(NewMove(square, leftSquare, MoveCapture))
 		}
-		if board.IsSquareOccupied(rightSquare) && board.IsPieceAtSquareWhite(rightSquare) == captureWhite {
+		if board.IsSquareOccupied(rightSquare) && board.IsPieceAtSquareBlack(rightSquare) == board.WhiteToMove {
 			board.AddMove(NewMove(square, rightSquare, MoveCapture))
 		}
 
