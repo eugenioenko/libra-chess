@@ -34,3 +34,12 @@ func TestShouldCalculateZobristHash(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestShouldGeneratePawnMoves(t *testing.T) {
+	board := libra.NewBoard()
+	board.LoadFromFEN(libra.BoardInitialFEN)
+	board.GeneratePawnMoves()
+	if len(board.Moves) != 16 {
+		t.Fail()
+	}
+}
