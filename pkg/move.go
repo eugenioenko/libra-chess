@@ -3,6 +3,7 @@ package libra
 const (
 	MoveQuiet = iota
 	MoveCapture
+	MoveOnPassant
 	MoveCastle
 	MovePromotion
 )
