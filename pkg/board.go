@@ -33,18 +33,13 @@ type Board struct {
 	WhiteToMove          bool
 	Moves                []*Move
 	Captures             []*Move
+	Promotions           []*Move
 	OnPassant            byte
 }
 
 func NewBoard() *Board {
 	board := &Board{}
 	return board
-}
-
-// https://en.wikipedia.org/wiki/Forsyth–Edwards_Notation
-func (board *Board) LoadInitial() (bool, error) {
-	board.Initialize()
-	return board.LoadFromFEN(BoardInitialFEN)
 }
 
 func (board *Board) Initialize() {
@@ -62,8 +57,14 @@ func (board *Board) Initialize() {
 	board.WhiteToMove = true
 	board.Moves = []*Move{}
 	board.Captures = []*Move{}
+	board.Promotions = []*Move{}
 	board.OnPassant = 0
+}
 
+// https://en.wikipedia.org/wiki/Forsyth–Edwards_Notation
+func (board *Board) LoadInitial() (bool, error) {
+	board.Initialize()
+	return board.LoadFromFEN(BoardInitialFEN)
 }
 
 func (board *Board) LoadFromFEN(fen string) (bool, error) {
@@ -175,9 +176,14 @@ func (board *Board) AddMove(move *Move) {
 	board.Moves = append(board.Moves, move)
 }
 
-func (board *Board) AddCaptures(captures []*Move) {
-	board.Captures = append(board.Captures, captures...)
-	board.Moves = append(board.Moves, captures...)
+func (board *Board) AddCapture(move *Move) {
+	board.AddMove(move)
+	board.Captures = append(board.Captures, move)
+}
+
+func (board *Board) AddPromotion(move *Move) {
+	board.Moves = append(board.Moves, move)
+	board.Promotions = append(board.Promotions, move)
 }
 
 func (board *Board) GeneratePawnMoves() {
@@ -206,7 +212,7 @@ func (board *Board) GeneratePawnMoves() {
 			}
 		}
 
-		// one move forward
+		// one move forward and promotion
 		var amountToMove int8 = 8
 		var dirToMove int8 = 1
 		if !board.WhiteToMove {
@@ -214,43 +220,62 @@ func (board *Board) GeneratePawnMoves() {
 		}
 		squareToMove := square - byte(amountToMove*dirToMove)
 		if board.IsSquareEmpty(squareToMove) {
-			board.AddMove(NewMove(square, squareToMove, MoveQuiet))
+			if (board.WhiteToMove && squareToMove <= 7) || (!board.WhiteToMove && squareToMove >= 56) {
+				board.AddMove(NewMove(square, squareToMove, MovePromotion))
+			} else {
+				board.AddMove(NewMove(square, squareToMove, MoveQuiet))
+			}
 		}
 
 		// captures
-		captures := []*Move{}
 		if board.WhiteToMove {
 			leftSquare := square - 8 - 1
 			if square%8 != 0 && board.IsSquareOccupied(leftSquare) && board.IsPieceAtSquareBlack(leftSquare) {
-				captures = append(captures, NewMove(square, leftSquare, MoveCapture))
+
+				if leftSquare <= 7 {
+					board.AddPromotion(NewMove(square, leftSquare, MovePromotionCapture))
+				} else {
+					board.AddCapture(NewMove(square, leftSquare, MoveCapture))
+				}
 			}
 			if square%8 != 0 && board.IsSquareOnPassant(leftSquare) && board.IsPieceAtSquareBlack(leftSquare+8) {
-				captures = append(captures, NewMove(square, leftSquare, MoveOnPassant))
+				board.AddCapture(NewMove(square, leftSquare, MoveOnPassant))
 			}
 			rightSquare := square - 8 + 1
 			if square%7 != 0 && board.IsSquareOccupied(rightSquare) && board.IsPieceAtSquareBlack(rightSquare) {
-				captures = append(captures, NewMove(square, rightSquare, MoveCapture))
+				if leftSquare <= 7 {
+					board.AddPromotion(NewMove(square, rightSquare, MovePromotionCapture))
+				} else {
+					board.AddCapture(NewMove(square, rightSquare, MoveCapture))
+				}
 			}
 			if square%7 != 0 && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareBlack(rightSquare+8) {
-				captures = append(captures, NewMove(square, rightSquare, MoveOnPassant))
+				board.AddCapture(NewMove(square, rightSquare, MoveOnPassant))
 			}
 		} else {
 			rightSquare := square + 8 - 1
 			if square%8 != 0 && board.IsSquareOccupied(rightSquare) && board.IsPieceAtSquareBlack(rightSquare) {
-				captures = append(captures, NewMove(square, rightSquare, MoveCapture))
+				if rightSquare >= 56 {
+					board.AddCapture(NewMove(square, rightSquare, MovePromotionCapture))
+				} else {
+					board.AddCapture(NewMove(square, rightSquare, MoveCapture))
+				}
 			}
 			if square%8 != 0 && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareBlack(rightSquare-8) {
-				captures = append(captures, NewMove(square, rightSquare, MoveOnPassant))
+				board.AddCapture(NewMove(square, rightSquare, MoveOnPassant))
 			}
 			leftSquare := square + 8 + 1
 			if square%7 != 0 && board.IsSquareOccupied(leftSquare) && board.IsPieceAtSquareBlack(leftSquare) {
-				captures = append(captures, NewMove(square, leftSquare, MoveCapture))
+				if rightSquare >= 56 {
+					board.AddCapture(NewMove(square, leftSquare, MovePromotionCapture))
+				} else {
+					board.AddCapture(NewMove(square, leftSquare, MoveCapture))
+				}
 			}
 			if square%8 != 0 && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareBlack(rightSquare-8) {
-				captures = append(captures, NewMove(square, rightSquare, MoveOnPassant))
+				board.AddCapture(NewMove(square, rightSquare, MoveOnPassant))
 			}
 		}
-		board.AddCaptures(captures)
 
 	}
 }

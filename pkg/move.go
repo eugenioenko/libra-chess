@@ -4,8 +4,9 @@ const (
 	MoveQuiet = iota
 	MoveCapture
 	MoveOnPassant
-	MoveCastle
 	MovePromotion
+	MovePromotionCapture
+	MoveCastle
 )
 
 type Move struct {
