@@ -28,8 +28,8 @@ type CastlingAvailability struct {
 type Board struct {
 	// 0: h1, 63: a8
 	Position             [64]byte
-	CastlingAvailability CastlingAvailability
-	Kings                KingLocations
+	CastlingAvailability *CastlingAvailability
+	Pieces               *PieceColorLocation
 	WhiteToMove          bool
 	Moves                []*Move
 	Captures             []*Move
@@ -44,16 +44,13 @@ func NewBoard() *Board {
 
 func (board *Board) Initialize() {
 	board.Position = [64]byte{}
-	board.CastlingAvailability = CastlingAvailability{
+	board.CastlingAvailability = &CastlingAvailability{
 		BlackKingSide:  true,
 		BlackQueenSide: true,
 		WhiteKingSide:  true,
 		WhiteQueenSide: true,
 	}
-	board.Kings = KingLocations{
-		White: 0,
-		Black: 0,
-	}
+	board.Pieces = NewPieceColorLocation()
 	board.WhiteToMove = true
 	board.Moves = []*Move{}
 	board.Captures = []*Move{}
@@ -93,9 +90,9 @@ func (board *Board) LoadFromFEN(fen string) (bool, error) {
 				board.Position[index] = byte(piece)
 				index += 1
 				if byte(piece) == WhiteKing {
-					board.Kings.White = byte(index)
+					board.Pieces.White.King = byte(index)
 				} else if byte(piece) == BlackKing {
-					board.Kings.Black = byte(index)
+					board.Pieces.Black.King = byte(index)
 				}
 			}
 		}
@@ -114,6 +111,9 @@ func (board *Board) LoadFromFEN(fen string) (bool, error) {
 			board.OnPassant = onPassant
 		}
 	}
+
+	// generate piece list table
+	board.GeneratePiecesLocations()
 	return true, nil
 }
 
@@ -146,10 +146,6 @@ func (board *Board) Print() {
 		}
 	}
 	fmt.Print("   ----------------\n    A B C D E F G H\n\n")
-}
-
-func (board *Board) GenerateMoves() {
-	board.GeneratePawnMoves()
 }
 
 func (board *Board) IsSquareValid(square byte) bool {
@@ -186,15 +182,47 @@ func (board *Board) AddPromotion(move *Move) {
 	board.Promotions = append(board.Promotions, move)
 }
 
-func (board *Board) GeneratePawnMoves() {
-	squares := []byte{}
+func (board *Board) GenerateMoves() {
+	board.GeneratePawnMoves()
+}
+
+func (board *Board) GeneratePiecesLocations() {
 	for index, piece := range board.Position {
-		if board.WhiteToMove && piece == WhitePawn {
-			squares = append(squares, byte(index))
-		} else if !board.WhiteToMove && piece == BlackPawn {
-			squares = append(squares, byte(index))
+		switch {
+		case piece == WhitePawn:
+			board.Pieces.White.Pawns = append(board.Pieces.White.Pawns, byte(index))
+		case piece == WhiteKnight:
+			board.Pieces.White.Knights = append(board.Pieces.White.Knights, byte(index))
+		case piece == WhiteBishop:
+			board.Pieces.White.Bishops = append(board.Pieces.White.Bishops, byte(index))
+		case piece == WhiteRook:
+			board.Pieces.White.Rooks = append(board.Pieces.White.Rooks, byte(index))
+		case piece == WhiteQueen:
+			board.Pieces.White.Queens = append(board.Pieces.White.Queens, byte(index))
+		case piece == WhiteKing:
+			board.Pieces.Black.King = byte(index)
+		case piece == BlackPawn:
+			board.Pieces.Black.Pawns = append(board.Pieces.Black.Pawns, byte(index))
+		case piece == BlackKnight:
+			board.Pieces.Black.Knights = append(board.Pieces.Black.Knights, byte(index))
+		case piece == BlackBishop:
+			board.Pieces.Black.Bishops = append(board.Pieces.Black.Bishops, byte(index))
+		case piece == BlackRook:
+			board.Pieces.Black.Rooks = append(board.Pieces.Black.Rooks, byte(index))
+		case piece == BlackQueen:
+			board.Pieces.Black.Queens = append(board.Pieces.Black.Queens, byte(index))
+		case piece == BlackKing:
+			board.Pieces.Black.King = byte(index)
 		}
 	}
+}
+
+func (board *Board) GeneratePawnMoves() {
+	squares := board.Pieces.White.Pawns
+	if !board.WhiteToMove {
+		squares = board.Pieces.Black.Pawns
+	}
+
 	for _, square := range squares {
 		// two squares forward
 		var leftRankSquare byte = SquareA2
@@ -276,6 +304,5 @@ func (board *Board) GeneratePawnMoves() {
 				board.AddCapture(NewMove(square, rightSquare, MoveOnPassant))
 			}
 		}
-
 	}
 }

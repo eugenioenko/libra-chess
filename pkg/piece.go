@@ -33,3 +33,35 @@ var pieceCodeToFont = map[byte]string{
 func PieceCodeToFont(piece byte) string {
 	return pieceCodeToFont[piece]
 }
+
+type PieceLocation struct {
+	Pawns   []byte
+	Knights []byte
+	Bishops []byte
+	Rooks   []byte
+	Queens  []byte
+	King    byte
+}
+
+type PieceColorLocation struct {
+	White *PieceLocation
+	Black *PieceLocation
+}
+
+func NewPieceLocation() *PieceLocation {
+	return &PieceLocation{
+		Pawns:   []byte{},
+		Knights: []byte{},
+		Bishops: []byte{},
+		Rooks:   []byte{},
+		Queens:  []byte{},
+		King:    0,
+	}
+}
+
+func NewPieceColorLocation() *PieceColorLocation {
+	return &PieceColorLocation{
+		White: NewPieceLocation(),
+		Black: NewPieceLocation(),
+	}
+}
