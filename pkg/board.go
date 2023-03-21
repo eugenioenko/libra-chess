@@ -181,6 +181,22 @@ func (board *Board) IsPieceAtSquareBlack(square byte) bool {
 	return board.Position[square] >= 98
 }
 
+func (board *Board) IsPieceAt8thRank(square byte) bool {
+	return square < 8
+}
+
+func (board *Board) IsPieceAt1tstRank(square byte) bool {
+	return square >= 56
+}
+
+func (board *Board) IsPieceAtAFile(square byte) bool {
+	return square%8 == 0
+}
+
+func (board *Board) IsPieceAtHFile(square byte) bool {
+	return (square+1)%8 == 0
+}
+
 func (board *Board) AddQuiteOrCapture(from, to byte) bool {
 	if board.IsSquareEmpty(to) {
 		board.AddMove(NewMove(from, to, MoveQuiet))
@@ -340,7 +356,7 @@ func (board *Board) GenerateRookMoves() {
 	for _, rook := range rooks {
 		var square int8 = int8(rook) - 8
 		// up
-		if rook > 7 {
+		if !board.IsPieceAt8thRank(rook) {
 			for {
 				canContinue := board.AddQuiteOrCapture(rook, byte(square))
 				square -= 8
@@ -350,7 +366,7 @@ func (board *Board) GenerateRookMoves() {
 			}
 		}
 		// down
-		if rook < 56 {
+		if !board.IsPieceAt1tstRank(rook) {
 			square = int8(rook) + 8
 			for {
 				canContinue := board.AddQuiteOrCapture(rook, byte(square))
@@ -361,7 +377,7 @@ func (board *Board) GenerateRookMoves() {
 			}
 		}
 		// left
-		if rook%8 != 0 {
+		if !board.IsPieceAtAFile(rook) {
 			square = int8(rook) - 1
 			for {
 				canContinue := board.AddQuiteOrCapture(rook, byte(square))
@@ -372,7 +388,7 @@ func (board *Board) GenerateRookMoves() {
 			}
 		}
 		// right
-		if (rook+1)%8 != 0 {
+		if !board.IsPieceAtHFile(rook) {
 			square = int8(rook) + 1
 			for {
 				canContinue := board.AddQuiteOrCapture(rook, byte(square))
