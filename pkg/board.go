@@ -31,9 +31,7 @@ type Board struct {
 	CastlingAvailability *CastlingAvailability
 	Pieces               *PieceColorLocation
 	WhiteToMove          bool
-	Moves                []*Move
-	Captures             []*Move
-	Promotions           []*Move
+	Moves                *BoardMoves
 	OnPassant            byte
 }
 
@@ -52,9 +50,7 @@ func (board *Board) Initialize() {
 	}
 	board.Pieces = NewPieceColorLocation()
 	board.WhiteToMove = true
-	board.Moves = []*Move{}
-	board.Captures = []*Move{}
-	board.Promotions = []*Move{}
+	board.Moves = NewBoardMoves()
 	board.OnPassant = 0
 }
 
@@ -210,17 +206,17 @@ func (board *Board) AddQuiteOrCapture(from, to byte) bool {
 }
 
 func (board *Board) AddMove(move *Move) {
-	board.Moves = append(board.Moves, move)
+	board.Moves.All = append(board.Moves.All, move)
 }
 
 func (board *Board) AddCapture(move *Move) {
 	board.AddMove(move)
-	board.Captures = append(board.Captures, move)
+	board.Moves.Captures = append(board.Moves.Captures, move)
 }
 
 func (board *Board) AddPromotion(move *Move) {
-	board.Moves = append(board.Moves, move)
-	board.Promotions = append(board.Promotions, move)
+	board.AddMove(move)
+	board.Moves.Promotions = append(board.Moves.Promotions, move)
 }
 
 func (board *Board) GenerateMoves() {

@@ -33,3 +33,19 @@ func NewPromotionMove(from byte, to byte, kind byte, code byte) *Move {
 		Code: code,
 	}
 }
+
+type BoardMoves struct {
+	All        []*Move
+	Quite      []*Move
+	Captures   []*Move
+	Promotions []*Move
+}
+
+func NewBoardMoves() *BoardMoves {
+	return &BoardMoves{
+		All:        []*Move{},
+		Quite:      []*Move{},
+		Captures:   []*Move{},
+		Promotions: []*Move{},
+	}
+}
