@@ -181,19 +181,19 @@ func (board *Board) IsPieceAtSquareBlack(square byte) bool {
 	return board.Position[square] >= 98
 }
 
-func (board *Board) IsPieceAt8thRank(square byte) bool {
+func (board *Board) IsSquareAt8thRank(square byte) bool {
 	return square < 8
 }
 
-func (board *Board) IsPieceAt1tstRank(square byte) bool {
+func (board *Board) IsSquareAt1stRank(square byte) bool {
 	return square >= 56
 }
 
-func (board *Board) IsPieceAtAFile(square byte) bool {
+func (board *Board) IsSquareAtAFile(square byte) bool {
 	return square%8 == 0
 }
 
-func (board *Board) IsPieceAtHFile(square byte) bool {
+func (board *Board) IsSquareAtHFile(square byte) bool {
 	return (square+1)%8 == 0
 }
 
@@ -289,7 +289,7 @@ func (board *Board) GeneratePawnMoves() {
 		}
 		squareToMove := square - byte(amountToMove*dirToMove)
 		if board.IsSquareEmpty(squareToMove) {
-			if (board.WhiteToMove && squareToMove <= 7) || (!board.WhiteToMove && squareToMove >= 56) {
+			if (board.WhiteToMove && board.IsSquareAt8thRank(squareToMove)) || (!board.WhiteToMove && board.IsSquareAt1stRank(squareToMove)) {
 				board.AddMove(NewMove(square, squareToMove, MovePromotion))
 			} else {
 				board.AddMove(NewMove(square, squareToMove, MoveQuiet))
@@ -299,49 +299,48 @@ func (board *Board) GeneratePawnMoves() {
 		// captures
 		if board.WhiteToMove {
 			leftSquare := square - 8 - 1
-			if square%8 != 0 && board.IsSquareOccupied(leftSquare) && board.IsPieceAtSquareBlack(leftSquare) {
-
-				if leftSquare <= 7 {
+			if !board.IsSquareAtHFile(square) && board.IsSquareOccupied(leftSquare) && board.IsPieceAtSquareBlack(leftSquare) {
+				if board.IsSquareAt8thRank(leftSquare) {
 					board.AddPromotion(NewMove(square, leftSquare, MovePromotionCapture))
 				} else {
 					board.AddCapture(NewMove(square, leftSquare, MoveCapture))
 				}
 			}
-			if square%8 != 0 && board.IsSquareOnPassant(leftSquare) && board.IsPieceAtSquareBlack(leftSquare+8) {
+			if !board.IsSquareAtHFile(square) && board.IsSquareOnPassant(leftSquare) && board.IsPieceAtSquareBlack(leftSquare+8) {
 				board.AddCapture(NewMove(square, leftSquare, MoveOnPassant))
 			}
 			rightSquare := square - 8 + 1
-			if square%7 != 0 && board.IsSquareOccupied(rightSquare) && board.IsPieceAtSquareBlack(rightSquare) {
-				if leftSquare <= 7 {
+			if !board.IsSquareAtAFile(square) && board.IsSquareOccupied(rightSquare) && board.IsPieceAtSquareBlack(rightSquare) {
+				if board.IsSquareAt1stRank(leftSquare) {
 					board.AddPromotion(NewMove(square, rightSquare, MovePromotionCapture))
 				} else {
 					board.AddCapture(NewMove(square, rightSquare, MoveCapture))
 				}
 			}
-			if square%7 != 0 && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareBlack(rightSquare+8) {
+			if !board.IsSquareAtAFile(square) && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareBlack(rightSquare+8) {
 				board.AddCapture(NewMove(square, rightSquare, MoveOnPassant))
 			}
 		} else {
 			rightSquare := square + 8 - 1
-			if square%8 != 0 && board.IsSquareOccupied(rightSquare) && board.IsPieceAtSquareBlack(rightSquare) {
-				if rightSquare >= 56 {
+			if !board.IsSquareAtHFile(square) && board.IsSquareOccupied(rightSquare) && board.IsPieceAtSquareBlack(rightSquare) {
+				if board.IsSquareAt1stRank(rightSquare) {
 					board.AddCapture(NewMove(square, rightSquare, MovePromotionCapture))
 				} else {
 					board.AddCapture(NewMove(square, rightSquare, MoveCapture))
 				}
 			}
-			if square%8 != 0 && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareBlack(rightSquare-8) {
+			if !board.IsSquareAtHFile(square) && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareBlack(rightSquare-8) {
 				board.AddCapture(NewMove(square, rightSquare, MoveOnPassant))
 			}
 			leftSquare := square + 8 + 1
-			if square%7 != 0 && board.IsSquareOccupied(leftSquare) && board.IsPieceAtSquareBlack(leftSquare) {
-				if rightSquare >= 56 {
+			if !board.IsSquareAtAFile(square) && board.IsSquareOccupied(leftSquare) && board.IsPieceAtSquareBlack(leftSquare) {
+				if board.IsSquareAt1stRank(rightSquare) {
 					board.AddCapture(NewMove(square, leftSquare, MovePromotionCapture))
 				} else {
 					board.AddCapture(NewMove(square, leftSquare, MoveCapture))
 				}
 			}
-			if square%8 != 0 && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareBlack(rightSquare-8) {
+			if !board.IsSquareAtHFile(square) && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareBlack(rightSquare-8) {
 				board.AddCapture(NewMove(square, rightSquare, MoveOnPassant))
 			}
 		}
@@ -356,7 +355,7 @@ func (board *Board) GenerateRookMoves() {
 	for _, rook := range rooks {
 		var square int8 = int8(rook) - 8
 		// up
-		if !board.IsPieceAt8thRank(rook) {
+		if !board.IsSquareAt8thRank(rook) {
 			for {
 				canContinue := board.AddQuiteOrCapture(rook, byte(square))
 				square -= 8
@@ -366,7 +365,7 @@ func (board *Board) GenerateRookMoves() {
 			}
 		}
 		// down
-		if !board.IsPieceAt1tstRank(rook) {
+		if !board.IsSquareAt1stRank(rook) {
 			square = int8(rook) + 8
 			for {
 				canContinue := board.AddQuiteOrCapture(rook, byte(square))
@@ -377,7 +376,7 @@ func (board *Board) GenerateRookMoves() {
 			}
 		}
 		// left
-		if !board.IsPieceAtAFile(rook) {
+		if !board.IsSquareAtAFile(rook) {
 			square = int8(rook) - 1
 			for {
 				canContinue := board.AddQuiteOrCapture(rook, byte(square))
@@ -388,7 +387,60 @@ func (board *Board) GenerateRookMoves() {
 			}
 		}
 		// right
-		if !board.IsPieceAtHFile(rook) {
+		if !board.IsSquareAtHFile(rook) {
+			square = int8(rook) + 1
+			for {
+				canContinue := board.AddQuiteOrCapture(rook, byte(square))
+				if (square+1)%8 == 0 || !canContinue {
+					break
+				}
+				square += 1
+			}
+		}
+	}
+}
+
+func (board *Board) GenerateBishopMoves() {
+	rooks := board.Pieces.White.Rooks
+	if !board.WhiteToMove {
+		rooks = board.Pieces.Black.Rooks
+	}
+	for _, rook := range rooks {
+		var square int8 = int8(rook) - 8
+		// up
+		if !board.IsSquareAt8thRank(rook) {
+			for {
+				canContinue := board.AddQuiteOrCapture(rook, byte(square))
+				square -= 8
+				if square < 0 || !canContinue {
+					break
+				}
+			}
+		}
+		// down
+		if !board.IsSquareAt1stRank(rook) {
+			square = int8(rook) + 8
+			for {
+				canContinue := board.AddQuiteOrCapture(rook, byte(square))
+				square += 8
+				if square >= 64 || !canContinue {
+					break
+				}
+			}
+		}
+		// left
+		if !board.IsSquareAtAFile(rook) {
+			square = int8(rook) - 1
+			for {
+				canContinue := board.AddQuiteOrCapture(rook, byte(square))
+				if square%8 == 0 || !canContinue {
+					break
+				}
+				square -= 1
+			}
+		}
+		// right
+		if !board.IsSquareAtHFile(rook) {
 			square = int8(rook) + 1
 			for {
 				canContinue := board.AddQuiteOrCapture(rook, byte(square))
