@@ -395,3 +395,56 @@ func (board *Board) GenerateRookMoves() {
 		}
 	}
 }
+
+func (board *Board) GenerateBishopMoves() {
+	bishops := board.Pieces.White.Bishops
+	if !board.WhiteToMove {
+		bishops = board.Pieces.Black.Bishops
+	}
+	for _, bishop := range bishops {
+		// up right
+		if !board.IsSquareAt8thRank(bishop) && !board.IsSquareAtHFile(bishop) {
+			var square int8 = int8(bishop) - 7
+			for {
+				isQuiteMove := board.AddQuiteOrCapture(bishop, byte(square))
+				if board.IsSquareAt8thRank(byte(square)) || board.IsSquareAtHFile(bishop) || !isQuiteMove {
+					break
+				}
+				square -= 7
+			}
+		}
+		// down right
+		if !board.IsSquareAt1stRank(bishop) && !board.IsSquareAtHFile(bishop) {
+			var square byte = bishop + 9
+			for {
+				isQuiteMove := board.AddQuiteOrCapture(bishop, byte(square))
+				if board.IsSquareAt1stRank(byte(square)) || board.IsSquareAtHFile(square) || !isQuiteMove {
+					break
+				}
+				square += 9
+			}
+		}
+		// down left
+		if !board.IsSquareAtAFile(bishop) && !board.IsSquareAt1stRank(bishop) {
+			var square byte = bishop + 7
+			for {
+				isQuiteMove := board.AddQuiteOrCapture(bishop, square)
+				if board.IsSquareAtAFile(square) || board.IsSquareAt1stRank(square) || !isQuiteMove {
+					break
+				}
+				square += 7
+			}
+		}
+		// up left
+		if !board.IsSquareAtAFile(bishop) && !board.IsSquareAt8thRank(bishop) {
+			var square int8 = int8(bishop) - 9
+			for {
+				isQuiteMove := board.AddQuiteOrCapture(bishop, byte(square))
+				if board.IsSquareAtAFile(byte(square)) || board.IsSquareAt8thRank(byte(square)) || !isQuiteMove {
+					break
+				}
+				square -= 9
+			}
+		}
+	}
+}
