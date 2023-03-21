@@ -353,30 +353,30 @@ func (board *Board) GenerateRookMoves() {
 		// up
 		if !board.IsSquareAt8thRank(rook) {
 			for {
-				canContinue := board.AddQuiteOrCapture(rook, byte(square))
-				square -= 8
-				if square < 0 || !canContinue {
+				isQuiteMove := board.AddQuiteOrCapture(rook, byte(square))
+				if board.IsSquareAt8thRank(byte(square)) || !isQuiteMove {
 					break
 				}
+				square -= 8
 			}
 		}
 		// down
 		if !board.IsSquareAt1stRank(rook) {
 			square = int8(rook) + 8
 			for {
-				canContinue := board.AddQuiteOrCapture(rook, byte(square))
-				square += 8
-				if square >= 64 || !canContinue {
+				isQuiteMove := board.AddQuiteOrCapture(rook, byte(square))
+				if board.IsSquareAt1stRank(byte(square)) || !isQuiteMove {
 					break
 				}
+				square += 8
 			}
 		}
 		// left
 		if !board.IsSquareAtAFile(rook) {
 			square = int8(rook) - 1
 			for {
-				canContinue := board.AddQuiteOrCapture(rook, byte(square))
-				if square%8 == 0 || !canContinue {
+				isQuiteMove := board.AddQuiteOrCapture(rook, byte(square))
+				if board.IsSquareAtAFile(byte(square)) || !isQuiteMove {
 					break
 				}
 				square -= 1
@@ -386,61 +386,8 @@ func (board *Board) GenerateRookMoves() {
 		if !board.IsSquareAtHFile(rook) {
 			square = int8(rook) + 1
 			for {
-				canContinue := board.AddQuiteOrCapture(rook, byte(square))
-				if (square+1)%8 == 0 || !canContinue {
-					break
-				}
-				square += 1
-			}
-		}
-	}
-}
-
-func (board *Board) GenerateBishopMoves() {
-	rooks := board.Pieces.White.Rooks
-	if !board.WhiteToMove {
-		rooks = board.Pieces.Black.Rooks
-	}
-	for _, rook := range rooks {
-		var square int8 = int8(rook) - 8
-		// up
-		if !board.IsSquareAt8thRank(rook) {
-			for {
-				canContinue := board.AddQuiteOrCapture(rook, byte(square))
-				square -= 8
-				if square < 0 || !canContinue {
-					break
-				}
-			}
-		}
-		// down
-		if !board.IsSquareAt1stRank(rook) {
-			square = int8(rook) + 8
-			for {
-				canContinue := board.AddQuiteOrCapture(rook, byte(square))
-				square += 8
-				if square >= 64 || !canContinue {
-					break
-				}
-			}
-		}
-		// left
-		if !board.IsSquareAtAFile(rook) {
-			square = int8(rook) - 1
-			for {
-				canContinue := board.AddQuiteOrCapture(rook, byte(square))
-				if square%8 == 0 || !canContinue {
-					break
-				}
-				square -= 1
-			}
-		}
-		// right
-		if !board.IsSquareAtHFile(rook) {
-			square = int8(rook) + 1
-			for {
-				canContinue := board.AddQuiteOrCapture(rook, byte(square))
-				if (square+1)%8 == 0 || !canContinue {
+				isQuiteMove := board.AddQuiteOrCapture(rook, byte(square))
+				if board.IsSquareAtHFile(byte(square)) || !isQuiteMove {
 					break
 				}
 				square += 1
