@@ -168,6 +168,18 @@ func (board *Board) IsPieceAtSquareBlack(square byte) bool {
 	return board.Position[square] >= 98
 }
 
+func (board *Board) AddQuiteOrCapture(from, to byte) bool {
+	if board.IsSquareEmpty(to) {
+		board.AddMove(NewMove(from, to, MoveQuiet))
+		return true
+	} else {
+		if board.WhiteToMove && board.IsPieceAtSquareBlack(to) {
+			board.AddCapture(NewMove(from, to, MoveCapture))
+		}
+		return false
+	}
+}
+
 func (board *Board) AddMove(move *Move) {
 	board.Moves = append(board.Moves, move)
 }
@@ -302,6 +314,65 @@ func (board *Board) GeneratePawnMoves() {
 			}
 			if square%8 != 0 && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareBlack(rightSquare-8) {
 				board.AddCapture(NewMove(square, rightSquare, MoveOnPassant))
+			}
+		}
+	}
+}
+
+func (board *Board) GenerateRookMoves() {
+	rooks := board.Pieces.White.Rooks
+	if !board.WhiteToMove {
+		rooks = board.Pieces.Black.Rooks
+	}
+	for _, rook := range rooks {
+		var square int8 = int8(rook) - 8
+		// up
+		if rook > 7 {
+			for square >= 0 {
+				canContinue := board.AddQuiteOrCapture(rook, byte(square))
+				if !canContinue {
+					break
+				}
+				square -= 8
+			}
+		}
+		// down
+		if rook < 56 {
+			square = int8(rook) + 8
+			for square <= 63 {
+				canContinue := board.AddQuiteOrCapture(rook, byte(square))
+				if !canContinue {
+					break
+				}
+				square += 8
+			}
+		}
+		// left
+		if rook%8 != 0 {
+			square = int8(rook) - 1
+			for {
+				canContinue := board.AddQuiteOrCapture(rook, byte(square))
+				if !canContinue {
+					break
+				}
+				if square%8 == 0 {
+					break
+				}
+				square -= 1
+			}
+		}
+		// right
+		if (rook+1)%8 != 0 {
+			square = int8(rook) + 1
+			for {
+				canContinue := board.AddQuiteOrCapture(rook, byte(square))
+				if !canContinue {
+					break
+				}
+				if (square+1)%8 == 0 {
+					break
+				}
+				square += 1
 			}
 		}
 	}

@@ -63,3 +63,12 @@ func TestShouldGenerateOnPassantPawnMoves(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestShouldGenerateRookMoves(t *testing.T) {
+	board := libra.NewBoard()
+	board.LoadFromFEN("1k4r1/8/2R5/8/8/8/8/7K w - - 0 9")
+	board.GenerateRookMoves()
+	if len(board.Moves) != 14 {
+		t.Fail()
+	}
+}
