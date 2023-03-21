@@ -67,8 +67,8 @@ func (board *Board) LoadInitial() (bool, error) {
 func (board *Board) LoadFromFEN(fen string) (bool, error) {
 	board.Initialize()
 	parts := strings.Split(fen, " ")
-	if len(parts) != 6 {
-		return false, fmt.Errorf("invalid FEN, missing blocks")
+	if len(parts) < 2 {
+		return false, fmt.Errorf("invalid FEN, missing blocks, at least 2 blocks are required")
 	}
 
 	// 1. Piece placement data
@@ -104,8 +104,18 @@ func (board *Board) LoadFromFEN(fen string) (bool, error) {
 	// 2. Active Color
 	board.WhiteToMove = parts[1] == "w"
 
-	// 3. On-passant
-	if parts[3] != "-" {
+	if len(parts) > 2 && parts[2] != "-" {
+		// TODO castling
+		board.CastlingAvailability = &CastlingAvailability{
+			BlackKingSide:  true,
+			BlackQueenSide: true,
+			WhiteKingSide:  true,
+			WhiteQueenSide: true,
+		}
+	}
+
+	// 4. On-passant
+	if len(parts) > 3 && parts[3] != "-" {
 		onPassant, ok := SquareNameToIndex(parts[3])
 		if ok {
 			board.OnPassant = onPassant
@@ -328,23 +338,23 @@ func (board *Board) GenerateRookMoves() {
 		var square int8 = int8(rook) - 8
 		// up
 		if rook > 7 {
-			for square >= 0 {
+			for {
 				canContinue := board.AddQuiteOrCapture(rook, byte(square))
-				if !canContinue {
+				square -= 8
+				if square < 0 || !canContinue {
 					break
 				}
-				square -= 8
 			}
 		}
 		// down
 		if rook < 56 {
 			square = int8(rook) + 8
-			for square <= 63 {
+			for {
 				canContinue := board.AddQuiteOrCapture(rook, byte(square))
-				if !canContinue {
+				square += 8
+				if square >= 64 || !canContinue {
 					break
 				}
-				square += 8
 			}
 		}
 		// left
@@ -352,10 +362,7 @@ func (board *Board) GenerateRookMoves() {
 			square = int8(rook) - 1
 			for {
 				canContinue := board.AddQuiteOrCapture(rook, byte(square))
-				if !canContinue {
-					break
-				}
-				if square%8 == 0 {
+				if square%8 == 0 || !canContinue {
 					break
 				}
 				square -= 1
@@ -366,10 +373,7 @@ func (board *Board) GenerateRookMoves() {
 			square = int8(rook) + 1
 			for {
 				canContinue := board.AddQuiteOrCapture(rook, byte(square))
-				if !canContinue {
-					break
-				}
-				if (square+1)%8 == 0 {
+				if (square+1)%8 == 0 || !canContinue {
 					break
 				}
 				square += 1
