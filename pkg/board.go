@@ -67,8 +67,8 @@ func (board *Board) LoadInitial() (bool, error) {
 func (board *Board) LoadFromFEN(fen string) (bool, error) {
 	board.Initialize()
 	parts := strings.Split(fen, " ")
-	if len(parts) < 2 {
-		return false, fmt.Errorf("invalid FEN, missing blocks, at least 2 blocks are required")
+	if len(parts) == 0 {
+		return false, fmt.Errorf("invalid FEN, missing blocks, at least piece list block required")
 	}
 
 	// 1. Piece placement data
@@ -102,8 +102,11 @@ func (board *Board) LoadFromFEN(fen string) (bool, error) {
 	}
 
 	// 2. Active Color
-	board.WhiteToMove = parts[1] == "w"
+	if len(parts) > 1 {
+		board.WhiteToMove = parts[1] == "w"
+	}
 
+	// 3. Castling
 	if len(parts) > 2 && parts[2] != "-" {
 		// TODO castling
 		board.CastlingAvailability = &CastlingAvailability{
