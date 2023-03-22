@@ -221,6 +221,9 @@ func (board *Board) AddPromotion(move *Move) {
 
 func (board *Board) GenerateMoves() {
 	board.GeneratePawnMoves()
+	board.GenerateBishopMoves()
+	board.GenerateRookMoves()
+	board.GenerateQueenMoves()
 }
 
 func (board *Board) GeneratePiecesLocations() {
@@ -343,57 +346,29 @@ func (board *Board) GeneratePawnMoves() {
 	}
 }
 
+func (board *Board) GenerateSlidingMoves(pieces []byte, startDir byte, endDir byte) {
+	for _, square := range pieces {
+		for dirOffset := startDir; dirOffset < endDir; dirOffset++ {
+			offset := BoardDirOffsets[dirOffset]
+			amountToMove := int8(SquaresToEdge[square][dirOffset])
+			for moveIndex := int8(1); moveIndex <= amountToMove; moveIndex++ {
+				squareTo := int8(square) + (offset * moveIndex)
+				fmt.Println(squareTo)
+				isQuiteMove := board.AddQuiteOrCapture(square, byte(squareTo))
+				if !isQuiteMove {
+					break
+				}
+			}
+		}
+	}
+}
+
 func (board *Board) GenerateRookMoves() {
 	rooks := board.Pieces.White.Rooks
 	if !board.WhiteToMove {
 		rooks = board.Pieces.Black.Rooks
 	}
-	for _, rook := range rooks {
-		var square int8 = int8(rook) - 8
-		// up
-		if !board.IsSquareAt8thRank(rook) {
-			for {
-				isQuiteMove := board.AddQuiteOrCapture(rook, byte(square))
-				if board.IsSquareAt8thRank(byte(square)) || !isQuiteMove {
-					break
-				}
-				square -= 8
-			}
-		}
-		// down
-		if !board.IsSquareAt1stRank(rook) {
-			square = int8(rook) + 8
-			for {
-				isQuiteMove := board.AddQuiteOrCapture(rook, byte(square))
-				if board.IsSquareAt1stRank(byte(square)) || !isQuiteMove {
-					break
-				}
-				square += 8
-			}
-		}
-		// left
-		if !board.IsSquareAtAFile(rook) {
-			square = int8(rook) - 1
-			for {
-				isQuiteMove := board.AddQuiteOrCapture(rook, byte(square))
-				if board.IsSquareAtAFile(byte(square)) || !isQuiteMove {
-					break
-				}
-				square -= 1
-			}
-		}
-		// right
-		if !board.IsSquareAtHFile(rook) {
-			square = int8(rook) + 1
-			for {
-				isQuiteMove := board.AddQuiteOrCapture(rook, byte(square))
-				if board.IsSquareAtHFile(byte(square)) || !isQuiteMove {
-					break
-				}
-				square += 1
-			}
-		}
-	}
+	board.GenerateSlidingMoves(rooks, 0, 4)
 }
 
 func (board *Board) GenerateBishopMoves() {
@@ -401,50 +376,13 @@ func (board *Board) GenerateBishopMoves() {
 	if !board.WhiteToMove {
 		bishops = board.Pieces.Black.Bishops
 	}
-	for _, bishop := range bishops {
-		// up right
-		if !board.IsSquareAt8thRank(bishop) && !board.IsSquareAtHFile(bishop) {
-			var square int8 = int8(bishop) - 7
-			for {
-				isQuiteMove := board.AddQuiteOrCapture(bishop, byte(square))
-				if board.IsSquareAt8thRank(byte(square)) || board.IsSquareAtHFile(bishop) || !isQuiteMove {
-					break
-				}
-				square -= 7
-			}
-		}
-		// down right
-		if !board.IsSquareAt1stRank(bishop) && !board.IsSquareAtHFile(bishop) {
-			var square byte = bishop + 9
-			for {
-				isQuiteMove := board.AddQuiteOrCapture(bishop, byte(square))
-				if board.IsSquareAt1stRank(byte(square)) || board.IsSquareAtHFile(square) || !isQuiteMove {
-					break
-				}
-				square += 9
-			}
-		}
-		// down left
-		if !board.IsSquareAtAFile(bishop) && !board.IsSquareAt1stRank(bishop) {
-			var square byte = bishop + 7
-			for {
-				isQuiteMove := board.AddQuiteOrCapture(bishop, square)
-				if board.IsSquareAtAFile(square) || board.IsSquareAt1stRank(square) || !isQuiteMove {
-					break
-				}
-				square += 7
-			}
-		}
-		// up left
-		if !board.IsSquareAtAFile(bishop) && !board.IsSquareAt8thRank(bishop) {
-			var square int8 = int8(bishop) - 9
-			for {
-				isQuiteMove := board.AddQuiteOrCapture(bishop, byte(square))
-				if board.IsSquareAtAFile(byte(square)) || board.IsSquareAt8thRank(byte(square)) || !isQuiteMove {
-					break
-				}
-				square -= 9
-			}
-		}
+	board.GenerateSlidingMoves(bishops, 4, 8)
+}
+
+func (board *Board) GenerateQueenMoves() {
+	queues := board.Pieces.White.Queens
+	if !board.WhiteToMove {
+		queues = board.Pieces.Black.Queens
 	}
+	board.GenerateSlidingMoves(queues, 0, 8)
 }

@@ -75,3 +75,10 @@ func SquareNameToIndex(name string) (byte, bool) {
 	val, ok := squareNameToIndex[name]
 	return val, ok
 }
+
+func MathMinByte(a byte, b byte) byte {
+	if a > b {
+		return b
+	}
+	return a
+}

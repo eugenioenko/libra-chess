@@ -66,12 +66,19 @@ func TestShouldGenerateOnPassantPawnMoves(t *testing.T) {
 
 func TestShouldGenerateRookMoves(t *testing.T) {
 	board := libra.NewBoard()
+
 	board.LoadFromFEN("1k4r1/8/2R4p/8/8/8/8/7K")
 	board.GenerateRookMoves()
 	if len(board.Moves.All) != 14 {
 		t.Fail()
 	}
 	if len(board.Moves.Captures) != 1 {
+		t.Fail()
+	}
+
+	board.LoadFromFEN("8/8/8/8/8/8/8/R7")
+	board.GenerateRookMoves()
+	if len(board.Moves.All) != 14 {
 		t.Fail()
 	}
 
@@ -93,15 +100,17 @@ func TestShouldGenerateRookMoves(t *testing.T) {
 		t.Fail()
 	}
 
-	board.LoadFromFEN("8/8/8/8/8/8/8/R7")
+	board.LoadFromFEN("8/8/4R3/8/8/8/8/8")
 	board.GenerateRookMoves()
 	if len(board.Moves.All) != 14 {
 		t.Fail()
 	}
+
 }
 
 func TestShouldGenerateBishopMoves(t *testing.T) {
 	board := libra.NewBoard()
+
 	board.LoadFromFEN("8/8/8/4B3/8/8/8/8")
 	board.GenerateBishopMoves()
 	if len(board.Moves.All) != 13 {
@@ -131,5 +140,38 @@ func TestShouldGenerateBishopMoves(t *testing.T) {
 	if len(board.Moves.All) != 7 {
 		t.Fail()
 	}
+}
 
+func TestShouldGenerateQueenMoves(t *testing.T) {
+	board := libra.NewBoard()
+
+	board.LoadFromFEN("8/8/8/4Q3/8/8/8/8")
+	board.GenerateQueenMoves()
+	if len(board.Moves.All) != 27 {
+		t.Fail()
+	}
+
+	board.LoadFromFEN("Q7/8/8/8/8/8/8/8")
+	board.GenerateQueenMoves()
+	if len(board.Moves.All) != 21 {
+		t.Fail()
+	}
+
+	board.LoadFromFEN("7Q/8/8/8/8/8/8/8")
+	board.GenerateQueenMoves()
+	if len(board.Moves.All) != 21 {
+		t.Fail()
+	}
+
+	board.LoadFromFEN("8/8/8/8/8/8/8/7Q")
+	board.GenerateQueenMoves()
+	if len(board.Moves.All) != 21 {
+		t.Fail()
+	}
+
+	board.LoadFromFEN("8/8/8/8/8/8/8/Q7")
+	board.GenerateQueenMoves()
+	if len(board.Moves.All) != 21 {
+		t.Fail()
+	}
 }
