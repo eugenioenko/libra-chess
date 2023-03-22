@@ -85,11 +85,6 @@ func (board *Board) LoadFromFEN(fen string) (bool, error) {
 			} else {
 				board.Position[index] = byte(piece)
 				index += 1
-				if byte(piece) == WhiteKing {
-					board.Pieces.White.King = byte(index)
-				} else if byte(piece) == BlackKing {
-					board.Pieces.Black.King = byte(index)
-				}
 			}
 		}
 	}
@@ -224,6 +219,7 @@ func (board *Board) GenerateMoves() {
 	board.GenerateBishopMoves()
 	board.GenerateRookMoves()
 	board.GenerateQueenMoves()
+	board.GenerateKingMoves()
 }
 
 func (board *Board) GeneratePiecesLocations() {
@@ -240,7 +236,7 @@ func (board *Board) GeneratePiecesLocations() {
 		case piece == WhiteQueen:
 			board.Pieces.White.Queens = append(board.Pieces.White.Queens, byte(index))
 		case piece == WhiteKing:
-			board.Pieces.Black.King = byte(index)
+			board.Pieces.White.King = byte(index)
 		case piece == BlackPawn:
 			board.Pieces.Black.Pawns = append(board.Pieces.Black.Pawns, byte(index))
 		case piece == BlackKnight:
@@ -353,12 +349,26 @@ func (board *Board) GenerateSlidingMoves(pieces []byte, startDir byte, endDir by
 			amountToMove := int8(SquaresToEdge[square][dirOffset])
 			for moveIndex := int8(1); moveIndex <= amountToMove; moveIndex++ {
 				squareTo := int8(square) + (offset * moveIndex)
-				fmt.Println(squareTo)
 				isQuiteMove := board.AddQuiteOrCapture(square, byte(squareTo))
 				if !isQuiteMove {
 					break
 				}
 			}
+		}
+	}
+}
+
+func (board *Board) GenerateKingMoves() {
+	square := board.Pieces.White.King
+	if !board.WhiteToMove {
+		square = board.Pieces.Black.King
+	}
+	for dirOffset := 0; dirOffset < 8; dirOffset++ {
+		offset := BoardDirOffsets[dirOffset]
+		amountToMove := int8(SquaresToEdge[square][dirOffset])
+		if amountToMove > 0 {
+			squareTo := int8(square) + offset
+			board.AddQuiteOrCapture(square, byte(squareTo))
 		}
 	}
 }

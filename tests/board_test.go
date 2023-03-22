@@ -175,3 +175,37 @@ func TestShouldGenerateQueenMoves(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestShouldGenerateKingMoves(t *testing.T) {
+	board := libra.NewBoard()
+
+	board.LoadFromFEN("8/8/8/4K3/8/8/8/8")
+	board.GenerateKingMoves()
+	if len(board.Moves.All) != 8 {
+		t.Fail()
+	}
+
+	board.LoadFromFEN("K7/8/8/8/8/8/8/8")
+	board.GenerateKingMoves()
+	if len(board.Moves.All) != 3 {
+		t.Fail()
+	}
+
+	board.LoadFromFEN("7Q/8/8/8/8/8/8/8")
+	board.GenerateKingMoves()
+	if len(board.Moves.All) != 3 {
+		t.Fail()
+	}
+
+	board.LoadFromFEN("8/8/8/8/8/8/8/7Q")
+	board.GenerateKingMoves()
+	if len(board.Moves.All) != 3 {
+		t.Fail()
+	}
+
+	board.LoadFromFEN("8/8/8/8/8/8/8/K7")
+	board.GenerateKingMoves()
+	if len(board.Moves.All) != 3 {
+		t.Fail()
+	}
+}
