@@ -238,6 +238,7 @@ func TestShouldGenerateKnightMoves(t *testing.T) {
 	}
 
 	board.LoadFromFEN("8/8/8/8/8/8/8/N7")
+
 	board.GenerateKnightMoves()
 	if len(board.Moves.All) != 2 {
 		t.Fail()
