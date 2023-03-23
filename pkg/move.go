@@ -83,7 +83,7 @@ func generateKnightJumps() [64][8]byte {
 			for offsetIndex, offset := range jumpOffsets {
 				x2 := int8(x) + offset[0]
 				y2 := int8(y) + offset[1]
-				if x2 >= 0 && y2 >= 0 {
+				if x2 >= 0 && y2 >= 0 && x2 < 8 && y2 < 8 {
 					squares[squareFrom][offsetIndex] = byte(y2*8 + x2)
 				} else {
 					squares[squareFrom][offsetIndex] = 255
