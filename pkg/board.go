@@ -216,6 +216,7 @@ func (board *Board) AddPromotion(move *Move) {
 
 func (board *Board) GenerateMoves() {
 	board.GeneratePawnMoves()
+	board.GenerateKnightMoves()
 	board.GenerateBishopMoves()
 	board.GenerateRookMoves()
 	board.GenerateQueenMoves()
@@ -395,4 +396,19 @@ func (board *Board) GenerateQueenMoves() {
 		queues = board.Pieces.Black.Queens
 	}
 	board.GenerateSlidingMoves(queues, 0, 8)
+}
+
+func (board *Board) GenerateKnightMoves() {
+	knights := board.Pieces.White.Knights
+	if !board.WhiteToMove {
+		knights = board.Pieces.Black.Knights
+	}
+	for _, square := range knights {
+		for moveIndex := 0; moveIndex < 8; moveIndex++ {
+			squareTo := SquareKnightJumps[square][moveIndex]
+			if squareTo < 255 {
+				board.AddQuiteOrCapture(square, squareTo)
+			}
+		}
+	}
 }

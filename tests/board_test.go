@@ -209,3 +209,42 @@ func TestShouldGenerateKingMoves(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestShouldGenerateKnightMoves(t *testing.T) {
+	board := libra.NewBoard()
+
+	board.LoadFromFEN("8/8/8/4N3/8/8/8/8")
+	board.GenerateKnightMoves()
+	if len(board.Moves.All) != 8 {
+		t.Fail()
+	}
+
+	board.LoadFromFEN("N7/8/8/8/8/8/8/8")
+	board.GenerateKnightMoves()
+	if len(board.Moves.All) != 2 {
+		t.Fail()
+	}
+
+	board.LoadFromFEN("7N/8/8/8/8/8/8/8")
+	board.GenerateKnightMoves()
+	if len(board.Moves.All) != 2 {
+		t.Fail()
+	}
+
+	board.LoadFromFEN("8/8/8/8/8/8/8/7N")
+	board.GenerateKnightMoves()
+	if len(board.Moves.All) != 2 {
+		t.Fail()
+	}
+
+	board.LoadFromFEN("8/8/8/8/8/8/8/N7")
+	board.GenerateKnightMoves()
+	if len(board.Moves.All) != 2 {
+		t.Fail()
+	}
+}
+
+func TestDummy(t *testing.T) {
+	b := libra.SquareKnightJumps
+	fmt.Print(b[0][0])
+}
