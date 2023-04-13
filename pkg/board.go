@@ -172,12 +172,12 @@ func (board *Board) IsPieceAtSquareBlack(square byte) bool {
 	return board.Position[square] >= 98
 }
 
-func (board *Board) IsSquareAt8thRank(square byte) bool {
-	return square < 8
+func (board *Board) IsPieceAtSquareWhite(square byte) bool {
+	return board.Position[square] > 0 && board.Position[square] < 98
 }
 
-func (board *Board) IsSquareAt1stRank(square byte) bool {
-	return square >= 56
+func (board *Board) SquareToRank(square byte) byte {
+	return 8 - square/8
 }
 
 func (board *Board) IsSquareAtAFile(square byte) bool {
@@ -190,11 +190,11 @@ func (board *Board) IsSquareAtHFile(square byte) bool {
 
 func (board *Board) AddQuiteOrCapture(from, to byte) bool {
 	if board.IsSquareEmpty(to) {
-		board.AddMove(NewMove(from, to, MoveQuiet, [2]byte{0, 0}))
+		board.AddQuietMove(from, to)
 		return true
 	} else {
 		if board.WhiteToMove && board.IsPieceAtSquareBlack(to) {
-			board.AddCapture(NewMove(from, to, MoveCapture, [2]byte{0, 0}))
+			board.AddCapture(from, to, MoveCapture)
 		}
 		return false
 	}
@@ -204,14 +204,240 @@ func (board *Board) AddMove(move *Move) {
 	board.Moves.All = append(board.Moves.All, move)
 }
 
-func (board *Board) AddCapture(move *Move) {
+func (board *Board) AddQuietMove(from byte, to byte) {
+	move := NewMove(from, to, MoveQuiet, [2]byte{0, 0})
+	board.Moves.All = append(board.Moves.All, move)
+}
+
+func (board *Board) AddCapture(from byte, to byte, moveType byte) {
+	captured := board.Position[to]
+	if moveType == MoveOnPassant {
+		if board.WhiteToMove {
+			captured = BlackPawn
+		} else {
+			captured = WhitePawn
+		}
+	}
+	move := NewMove(from, to, moveType, [2]byte{captured, 0})
 	board.AddMove(move)
 	board.Moves.Captures = append(board.Moves.Captures, move)
 }
 
-func (board *Board) AddPromotion(move *Move) {
+func (board *Board) AddPromotion(from byte, to byte, captured byte) {
+	var moveType byte = MovePromotion
+	if captured != 0 {
+		moveType = MovePromotionCapture
+	}
+	var queenPiece byte = WhiteQueen
+	var rookPiece byte = WhiteRook
+	var bishopPiece byte = WhiteBishop
+	var knightPiece byte = WhiteKnight
+
+	if !board.WhiteToMove {
+		queenPiece = BlackQueen
+		rookPiece = BlackRook
+		bishopPiece = BlackBishop
+		knightPiece = BlackKnight
+	}
+
+	move := NewMove(from, to, moveType, [2]byte{queenPiece, captured})
 	board.AddMove(move)
 	board.Moves.Promotions = append(board.Moves.Promotions, move)
+
+	move = NewMove(from, to, moveType, [2]byte{rookPiece, captured})
+	board.AddMove(move)
+	board.Moves.Promotions = append(board.Moves.Promotions, move)
+
+	move = NewMove(from, to, moveType, [2]byte{bishopPiece, captured})
+	board.AddMove(move)
+	board.Moves.Promotions = append(board.Moves.Promotions, move)
+
+	move = NewMove(from, to, moveType, [2]byte{knightPiece, captured})
+	board.AddMove(move)
+	board.Moves.Promotions = append(board.Moves.Promotions, move)
+}
+
+func (board *Board) GeneratePawnMoves() {
+	squares := board.Pieces.White.Pawns
+	if !board.WhiteToMove {
+		squares = board.Pieces.Black.Pawns
+	}
+
+	for _, square := range squares {
+
+		// two space forward, pawns are on initial square
+		if board.WhiteToMove {
+			if board.SquareToRank(square) == 2 {
+				squareToMove := square - 16
+				if board.IsSquareEmpty(squareToMove) {
+					board.AddQuietMove(square, squareToMove)
+				}
+			}
+		} else {
+			if board.SquareToRank(square) == 7 {
+				squareToMove := square + 16
+				if board.IsSquareEmpty(squareToMove) {
+					board.AddQuietMove(square, squareToMove)
+				}
+			}
+		}
+
+		// one move forward and promotion
+		if board.WhiteToMove {
+			squareToMove := square - 8
+			if board.IsSquareEmpty(squareToMove) {
+				if board.SquareToRank(squareToMove) == 8 {
+					board.AddPromotion(square, squareToMove, 0)
+				} else {
+					board.AddQuietMove(square, squareToMove)
+				}
+			}
+		} else {
+			squareToMove := square + 8
+			if board.IsSquareEmpty(squareToMove) {
+				if board.SquareToRank(squareToMove) == 1 {
+					board.AddPromotion(square, squareToMove, 0)
+				} else {
+					board.AddQuietMove(square, squareToMove)
+				}
+			}
+		}
+
+		// captures and promotion captures
+		if board.WhiteToMove {
+			// left capture with white
+			leftSquare := square - 8 - 1
+			if !board.IsSquareAtHFile(square) && board.IsSquareOccupied(leftSquare) && board.IsPieceAtSquareBlack(leftSquare) {
+				if board.SquareToRank(leftSquare) == 8 {
+					// promotion capture
+					captured := board.Position[leftSquare]
+					board.AddPromotion(square, leftSquare, captured)
+				} else {
+					// normal capture
+					board.AddCapture(square, leftSquare, MoveCapture)
+				}
+			}
+			// en-passant capture left
+			if !board.IsSquareAtHFile(square) && board.IsSquareOnPassant(leftSquare) && board.IsPieceAtSquareBlack(leftSquare+8) {
+				board.AddCapture(square, leftSquare, MoveOnPassant)
+			}
+			// right capture with white
+			rightSquare := square - 8 + 1
+			if !board.IsSquareAtAFile(square) && board.IsSquareOccupied(rightSquare) && board.IsPieceAtSquareBlack(rightSquare) {
+				if board.SquareToRank(rightSquare) == 1 {
+					// promotion capture
+					captured := board.Position[rightSquare]
+					board.AddPromotion(square, rightSquare, captured)
+				} else {
+					// normal capture
+					board.AddCapture(square, rightSquare, MoveCapture)
+				}
+			}
+			// en-passant capture right
+			if !board.IsSquareAtAFile(square) && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareBlack(rightSquare+8) {
+				board.AddCapture(square, rightSquare, MoveOnPassant)
+			}
+		} else {
+			// right capture with black
+			rightSquare := square + 8 - 1
+			if !board.IsSquareAtHFile(square) && board.IsSquareOccupied(rightSquare) && board.IsPieceAtSquareWhite(rightSquare) {
+				if board.SquareToRank(rightSquare) == 1 {
+					captured := board.Position[rightSquare]
+					board.AddPromotion(square, rightSquare, captured)
+				} else {
+					board.AddCapture(square, rightSquare, MoveCapture)
+				}
+			}
+			// en-passant capture right
+			if !board.IsSquareAtHFile(square) && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareWhite(rightSquare-8) {
+				board.AddCapture(square, rightSquare, MoveOnPassant)
+			}
+			// left capture with black
+			leftSquare := square + 8 + 1
+			if !board.IsSquareAtAFile(square) && board.IsSquareOccupied(leftSquare) && board.IsPieceAtSquareWhite(leftSquare) {
+				if board.SquareToRank(leftSquare) == 1 {
+					captured := board.Position[leftSquare]
+					board.AddPromotion(square, leftSquare, captured)
+				} else {
+					board.AddCapture(square, leftSquare, MoveCapture)
+				}
+			}
+			// en passant capture right
+			if !board.IsSquareAtHFile(square) && board.IsSquareOnPassant(leftSquare) && board.IsPieceAtSquareWhite(leftSquare-8) {
+				board.AddCapture(square, leftSquare, MoveOnPassant)
+			}
+		}
+	}
+}
+
+func (board *Board) GenerateSlidingMoves(pieces []byte, startDir byte, endDir byte) {
+	for _, square := range pieces {
+		for dirOffset := startDir; dirOffset < endDir; dirOffset++ {
+			offset := BoardDirOffsets[dirOffset]
+			amountToMove := int8(SquaresToEdge[square][dirOffset])
+			for moveIndex := int8(1); moveIndex <= amountToMove; moveIndex++ {
+				squareTo := int8(square) + (offset * moveIndex)
+				isQuiteMove := board.AddQuiteOrCapture(square, byte(squareTo))
+				if !isQuiteMove {
+					break
+				}
+			}
+		}
+	}
+}
+
+func (board *Board) GenerateKingMoves() {
+	square := board.Pieces.White.King
+	if !board.WhiteToMove {
+		square = board.Pieces.Black.King
+	}
+	for dirOffset := 0; dirOffset < 8; dirOffset++ {
+		offset := BoardDirOffsets[dirOffset]
+		amountToMove := int8(SquaresToEdge[square][dirOffset])
+		if amountToMove > 0 {
+			squareTo := int8(square) + offset
+			board.AddQuiteOrCapture(square, byte(squareTo))
+		}
+	}
+}
+
+func (board *Board) GenerateRookMoves() {
+	rooks := board.Pieces.White.Rooks
+	if !board.WhiteToMove {
+		rooks = board.Pieces.Black.Rooks
+	}
+	board.GenerateSlidingMoves(rooks, 0, 4)
+}
+
+func (board *Board) GenerateBishopMoves() {
+	bishops := board.Pieces.White.Bishops
+	if !board.WhiteToMove {
+		bishops = board.Pieces.Black.Bishops
+	}
+	board.GenerateSlidingMoves(bishops, 4, 8)
+}
+
+func (board *Board) GenerateQueenMoves() {
+	queues := board.Pieces.White.Queens
+	if !board.WhiteToMove {
+		queues = board.Pieces.Black.Queens
+	}
+	board.GenerateSlidingMoves(queues, 0, 8)
+}
+
+func (board *Board) GenerateKnightMoves() {
+	knights := board.Pieces.White.Knights
+	if !board.WhiteToMove {
+		knights = board.Pieces.Black.Knights
+	}
+	for _, square := range knights {
+		for moveIndex := 0; moveIndex < 8; moveIndex++ {
+			squareTo := SquareKnightJumps[square][moveIndex]
+			if squareTo < 255 {
+				board.AddQuiteOrCapture(square, squareTo)
+			}
+		}
+	}
 }
 
 func (board *Board) GenerateMoves() {
