@@ -27,7 +27,7 @@ func NewMove(from byte, to byte, moveType byte, data [2]byte) *Move {
 
 type BoardMoves struct {
 	All        []*Move
-	Quite      []*Move
+	Quiet      []*Move
 	Captures   []*Move
 	Promotions []*Move
 }
@@ -35,7 +35,7 @@ type BoardMoves struct {
 func NewBoardMoves() *BoardMoves {
 	return &BoardMoves{
 		All:        []*Move{},
-		Quite:      []*Move{},
+		Quiet:      []*Move{},
 		Captures:   []*Move{},
 		Promotions: []*Move{},
 	}

@@ -188,7 +188,7 @@ func (board *Board) IsSquareAtHFile(square byte) bool {
 	return (square+1)%8 == 0
 }
 
-func (board *Board) AddQuiteOrCapture(from, to byte) bool {
+func (board *Board) AddQuietOrCapture(from, to byte) bool {
 	if board.IsSquareEmpty(to) {
 		board.AddQuietMove(from, to)
 		return true
@@ -207,6 +207,13 @@ func (board *Board) AddMove(move *Move) {
 func (board *Board) AddQuietMove(from byte, to byte) {
 	move := NewMove(from, to, MoveQuiet, [2]byte{0, 0})
 	board.Moves.All = append(board.Moves.All, move)
+	board.Moves.Quiet = append(board.Moves.Quiet, move)
+}
+
+func (board *Board) AddCastleMove(from byte, to byte) {
+	move := NewMove(from, to, MoveCastle, [2]byte{0, 0})
+	board.Moves.All = append(board.Moves.All, move)
+	board.Moves.Quiet = append(board.Moves.Quiet, move)
 }
 
 func (board *Board) AddCapture(from byte, to byte, moveType byte) {
@@ -377,8 +384,8 @@ func (board *Board) GenerateSlidingMoves(pieces []byte, startDir byte, endDir by
 			amountToMove := int8(SquaresToEdge[square][dirOffset])
 			for moveIndex := int8(1); moveIndex <= amountToMove; moveIndex++ {
 				squareTo := int8(square) + (offset * moveIndex)
-				isQuiteMove := board.AddQuiteOrCapture(square, byte(squareTo))
-				if !isQuiteMove {
+				isQuietMove := board.AddQuietOrCapture(square, byte(squareTo))
+				if !isQuietMove {
 					break
 				}
 			}
@@ -396,7 +403,23 @@ func (board *Board) GenerateKingMoves() {
 		amountToMove := int8(SquaresToEdge[square][dirOffset])
 		if amountToMove > 0 {
 			squareTo := int8(square) + offset
-			board.AddQuiteOrCapture(square, byte(squareTo))
+			board.AddQuietOrCapture(square, byte(squareTo))
+		}
+	}
+}
+
+func (board *Board) GenerateCastleMoves() {
+	if board.WhiteToMove {
+		if (board.CastlingAvailability.WhiteQueenSide) && board.IsSquareEmpty(57) && board.IsSquareEmpty(58) && board.IsSquareEmpty(59) {
+			board.AddCastleMove(60, 58)
+		} else if (board.CastlingAvailability.WhiteKingSide) && board.IsSquareEmpty(61) && board.IsSquareEmpty(62) {
+			board.AddCastleMove(60, 62)
+		}
+	} else {
+		if (board.CastlingAvailability.BlackQueenSide) && board.IsSquareEmpty(1) && board.IsSquareEmpty(2) && board.IsSquareEmpty(3) {
+			board.AddCastleMove(4, 2)
+		} else if (board.CastlingAvailability.BlackKingSide) && board.IsSquareEmpty(5) && board.IsSquareEmpty(6) {
+			board.AddCastleMove(4, 6)
 		}
 	}
 }
@@ -434,7 +457,7 @@ func (board *Board) GenerateKnightMoves() {
 		for moveIndex := 0; moveIndex < 8; moveIndex++ {
 			squareTo := SquareKnightJumps[square][moveIndex]
 			if squareTo < 255 {
-				board.AddQuiteOrCapture(square, squareTo)
+				board.AddQuietOrCapture(square, squareTo)
 			}
 		}
 	}
@@ -447,6 +470,7 @@ func (board *Board) GenerateMoves() {
 	board.GenerateRookMoves()
 	board.GenerateQueenMoves()
 	board.GenerateKingMoves()
+	board.GenerateCastleMoves()
 }
 
 func (board *Board) GeneratePiecesLocations() {
