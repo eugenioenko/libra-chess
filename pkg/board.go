@@ -161,6 +161,10 @@ func (board *Board) IsSquareEmpty(square byte) bool {
 	return board.IsSquareValid(square) && board.Position[square] == 0
 }
 
+func (board *Board) IsSquareEmptyAndNotAttacked(square byte) bool {
+	return board.IsSquareEmpty(square) && !board.AttackedSquares[square]
+}
+
 func (board *Board) IsSquareOccupied(square byte) bool {
 	return board.IsSquareValid(square) && board.Position[square] > 0
 }
@@ -444,15 +448,15 @@ func (board *Board) GenerateKingMoves(whiteToMove bool) {
 
 func (board *Board) GenerateCastleMoves(whiteToMove bool) {
 	if whiteToMove {
-		if (board.CastlingAvailability.WhiteQueenSide) && board.IsSquareEmpty(57) && board.IsSquareEmpty(58) && board.IsSquareEmpty(59) {
+		if (board.CastlingAvailability.WhiteQueenSide) && board.IsSquareEmptyAndNotAttacked(57) && board.IsSquareEmptyAndNotAttacked(58) && board.IsSquareEmptyAndNotAttacked(59) {
 			board.AddCastleMove(60, 58)
-		} else if (board.CastlingAvailability.WhiteKingSide) && board.IsSquareEmpty(61) && board.IsSquareEmpty(62) {
+		} else if (board.CastlingAvailability.WhiteKingSide) && board.IsSquareEmptyAndNotAttacked(61) && board.IsSquareEmptyAndNotAttacked(62) {
 			board.AddCastleMove(60, 62)
 		}
 	} else {
-		if (board.CastlingAvailability.BlackQueenSide) && board.IsSquareEmpty(1) && board.IsSquareEmpty(2) && board.IsSquareEmpty(3) {
+		if (board.CastlingAvailability.BlackQueenSide) && board.IsSquareEmptyAndNotAttacked(1) && board.IsSquareEmptyAndNotAttacked(2) && board.IsSquareEmptyAndNotAttacked(3) {
 			board.AddCastleMove(4, 2)
-		} else if (board.CastlingAvailability.BlackKingSide) && board.IsSquareEmpty(5) && board.IsSquareEmpty(6) {
+		} else if (board.CastlingAvailability.BlackKingSide) && board.IsSquareEmptyAndNotAttacked(5) && board.IsSquareEmptyAndNotAttacked(6) {
 			board.AddCastleMove(4, 6)
 		}
 	}
@@ -498,9 +502,22 @@ func (board *Board) GenerateKnightMoves(whiteToMove bool) {
 }
 
 func (board *Board) GenerateMoves() {
+
+	// generate moving color all moves
+	board.AttackedSquares = board.GenerateAttackedSquares(!board.WhiteToMove)
 	board.Moves = NewBoardMoves()
-	board.AttackedSquares = [64]bool{}
-	whiteToMove := !board.WhiteToMove
+	board.GeneratePawnMoves(board.WhiteToMove)
+	board.GenerateKnightMoves(board.WhiteToMove)
+	board.GenerateBishopMoves(board.WhiteToMove)
+	board.GenerateRookMoves(board.WhiteToMove)
+	board.GenerateQueenMoves(board.WhiteToMove)
+	board.GenerateKingMoves(board.WhiteToMove)
+	board.GenerateCastleMoves(board.WhiteToMove)
+}
+
+func (board *Board) GenerateAttackedSquares(whiteToMove bool) [64]bool {
+	board.Moves = NewBoardMoves()
+	attackedSquares := [64]bool{}
 
 	// generate opposing color attacked squares
 	board.GenerateKnightMoves(whiteToMove)
@@ -510,21 +527,12 @@ func (board *Board) GenerateMoves() {
 	board.GenerateKingMoves(whiteToMove)
 	board.GeneratePawnAttackingSquares(whiteToMove)
 	for _, move := range board.Moves.Quiet {
-		board.AttackedSquares[move.To] = true
+		attackedSquares[move.To] = true
 	}
 	for _, move := range board.Moves.Captures {
-		board.AttackedSquares[move.To] = true
+		attackedSquares[move.To] = true
 	}
-
-	// generate moving color all moves
-	board.Moves = NewBoardMoves()
-	board.GeneratePawnMoves(board.WhiteToMove)
-	board.GenerateKnightMoves(board.WhiteToMove)
-	board.GenerateBishopMoves(board.WhiteToMove)
-	board.GenerateRookMoves(board.WhiteToMove)
-	board.GenerateQueenMoves(board.WhiteToMove)
-	board.GenerateKingMoves(board.WhiteToMove)
-	board.GenerateCastleMoves(board.WhiteToMove)
+	return attackedSquares
 }
 
 func (board *Board) GeneratePiecesLocations() {
