@@ -378,6 +378,39 @@ func (board *Board) GeneratePawnMoves(whiteToMove bool) {
 	}
 }
 
+func (board *Board) GeneratePawnAttackingSquares(whiteToMove bool) {
+	squares := board.Pieces.White.Pawns
+	if !whiteToMove {
+		squares = board.Pieces.Black.Pawns
+	}
+	for _, square := range squares {
+		// captures and promotion captures
+		if whiteToMove {
+			// left attack with white
+			leftSquare := square - 8 - 1
+			if !board.IsSquareAtHFile(square) {
+				board.AddCapture(square, leftSquare, MoveCapture, whiteToMove)
+			}
+			// right attack with white
+			rightSquare := square - 8 + 1
+			if !board.IsSquareAtAFile(square) {
+				board.AddCapture(square, rightSquare, MoveCapture, whiteToMove)
+			}
+		} else {
+			// right attack with black
+			rightSquare := square + 8 - 1
+			if !board.IsSquareAtHFile(square) {
+				board.AddCapture(square, rightSquare, MoveCapture, whiteToMove)
+			}
+			// left attack with black
+			leftSquare := square + 8 + 1
+			if !board.IsSquareAtAFile(square) {
+				board.AddCapture(square, leftSquare, MoveCapture, whiteToMove)
+			}
+		}
+	}
+}
+
 func (board *Board) GenerateSlidingMoves(pieces []byte, startDir byte, endDir byte, whiteToMove bool) {
 	for _, square := range pieces {
 		for dirOffset := startDir; dirOffset < endDir; dirOffset++ {
@@ -475,21 +508,12 @@ func (board *Board) GenerateMoves() {
 	board.GenerateRookMoves(whiteToMove)
 	board.GenerateQueenMoves(whiteToMove)
 	board.GenerateKingMoves(whiteToMove)
+	board.GeneratePawnAttackingSquares(whiteToMove)
 	for _, move := range board.Moves.Quiet {
 		board.AttackedSquares[move.To] = true
 	}
-
-	// generate opposing color pawn attacked squares
-	board.Moves = NewBoardMoves()
-	// todo generate pawn attack vectors
-	board.GeneratePawnMoves(whiteToMove)
 	for _, move := range board.Moves.Captures {
 		board.AttackedSquares[move.To] = true
-	}
-	for _, move := range board.Moves.Promotions {
-		if move.MoveType == MovePromotionCapture {
-			board.AttackedSquares[move.To] = true
-		}
 	}
 
 	// generate moving color all moves
