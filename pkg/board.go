@@ -65,6 +65,12 @@ func (board *Board) LoadInitial() {
 	board.LoadFromFEN(BoardInitialFEN)
 }
 
+func (board *Board) LoadFromMove(other *Board, move *Move) {
+	position := other.Position
+	board.Initialize(position)
+	board.MakeMove(move)
+}
+
 func (board *Board) LoadFromFEN(fen string) (bool, error) {
 	board.Initialize([64]byte{})
 	parts := strings.Split(fen, " ")
@@ -581,8 +587,8 @@ func (board *Board) GenerateLegalMoves() {
 }
 
 func (board *Board) IsMoveLegal(move *Move) bool {
-	tmpBoard := *board
-	tmpBoard.MakeMove(move)
+	tmpBoard := NewBoard()
+	tmpBoard.LoadFromMove(board, move)
 	return !tmpBoard.IsKingInCheck(board.WhiteToMove)
 }
 
@@ -607,9 +613,9 @@ func (board *Board) Perft(depth int) int {
 
 	var count int
 	for _, move := range board.Moves {
-		tmp := *board
-		tmp.MakeMove(move)
-		count += tmp.Perft(depth - 1)
+		tmpBoard := NewBoard()
+		tmpBoard.LoadFromMove(board, move)
+		count += tmpBoard.Perft(depth - 1)
 	}
 
 	return count
