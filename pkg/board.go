@@ -29,11 +29,13 @@ type Board struct {
 	// 0: h1, 63: a8
 	Position             [64]byte
 	AttackedSquares      [64]bool
-	CastlingAvailability *CastlingAvailability
+	CastlingAvailability CastlingAvailability
 	Pieces               *PieceColorLocation
 	WhiteToMove          bool
-	Moves                *BoardMoves
+	Moves                []*Move
 	OnPassant            byte
+	HalfMoveClock        int
+	FullMoveCounter      int
 }
 
 func NewBoard() *Board {
@@ -41,9 +43,9 @@ func NewBoard() *Board {
 	return board
 }
 
-func (board *Board) Initialize() {
-	board.Position = [64]byte{}
-	board.CastlingAvailability = &CastlingAvailability{
+func (board *Board) Initialize(position [64]byte) {
+	board.Position = position
+	board.CastlingAvailability = CastlingAvailability{
 		BlackKingSide:  true,
 		BlackQueenSide: true,
 		WhiteKingSide:  true,
@@ -51,18 +53,26 @@ func (board *Board) Initialize() {
 	}
 	board.Pieces = NewPieceColorLocation()
 	board.WhiteToMove = true
-	board.Moves = NewBoardMoves()
+	board.Moves = []*Move{}
 	board.OnPassant = 0
+	board.HalfMoveClock = 0
+	board.FullMoveCounter = 0
 }
 
 // https://en.wikipedia.org/wiki/Forsyth–Edwards_Notation
-func (board *Board) LoadInitial() (bool, error) {
-	board.Initialize()
-	return board.LoadFromFEN(BoardInitialFEN)
+func (board *Board) LoadInitial() {
+	board.Initialize([64]byte{})
+	board.LoadFromFEN(BoardInitialFEN)
+}
+
+func (board *Board) LoadFromBoardMove(fromBoard *Board, move *Move) *Board {
+	board = NewBoard()
+	board.Initialize(fromBoard.Position)
+	return board
 }
 
 func (board *Board) LoadFromFEN(fen string) (bool, error) {
-	board.Initialize()
+	board.Initialize([64]byte{})
 	parts := strings.Split(fen, " ")
 	if len(parts) == 0 {
 		return false, fmt.Errorf("invalid FEN, missing blocks, at least piece list block required")
@@ -101,7 +111,7 @@ func (board *Board) LoadFromFEN(fen string) (bool, error) {
 	// 3. Castling
 	if len(parts) > 2 && parts[2] != "-" {
 		// TODO castling
-		board.CastlingAvailability = &CastlingAvailability{
+		board.CastlingAvailability = CastlingAvailability{
 			BlackKingSide:  true,
 			BlackQueenSide: true,
 			WhiteKingSide:  true,
@@ -169,6 +179,10 @@ func (board *Board) IsSquareOccupied(square byte) bool {
 	return board.IsSquareValid(square) && board.Position[square] > 0
 }
 
+func (board *Board) IsSquarePawn(square byte) bool {
+	return board.Position[square] == WhitePawn || board.Position[square] == BlackPawn
+}
+
 func (board *Board) IsSquareOnPassant(square byte) bool {
 	return board.OnPassant == square
 }
@@ -206,24 +220,22 @@ func (board *Board) AddQuietOrCapture(from, to byte, whiteToMove bool) bool {
 }
 
 func (board *Board) AddMove(move *Move) {
-	board.Moves.All = append(board.Moves.All, move)
+	board.Moves = append(board.Moves, move)
 }
 
 func (board *Board) AddQuietMove(from, to byte) {
 	move := NewMove(from, to, MoveQuiet, [2]byte{0, 0})
-	board.Moves.All = append(board.Moves.All, move)
-	board.Moves.Quiet = append(board.Moves.Quiet, move)
+	board.Moves = append(board.Moves, move)
 }
 
 func (board *Board) AddCastleMove(from, to byte) {
 	move := NewMove(from, to, MoveCastle, [2]byte{0, 0})
-	board.Moves.All = append(board.Moves.All, move)
-	board.Moves.Quiet = append(board.Moves.Quiet, move)
+	board.Moves = append(board.Moves, move)
 }
 
 func (board *Board) AddCapture(from, to, moveType byte, whiteToMove bool) {
 	captured := board.Position[to]
-	if moveType == MoveOnPassant {
+	if moveType == MoveEnPassant {
 		if whiteToMove {
 			captured = BlackPawn
 		} else {
@@ -232,7 +244,6 @@ func (board *Board) AddCapture(from, to, moveType byte, whiteToMove bool) {
 	}
 	move := NewMove(from, to, moveType, [2]byte{captured, 0})
 	board.AddMove(move)
-	board.Moves.Captures = append(board.Moves.Captures, move)
 }
 
 func (board *Board) AddPromotion(from, to, captured byte, whiteToMove bool) {
@@ -254,19 +265,30 @@ func (board *Board) AddPromotion(from, to, captured byte, whiteToMove bool) {
 
 	move := NewMove(from, to, moveType, [2]byte{queenPiece, captured})
 	board.AddMove(move)
-	board.Moves.Promotions = append(board.Moves.Promotions, move)
 
 	move = NewMove(from, to, moveType, [2]byte{rookPiece, captured})
 	board.AddMove(move)
-	board.Moves.Promotions = append(board.Moves.Promotions, move)
 
 	move = NewMove(from, to, moveType, [2]byte{bishopPiece, captured})
 	board.AddMove(move)
-	board.Moves.Promotions = append(board.Moves.Promotions, move)
 
 	move = NewMove(from, to, moveType, [2]byte{knightPiece, captured})
 	board.AddMove(move)
-	board.Moves.Promotions = append(board.Moves.Promotions, move)
+}
+
+func (board *Board) CountMoves() *MovesCount {
+	count := NewMovesCount()
+	count.All = len(board.Moves)
+	for _, move := range board.Moves {
+		if move.MoveType == MoveQuiet {
+			count.Quiet += 1
+		} else if move.MoveType == MovePromotion || move.MoveType == MovePromotionCapture {
+			count.Promotion += 1
+		} else if move.MoveType == MoveCapture || move.MoveType == MovePromotionCapture || move.MoveType == MoveEnPassant {
+			count.Capture += 1
+		}
+	}
+	return count
 }
 
 func (board *Board) GeneratePawnMoves(whiteToMove bool) {
@@ -331,7 +353,7 @@ func (board *Board) GeneratePawnMoves(whiteToMove bool) {
 			}
 			// en-passant capture left
 			if !board.IsSquareAtHFile(square) && board.IsSquareOnPassant(leftSquare) && board.IsPieceAtSquareBlack(leftSquare+8) {
-				board.AddCapture(square, leftSquare, MoveOnPassant, whiteToMove)
+				board.AddCapture(square, leftSquare, MoveEnPassant, whiteToMove)
 			}
 			// right capture with white
 			rightSquare := square - 8 + 1
@@ -347,7 +369,7 @@ func (board *Board) GeneratePawnMoves(whiteToMove bool) {
 			}
 			// en-passant capture right
 			if !board.IsSquareAtAFile(square) && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareBlack(rightSquare+8) {
-				board.AddCapture(square, rightSquare, MoveOnPassant, whiteToMove)
+				board.AddCapture(square, rightSquare, MoveEnPassant, whiteToMove)
 			}
 		} else {
 			// right capture with black
@@ -362,7 +384,7 @@ func (board *Board) GeneratePawnMoves(whiteToMove bool) {
 			}
 			// en-passant capture right
 			if !board.IsSquareAtHFile(square) && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareWhite(rightSquare-8) {
-				board.AddCapture(square, rightSquare, MoveOnPassant, whiteToMove)
+				board.AddCapture(square, rightSquare, MoveEnPassant, whiteToMove)
 			}
 			// left capture with black
 			leftSquare := square + 8 + 1
@@ -376,7 +398,7 @@ func (board *Board) GeneratePawnMoves(whiteToMove bool) {
 			}
 			// en passant capture right
 			if !board.IsSquareAtHFile(square) && board.IsSquareOnPassant(leftSquare) && board.IsPieceAtSquareWhite(leftSquare-8) {
-				board.AddCapture(square, leftSquare, MoveOnPassant, whiteToMove)
+				board.AddCapture(square, leftSquare, MoveEnPassant, whiteToMove)
 			}
 		}
 	}
@@ -501,11 +523,46 @@ func (board *Board) GenerateKnightMoves(whiteToMove bool) {
 	}
 }
 
+func (board *Board) MakeMove(move *Move) {
+	// update counters
+	board.FullMoveCounter += 1
+	if move.MoveType == MoveCapture || board.IsSquarePawn(move.From) {
+		board.HalfMoveClock = 0
+	} else {
+		board.HalfMoveClock += 1
+	}
+	if !board.WhiteToMove {
+		board.FullMoveCounter += 1
+	}
+
+	// update position
+	board.Position[move.To] = board.Position[move.From]
+	board.Position[move.From] = 0
+
+	// Remove EnPassant pawn
+	if move.MoveType == MoveEnPassant {
+		if board.WhiteToMove {
+			board.Position[move.To+8] = 0
+		} else {
+			board.Position[move.To-8] = 0
+		}
+	}
+
+	// TODO Handle castling update rook position
+
+	// TODO Update the en passant square if a pawn moved two squares
+
+	// TODO Update castling rights
+
+	// switch active color
+	board.WhiteToMove = !board.WhiteToMove
+}
+
 func (board *Board) GenerateMoves() {
 
 	// generate moving color all moves
 	board.AttackedSquares = board.GenerateAttackedSquares(!board.WhiteToMove)
-	board.Moves = NewBoardMoves()
+	board.Moves = []*Move{}
 	board.GeneratePawnMoves(board.WhiteToMove)
 	board.GenerateKnightMoves(board.WhiteToMove)
 	board.GenerateBishopMoves(board.WhiteToMove)
@@ -516,7 +573,7 @@ func (board *Board) GenerateMoves() {
 }
 
 func (board *Board) GenerateAttackedSquares(whiteToMove bool) [64]bool {
-	board.Moves = NewBoardMoves()
+	board.Moves = []*Move{}
 	attackedSquares := [64]bool{}
 
 	// generate opposing color attacked squares
@@ -526,11 +583,10 @@ func (board *Board) GenerateAttackedSquares(whiteToMove bool) [64]bool {
 	board.GenerateQueenMoves(whiteToMove)
 	board.GenerateKingMoves(whiteToMove)
 	board.GeneratePawnAttackingSquares(whiteToMove)
-	for _, move := range board.Moves.Quiet {
-		attackedSquares[move.To] = true
-	}
-	for _, move := range board.Moves.Captures {
-		attackedSquares[move.To] = true
+	for _, move := range board.Moves {
+		if move.MoveType == MoveCapture || move.MoveType == MoveQuiet {
+			attackedSquares[move.To] = true
+		}
 	}
 	return attackedSquares
 }

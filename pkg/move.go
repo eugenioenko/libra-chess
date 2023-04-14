@@ -3,7 +3,7 @@ package libra
 const (
 	MoveQuiet = iota
 	MoveCapture
-	MoveOnPassant
+	MoveEnPassant
 	MovePromotion
 	MovePromotionCapture
 	MoveCastle
@@ -16,28 +16,27 @@ type Move struct {
 	Data     [2]byte
 }
 
+type MovesCount struct {
+	All       int
+	Quiet     int
+	Capture   int
+	Promotion int
+}
+
+func NewMovesCount() *MovesCount {
+	return &MovesCount{All: 0,
+		Quiet:     0,
+		Capture:   0,
+		Promotion: 0,
+	}
+}
+
 func NewMove(from byte, to byte, moveType byte, data [2]byte) *Move {
 	return &Move{
 		From:     from,
 		To:       to,
 		MoveType: moveType,
 		Data:     data,
-	}
-}
-
-type BoardMoves struct {
-	All        []*Move
-	Quiet      []*Move
-	Captures   []*Move
-	Promotions []*Move
-}
-
-func NewBoardMoves() *BoardMoves {
-	return &BoardMoves{
-		All:        []*Move{},
-		Quiet:      []*Move{},
-		Captures:   []*Move{},
-		Promotions: []*Move{},
 	}
 }
 
