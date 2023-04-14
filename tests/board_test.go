@@ -280,10 +280,11 @@ func TestShouldGenerateAttackVector(t *testing.T) {
 //
 func TestShouldGenerateOnlyLegalMoves(t *testing.T) {
 	board := libra.NewBoard()
-	board.LoadFromFEN("8/8/5k2/8/q4q2/q5q1/2P1P3/3K4 w - - 0 1")
+	board.LoadFromFEN("8/8/5k2/8/q5q1/q5q1/2P1P3/3K4 w - - 0 1")
 	board.GenerateMoves()
 
-	if board.CountMoves().All != 0 {
+	validMoves := board.CountValidMoves()
+	if validMoves != 1 {
 		t.Fail()
 	}
 }

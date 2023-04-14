@@ -65,12 +65,6 @@ func (board *Board) LoadInitial() {
 	board.LoadFromFEN(BoardInitialFEN)
 }
 
-func (board *Board) LoadFromBoardMove(fromBoard *Board, move *Move) *Board {
-	board = NewBoard()
-	board.Initialize(fromBoard.Position)
-	return board
-}
-
 func (board *Board) LoadFromFEN(fen string) (bool, error) {
 	board.Initialize([64]byte{})
 	parts := strings.Split(fen, " ")
@@ -128,7 +122,7 @@ func (board *Board) LoadFromFEN(fen string) (bool, error) {
 	}
 
 	// generate piece list table
-	board.GeneratePiecesLocations()
+	board.UpdatePiecesLocation()
 	return true, nil
 }
 
@@ -212,7 +206,7 @@ func (board *Board) AddQuietOrCapture(from, to byte, whiteToMove bool) bool {
 		board.AddQuietMove(from, to)
 		return true
 	} else {
-		if whiteToMove && board.IsPieceAtSquareBlack(to) {
+		if (whiteToMove && board.IsPieceAtSquareBlack(to)) || (!whiteToMove && board.IsPieceAtSquareWhite(to)) {
 			board.AddCapture(from, to, MoveCapture, whiteToMove)
 		}
 		return false
@@ -548,6 +542,10 @@ func (board *Board) MakeMove(move *Move) {
 		}
 	}
 
+	// Update pieces location
+	// TODO avoid calling this after every move
+	board.UpdatePiecesLocation()
+
 	// TODO Handle castling update rook position
 
 	// TODO Update the en passant square if a pawn moved two squares
@@ -559,9 +557,8 @@ func (board *Board) MakeMove(move *Move) {
 }
 
 func (board *Board) GenerateMoves() {
-
 	// generate moving color all moves
-	board.AttackedSquares = board.GenerateAttackedSquares(!board.WhiteToMove)
+	board.GenerateAttackedSquares(!board.WhiteToMove)
 	board.Moves = []*Move{}
 	board.GeneratePawnMoves(board.WhiteToMove)
 	board.GenerateKnightMoves(board.WhiteToMove)
@@ -572,26 +569,47 @@ func (board *Board) GenerateMoves() {
 	board.GenerateCastleMoves(board.WhiteToMove)
 }
 
-func (board *Board) GenerateAttackedSquares(whiteToMove bool) [64]bool {
+func (board *Board) IsKingInCheck(whiteToMove bool) bool {
+	board.GenerateAttackedSquares(!whiteToMove)
+	king := board.Pieces.White.King
+	if !whiteToMove {
+		king = board.Pieces.Black.King
+	}
+	return board.AttackedSquares[king]
+}
+
+func (board *Board) CountValidMoves() int {
+	count := 0
+	for _, move := range board.Moves {
+		tmpBoard := *board
+		tmpBoard.MakeMove(move)
+		inCheck := tmpBoard.IsKingInCheck(board.WhiteToMove)
+		if !inCheck {
+			count += 1
+		}
+	}
+	return count
+}
+
+func (board *Board) GenerateAttackedSquares(whiteToMove bool) {
 	board.Moves = []*Move{}
-	attackedSquares := [64]bool{}
+	board.AttackedSquares = [64]bool{}
 
 	// generate opposing color attacked squares
+	board.GenerateQueenMoves(whiteToMove)
 	board.GenerateKnightMoves(whiteToMove)
 	board.GenerateBishopMoves(whiteToMove)
 	board.GenerateRookMoves(whiteToMove)
-	board.GenerateQueenMoves(whiteToMove)
 	board.GenerateKingMoves(whiteToMove)
 	board.GeneratePawnAttackingSquares(whiteToMove)
 	for _, move := range board.Moves {
-		if move.MoveType == MoveCapture || move.MoveType == MoveQuiet {
-			attackedSquares[move.To] = true
+		if move.MoveType == MoveCapture || move.MoveType == MoveQuiet || move.MoveType == MovePromotionCapture {
+			board.AttackedSquares[move.To] = true
 		}
 	}
-	return attackedSquares
 }
 
-func (board *Board) GeneratePiecesLocations() {
+func (board *Board) UpdatePiecesLocation() {
 	for index, piece := range board.Position {
 		switch {
 		case piece == WhitePawn:
