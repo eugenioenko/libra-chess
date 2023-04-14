@@ -3,6 +3,7 @@ package testing
 import (
 	"fmt"
 	libra "libra/pkg"
+	"os"
 	"testing"
 )
 
@@ -51,6 +52,12 @@ func TestShouldGeneratePawnMoves(t *testing.T) {
 		t.Fail()
 	}
 	if board.CountMoves().Capture != 3 {
+		t.Fail()
+	}
+
+	board.LoadFromFEN("8/6k1/p7/P5K1/8/8/8/8 b - - 0 1")
+	board.GenerateLegalMoves()
+	if len(board.Moves) != 0 {
 		t.Fail()
 	}
 }
@@ -299,6 +306,25 @@ func TestPerft(t *testing.T) {
 	// n6 := board.Perft(6)
 
 	if n1 != 20 || n2 != 400 || n3 != 8902 || n4 != 197281 { //|| n5 != 4865609 || n6 != 119060324 {
+		t.Fail()
+	}
+
+}
+
+func TestPerftFile(t *testing.T) {
+	f, err := os.Create("test.txt")
+	if err != nil {
+		fmt.Println(err)
+		t.Fail()
+	}
+
+	board := libra.NewBoard()
+	board.LoadInitial()
+
+	n3 := board.PerftMoves(5, f)
+	f.Close()
+
+	if n3 != 8902 {
 		t.Fail()
 	}
 

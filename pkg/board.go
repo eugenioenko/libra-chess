@@ -2,6 +2,7 @@ package libra
 
 import (
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -36,6 +37,7 @@ type Board struct {
 	OnPassant            byte
 	HalfMoveClock        int
 	FullMoveCounter      int
+	Played               string
 }
 
 func NewBoard() *Board {
@@ -74,6 +76,7 @@ func (board *Board) Clone() *Board {
 	clone.OnPassant = board.OnPassant
 	clone.HalfMoveClock = board.HalfMoveClock
 	clone.FullMoveCounter = board.FullMoveCounter
+	clone.Played = board.Played
 	return clone
 }
 
@@ -121,13 +124,22 @@ func (board *Board) LoadFromFEN(fen string) (bool, error) {
 	}
 
 	// 3. Castling
-	if len(parts) > 2 && parts[2] != "-" {
-		// TODO castling
-		board.CastlingAvailability = CastlingAvailability{
-			BlackKingSide:  true,
-			BlackQueenSide: true,
-			WhiteKingSide:  true,
-			WhiteQueenSide: true,
+	if len(parts) > 2 {
+		if parts[2] == "-" {
+			// TODO castling
+			board.CastlingAvailability = CastlingAvailability{
+				BlackKingSide:  false,
+				BlackQueenSide: false,
+				WhiteKingSide:  false,
+				WhiteQueenSide: false,
+			}
+		} else {
+			board.CastlingAvailability = CastlingAvailability{
+				BlackKingSide:  true,
+				BlackQueenSide: true,
+				WhiteKingSide:  true,
+				WhiteQueenSide: true,
+			}
 		}
 	}
 
@@ -548,7 +560,8 @@ func (board *Board) MakeMove(move Move) {
 	}
 
 	// update position
-	board.Position[move.To] = board.Position[move.From]
+	piece := board.Position[move.From]
+	board.Position[move.To] = piece
 	board.Position[move.From] = 0
 
 	// Remove EnPassant pawn
@@ -571,6 +584,7 @@ func (board *Board) MakeMove(move Move) {
 	// TODO Update castling rights
 
 	// switch active color
+	board.Played += PieceCodeToNotation[piece] + BoardSquareNames[move.To] + " "
 	board.WhiteToMove = !board.WhiteToMove
 }
 
@@ -628,6 +642,27 @@ func (board *Board) Perft(depth int) int {
 		tmpBoard := board.Clone()
 		tmpBoard.MakeMove(move)
 		count += tmpBoard.Perft(depth - 1)
+	}
+
+	return count
+}
+
+func (board *Board) PerftMoves(depth int, f *os.File) int {
+	if depth == 0 {
+		return 1
+	}
+	board.GenerateLegalMoves()
+
+	if depth == 1 {
+		fmt.Fprintln(f, board.Played)
+		return len(board.Moves)
+	}
+
+	var count int
+	for _, move := range board.Moves {
+		tmpBoard := board.Clone()
+		tmpBoard.MakeMove(move)
+		count += tmpBoard.PerftMoves(depth-1, f)
 	}
 
 	return count
