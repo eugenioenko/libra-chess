@@ -31,8 +31,8 @@ func NewMovesCount() *MovesCount {
 	}
 }
 
-func NewMove(from byte, to byte, moveType byte, data [2]byte) *Move {
-	return &Move{
+func NewMove(from byte, to byte, moveType byte, data [2]byte) Move {
+	return Move{
 		From:     from,
 		To:       to,
 		MoveType: moveType,

@@ -44,12 +44,12 @@ type PieceLocation struct {
 }
 
 type PieceColorLocation struct {
-	White *PieceLocation
-	Black *PieceLocation
+	White PieceLocation
+	Black PieceLocation
 }
 
-func NewPieceLocation() *PieceLocation {
-	return &PieceLocation{
+func NewPieceLocation() PieceLocation {
+	return PieceLocation{
 		Pawns:   []byte{},
 		Knights: []byte{},
 		Bishops: []byte{},
@@ -59,8 +59,8 @@ func NewPieceLocation() *PieceLocation {
 	}
 }
 
-func NewPieceColorLocation() *PieceColorLocation {
-	return &PieceColorLocation{
+func NewPieceColorLocation() PieceColorLocation {
+	return PieceColorLocation{
 		White: NewPieceLocation(),
 		Black: NewPieceLocation(),
 	}

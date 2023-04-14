@@ -28,11 +28,11 @@ type CastlingAvailability struct {
 type Board struct {
 	// 0: h1, 63: a8
 	Position             [64]byte
-	AttackedSquares      [64]bool
+	AttackedSquares      []bool
 	CastlingAvailability CastlingAvailability
-	Pieces               *PieceColorLocation
+	Pieces               PieceColorLocation
 	WhiteToMove          bool
-	Moves                []*Move
+	Moves                []Move
 	OnPassant            byte
 	HalfMoveClock        int
 	FullMoveCounter      int
@@ -53,22 +53,34 @@ func (board *Board) Initialize(position [64]byte) {
 	}
 	board.Pieces = NewPieceColorLocation()
 	board.WhiteToMove = true
-	board.Moves = []*Move{}
+	board.Moves = []Move{}
 	board.OnPassant = 0
 	board.HalfMoveClock = 0
 	board.FullMoveCounter = 0
+}
+
+func (board *Board) Clone() *Board {
+	clone := NewBoard()
+	clone.Position = board.Position
+	clone.CastlingAvailability = CastlingAvailability{
+		BlackKingSide:  true,
+		BlackQueenSide: true,
+		WhiteKingSide:  true,
+		WhiteQueenSide: true,
+	}
+	clone.Pieces = NewPieceColorLocation()
+	clone.WhiteToMove = board.WhiteToMove
+	clone.Moves = []Move{}
+	clone.OnPassant = board.OnPassant
+	clone.HalfMoveClock = board.HalfMoveClock
+	clone.FullMoveCounter = board.FullMoveCounter
+	return clone
 }
 
 // https://en.wikipedia.org/wiki/Forsyth–Edwards_Notation
 func (board *Board) LoadInitial() {
 	board.Initialize([64]byte{})
 	board.LoadFromFEN(BoardInitialFEN)
-}
-
-func (board *Board) LoadFromMove(other *Board, move *Move) {
-	position := other.Position
-	board.Initialize(position)
-	board.MakeMove(move)
 }
 
 func (board *Board) LoadFromFEN(fen string) (bool, error) {
@@ -219,7 +231,7 @@ func (board *Board) AddQuietOrCapture(from, to byte, whiteToMove bool) bool {
 	}
 }
 
-func (board *Board) AddMove(move *Move) {
+func (board *Board) AddMove(move Move) {
 	board.Moves = append(board.Moves, move)
 }
 
@@ -523,7 +535,7 @@ func (board *Board) GenerateKnightMoves(whiteToMove bool) {
 	}
 }
 
-func (board *Board) MakeMove(move *Move) {
+func (board *Board) MakeMove(move Move) {
 	// update counters
 	board.FullMoveCounter += 1
 	if move.MoveType == MoveCapture || board.IsSquarePawn(move.From) {
@@ -565,7 +577,7 @@ func (board *Board) MakeMove(move *Move) {
 func (board *Board) GeneratePseudoLegalMoves() {
 	// generate moving color all moves
 	board.GenerateAttackedSquares(!board.WhiteToMove)
-	board.Moves = []*Move{}
+	board.Moves = []Move{}
 	board.GeneratePawnMoves(board.WhiteToMove)
 	board.GenerateKnightMoves(board.WhiteToMove)
 	board.GenerateBishopMoves(board.WhiteToMove)
@@ -576,7 +588,7 @@ func (board *Board) GeneratePseudoLegalMoves() {
 }
 
 func (board *Board) GenerateLegalMoves() {
-	legalMoves := []*Move{}
+	legalMoves := []Move{}
 	board.GeneratePseudoLegalMoves()
 	for _, move := range board.Moves {
 		if board.IsMoveLegal(move) {
@@ -586,9 +598,9 @@ func (board *Board) GenerateLegalMoves() {
 	board.Moves = legalMoves
 }
 
-func (board *Board) IsMoveLegal(move *Move) bool {
-	tmpBoard := NewBoard()
-	tmpBoard.LoadFromMove(board, move)
+func (board *Board) IsMoveLegal(move Move) bool {
+	tmpBoard := board.Clone()
+	tmpBoard.MakeMove(move)
 	return !tmpBoard.IsKingInCheck(board.WhiteToMove)
 }
 
@@ -613,8 +625,8 @@ func (board *Board) Perft(depth int) int {
 
 	var count int
 	for _, move := range board.Moves {
-		tmpBoard := NewBoard()
-		tmpBoard.LoadFromMove(board, move)
+		tmpBoard := board.Clone()
+		tmpBoard.MakeMove(move)
 		count += tmpBoard.Perft(depth - 1)
 	}
 
@@ -622,8 +634,8 @@ func (board *Board) Perft(depth int) int {
 }
 
 func (board *Board) GenerateAttackedSquares(whiteToMove bool) {
-	board.Moves = []*Move{}
-	board.AttackedSquares = [64]bool{}
+	board.Moves = []Move{}
+	board.AttackedSquares = make([]bool, 64)
 
 	// generate opposing color attacked squares
 	board.GenerateQueenMoves(whiteToMove)
@@ -640,6 +652,7 @@ func (board *Board) GenerateAttackedSquares(whiteToMove bool) {
 }
 
 func (board *Board) UpdatePiecesLocation() {
+	board.Pieces = NewPieceColorLocation()
 	for index, piece := range board.Position {
 		switch {
 		case piece == WhitePawn:

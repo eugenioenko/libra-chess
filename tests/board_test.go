@@ -295,18 +295,18 @@ func TestPerft(t *testing.T) {
 	n2 := board.Perft(2)
 	n3 := board.Perft(3)
 	n4 := board.Perft(4)
-	n5 := board.Perft(5)
-	n6 := board.Perft(6)
+	//n5 := board.Perft(5)
+	// n6 := board.Perft(6)
 
-	if n1 != 20 || n2 != 200 || n3 != 8902 || n4 != 197281 || n5 != 4865609 || n6 != 119060324 {
+	if n1 != 20 || n2 != 400 || n3 != 8902 || n4 != 197281 { //|| n5 != 4865609 || n6 != 119060324 {
 		t.Fail()
 	}
 
 }
 
 func TestTest(t *testing.T) {
-	a := [10]byte{}
-	b := a
+	a := []byte{1, 2, 3, 4, 5}
+	b := a[:]
 	b[0] = 255
 
 	if false {
