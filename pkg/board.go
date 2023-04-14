@@ -556,7 +556,7 @@ func (board *Board) MakeMove(move *Move) {
 	board.WhiteToMove = !board.WhiteToMove
 }
 
-func (board *Board) GenerateMoves() {
+func (board *Board) GeneratePseudoLegalMoves() {
 	// generate moving color all moves
 	board.GenerateAttackedSquares(!board.WhiteToMove)
 	board.Moves = []*Move{}
@@ -569,6 +569,23 @@ func (board *Board) GenerateMoves() {
 	board.GenerateCastleMoves(board.WhiteToMove)
 }
 
+func (board *Board) GenerateLegalMoves() {
+	legalMoves := []*Move{}
+	board.GeneratePseudoLegalMoves()
+	for _, move := range board.Moves {
+		if board.IsMoveLegal(move) {
+			legalMoves = append(legalMoves, move)
+		}
+	}
+	board.Moves = legalMoves
+}
+
+func (board *Board) IsMoveLegal(move *Move) bool {
+	tmpBoard := *board
+	tmpBoard.MakeMove(move)
+	return !tmpBoard.IsKingInCheck(board.WhiteToMove)
+}
+
 func (board *Board) IsKingInCheck(whiteToMove bool) bool {
 	board.GenerateAttackedSquares(!whiteToMove)
 	king := board.Pieces.White.King
@@ -578,16 +595,23 @@ func (board *Board) IsKingInCheck(whiteToMove bool) bool {
 	return board.AttackedSquares[king]
 }
 
-func (board *Board) CountValidMoves() int {
-	count := 0
-	for _, move := range board.Moves {
-		tmpBoard := *board
-		tmpBoard.MakeMove(move)
-		inCheck := tmpBoard.IsKingInCheck(board.WhiteToMove)
-		if !inCheck {
-			count += 1
-		}
+func (board *Board) Perft(depth int) int {
+	if depth == 0 {
+		return 1
 	}
+	board.GenerateLegalMoves()
+
+	if depth == 1 {
+		return len(board.Moves)
+	}
+
+	var count int
+	for _, move := range board.Moves {
+		tmp := *board
+		tmp.MakeMove(move)
+		count += tmp.Perft(depth - 1)
+	}
+
 	return count
 }
 

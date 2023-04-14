@@ -265,7 +265,7 @@ func TestShouldGenerateAttackVector(t *testing.T) {
 	board := libra.NewBoard()
 
 	board.LoadFromFEN("1k6/ppp5/8/3b2R1/3B4/8/5PPP/6K1 b - - 0 1")
-	board.GenerateMoves()
+	board.GeneratePseudoLegalMoves()
 	count := 0
 	for _, attacked := range board.AttackedSquares {
 		if attacked {
@@ -281,10 +281,9 @@ func TestShouldGenerateAttackVector(t *testing.T) {
 func TestShouldGenerateOnlyLegalMoves(t *testing.T) {
 	board := libra.NewBoard()
 	board.LoadFromFEN("8/8/5k2/8/q5q1/q5q1/2P1P3/3K4 w - - 0 1")
-	board.GenerateMoves()
+	board.GenerateLegalMoves()
 
-	validMoves := board.CountValidMoves()
-	if validMoves != 1 {
+	if len(board.Moves) != 1 {
 		t.Fail()
 	}
 }
