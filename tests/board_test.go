@@ -60,6 +60,7 @@ func TestShouldGeneratePawnMoves(t *testing.T) {
 	if len(board.Moves) != 0 {
 		t.Fail()
 	}
+
 }
 
 func TestShouldGenerateOnPassantPawnMoves(t *testing.T) {

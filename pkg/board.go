@@ -6,12 +6,6 @@ import (
 	"strings"
 )
 
-// Piece Types
-const (
-	SquareA2 = 48
-	SquareA7 = 8
-)
-
 const BoardInitialFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 type KingLocations struct {
@@ -223,12 +217,8 @@ func (board *Board) SquareToRank(square byte) byte {
 	return 8 - square/8
 }
 
-func (board *Board) IsSquareAtAFile(square byte) bool {
-	return square%8 == 0
-}
-
-func (board *Board) IsSquareAtHFile(square byte) bool {
-	return (square+1)%8 == 0
+func (board *Board) SquareToFile(square byte) byte {
+	return 1 + square%8
 }
 
 func (board *Board) AddQuietOrCapture(from, to byte, whiteToMove bool) bool {
@@ -365,7 +355,7 @@ func (board *Board) GeneratePawnMoves(whiteToMove bool) {
 		if whiteToMove {
 			// left capture with white
 			leftSquare := square - 8 - 1
-			if !board.IsSquareAtHFile(square) && board.IsSquareOccupied(leftSquare) && board.IsPieceAtSquareBlack(leftSquare) {
+			if board.SquareToFile(square) != 8 && board.IsSquareOccupied(leftSquare) && board.IsPieceAtSquareBlack(leftSquare) {
 				if board.SquareToRank(leftSquare) == 8 {
 					// promotion capture
 					captured := board.Position[leftSquare]
@@ -376,12 +366,12 @@ func (board *Board) GeneratePawnMoves(whiteToMove bool) {
 				}
 			}
 			// en-passant capture left
-			if !board.IsSquareAtHFile(square) && board.IsSquareOnPassant(leftSquare) && board.IsPieceAtSquareBlack(leftSquare+8) {
+			if board.SquareToFile(square) != 8 && board.IsSquareOnPassant(leftSquare) && board.IsPieceAtSquareBlack(leftSquare+8) {
 				board.AddCapture(square, leftSquare, MoveEnPassant, whiteToMove)
 			}
 			// right capture with white
 			rightSquare := square - 8 + 1
-			if !board.IsSquareAtAFile(square) && board.IsSquareOccupied(rightSquare) && board.IsPieceAtSquareBlack(rightSquare) {
+			if board.SquareToFile(square) != 1 && board.IsSquareOccupied(rightSquare) && board.IsPieceAtSquareBlack(rightSquare) {
 				if board.SquareToRank(rightSquare) == 1 {
 					// promotion capture
 					captured := board.Position[rightSquare]
@@ -392,13 +382,13 @@ func (board *Board) GeneratePawnMoves(whiteToMove bool) {
 				}
 			}
 			// en-passant capture right
-			if !board.IsSquareAtAFile(square) && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareBlack(rightSquare+8) {
+			if board.SquareToFile(square) != 1 && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareBlack(rightSquare+8) {
 				board.AddCapture(square, rightSquare, MoveEnPassant, whiteToMove)
 			}
 		} else {
 			// right capture with black
 			rightSquare := square + 8 - 1
-			if !board.IsSquareAtHFile(square) && board.IsSquareOccupied(rightSquare) && board.IsPieceAtSquareWhite(rightSquare) {
+			if board.SquareToFile(square) != 8 && board.IsSquareOccupied(rightSquare) && board.IsPieceAtSquareWhite(rightSquare) {
 				if board.SquareToRank(rightSquare) == 1 {
 					captured := board.Position[rightSquare]
 					board.AddPromotion(square, rightSquare, captured, whiteToMove)
@@ -407,12 +397,12 @@ func (board *Board) GeneratePawnMoves(whiteToMove bool) {
 				}
 			}
 			// en-passant capture right
-			if !board.IsSquareAtHFile(square) && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareWhite(rightSquare-8) {
+			if board.SquareToFile(square) != 8 && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareWhite(rightSquare-8) {
 				board.AddCapture(square, rightSquare, MoveEnPassant, whiteToMove)
 			}
 			// left capture with black
 			leftSquare := square + 8 + 1
-			if !board.IsSquareAtAFile(square) && board.IsSquareOccupied(leftSquare) && board.IsPieceAtSquareWhite(leftSquare) {
+			if board.SquareToFile(square) != 1 && board.IsSquareOccupied(leftSquare) && board.IsPieceAtSquareWhite(leftSquare) {
 				if board.SquareToRank(leftSquare) == 1 {
 					captured := board.Position[leftSquare]
 					board.AddPromotion(square, leftSquare, captured, whiteToMove)
@@ -421,7 +411,7 @@ func (board *Board) GeneratePawnMoves(whiteToMove bool) {
 				}
 			}
 			// en passant capture right
-			if !board.IsSquareAtHFile(square) && board.IsSquareOnPassant(leftSquare) && board.IsPieceAtSquareWhite(leftSquare-8) {
+			if board.SquareToFile(square) != 8 && board.IsSquareOnPassant(leftSquare) && board.IsPieceAtSquareWhite(leftSquare-8) {
 				board.AddCapture(square, leftSquare, MoveEnPassant, whiteToMove)
 			}
 		}
@@ -438,23 +428,23 @@ func (board *Board) GeneratePawnAttackingSquares(whiteToMove bool) {
 		if whiteToMove {
 			// left attack with white
 			leftSquare := square - 8 - 1
-			if !board.IsSquareAtHFile(square) {
+			if board.SquareToFile(square) != 8 {
 				board.AddCapture(square, leftSquare, MoveCapture, whiteToMove)
 			}
 			// right attack with white
 			rightSquare := square - 8 + 1
-			if !board.IsSquareAtAFile(square) {
+			if board.SquareToFile(square) != 1 {
 				board.AddCapture(square, rightSquare, MoveCapture, whiteToMove)
 			}
 		} else {
 			// right attack with black
 			rightSquare := square + 8 - 1
-			if !board.IsSquareAtHFile(square) {
+			if board.SquareToFile(square) != 8 {
 				board.AddCapture(square, rightSquare, MoveCapture, whiteToMove)
 			}
 			// left attack with black
 			leftSquare := square + 8 + 1
-			if !board.IsSquareAtAFile(square) {
+			if board.SquareToFile(square) != 1 {
 				board.AddCapture(square, leftSquare, MoveCapture, whiteToMove)
 			}
 		}
