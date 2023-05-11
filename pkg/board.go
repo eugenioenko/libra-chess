@@ -317,14 +317,16 @@ func (board *Board) GeneratePawnMoves(whiteToMove bool) {
 		if whiteToMove {
 			if board.SquareToRank(square) == 2 {
 				squareToMove := square - 16
-				if board.IsSquareEmpty(squareToMove) {
+				squareInBetween := square - 8
+				if board.IsSquareEmpty(squareToMove) && board.IsSquareEmpty(squareInBetween) {
 					board.AddQuietMove(square, squareToMove)
 				}
 			}
 		} else {
 			if board.SquareToRank(square) == 7 {
 				squareToMove := square + 16
-				if board.IsSquareEmpty(squareToMove) {
+				squareInBetween := square + 8
+				if board.IsSquareEmpty(squareToMove) && board.IsSquareEmpty(squareInBetween) {
 					board.AddQuietMove(square, squareToMove)
 				}
 			}
@@ -355,7 +357,7 @@ func (board *Board) GeneratePawnMoves(whiteToMove bool) {
 		if whiteToMove {
 			// left capture with white
 			leftSquare := square - 8 - 1
-			if board.SquareToFile(square) != 8 && board.IsSquareOccupied(leftSquare) && board.IsPieceAtSquareBlack(leftSquare) {
+			if board.SquareToFile(square) != 1 && board.IsSquareOccupied(leftSquare) && board.IsPieceAtSquareBlack(leftSquare) {
 				if board.SquareToRank(leftSquare) == 8 {
 					// promotion capture
 					captured := board.Position[leftSquare]
@@ -366,12 +368,12 @@ func (board *Board) GeneratePawnMoves(whiteToMove bool) {
 				}
 			}
 			// en-passant capture left
-			if board.SquareToFile(square) != 8 && board.IsSquareOnPassant(leftSquare) && board.IsPieceAtSquareBlack(leftSquare+8) {
+			if board.SquareToFile(square) != 1 && board.IsSquareOnPassant(leftSquare) && board.IsPieceAtSquareBlack(leftSquare+8) {
 				board.AddCapture(square, leftSquare, MoveEnPassant, whiteToMove)
 			}
 			// right capture with white
 			rightSquare := square - 8 + 1
-			if board.SquareToFile(square) != 1 && board.IsSquareOccupied(rightSquare) && board.IsPieceAtSquareBlack(rightSquare) {
+			if board.SquareToFile(square) != 8 && board.IsSquareOccupied(rightSquare) && board.IsPieceAtSquareBlack(rightSquare) {
 				if board.SquareToRank(rightSquare) == 1 {
 					// promotion capture
 					captured := board.Position[rightSquare]
@@ -382,13 +384,13 @@ func (board *Board) GeneratePawnMoves(whiteToMove bool) {
 				}
 			}
 			// en-passant capture right
-			if board.SquareToFile(square) != 1 && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareBlack(rightSquare+8) {
+			if board.SquareToFile(square) != 8 && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareBlack(rightSquare+8) {
 				board.AddCapture(square, rightSquare, MoveEnPassant, whiteToMove)
 			}
 		} else {
 			// right capture with black
 			rightSquare := square + 8 - 1
-			if board.SquareToFile(square) != 8 && board.IsSquareOccupied(rightSquare) && board.IsPieceAtSquareWhite(rightSquare) {
+			if board.SquareToFile(square) != 1 && board.IsSquareOccupied(rightSquare) && board.IsPieceAtSquareWhite(rightSquare) {
 				if board.SquareToRank(rightSquare) == 1 {
 					captured := board.Position[rightSquare]
 					board.AddPromotion(square, rightSquare, captured, whiteToMove)
@@ -397,12 +399,12 @@ func (board *Board) GeneratePawnMoves(whiteToMove bool) {
 				}
 			}
 			// en-passant capture right
-			if board.SquareToFile(square) != 8 && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareWhite(rightSquare-8) {
+			if board.SquareToFile(square) != 1 && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareWhite(rightSquare-8) {
 				board.AddCapture(square, rightSquare, MoveEnPassant, whiteToMove)
 			}
 			// left capture with black
 			leftSquare := square + 8 + 1
-			if board.SquareToFile(square) != 1 && board.IsSquareOccupied(leftSquare) && board.IsPieceAtSquareWhite(leftSquare) {
+			if board.SquareToFile(square) != 8 && board.IsSquareOccupied(leftSquare) && board.IsPieceAtSquareWhite(leftSquare) {
 				if board.SquareToRank(leftSquare) == 1 {
 					captured := board.Position[leftSquare]
 					board.AddPromotion(square, leftSquare, captured, whiteToMove)
@@ -484,7 +486,7 @@ func (board *Board) GenerateKingMoves(whiteToMove bool) {
 
 func (board *Board) GenerateCastleMoves(whiteToMove bool) {
 	if whiteToMove {
-		if (board.CastlingAvailability.WhiteQueenSide) && board.IsSquareEmptyAndNotAttacked(57) && board.IsSquareEmptyAndNotAttacked(58) && board.IsSquareEmptyAndNotAttacked(59) {
+		if (board.CastlingAvailability.WhiteQueenSide) && board.IsSquareEmptyAndNotAttacked(58) && board.IsSquareEmptyAndNotAttacked(59) {
 			board.AddCastleMove(60, 58)
 		} else if (board.CastlingAvailability.WhiteKingSide) && board.IsSquareEmptyAndNotAttacked(61) && board.IsSquareEmptyAndNotAttacked(62) {
 			board.AddCastleMove(60, 62)
@@ -563,6 +565,13 @@ func (board *Board) MakeMove(move Move) {
 		}
 	}
 
+	// move played recording
+	separator := "-"
+	if move.MoveType == MoveCapture {
+		separator = "x"
+	}
+	board.Played += PieceCodeToNotation[piece] + BoardSquareNames[move.From] + separator + BoardSquareNames[move.To] + ", "
+
 	// Update pieces location
 	// TODO avoid calling this after every move
 	board.UpdatePiecesLocation()
@@ -574,7 +583,6 @@ func (board *Board) MakeMove(move Move) {
 	// TODO Update castling rights
 
 	// switch active color
-	board.Played += PieceCodeToNotation[piece] + BoardSquareNames[move.To] + " "
 	board.WhiteToMove = !board.WhiteToMove
 }
 

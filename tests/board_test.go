@@ -55,11 +55,19 @@ func TestShouldGeneratePawnMoves(t *testing.T) {
 		t.Fail()
 	}
 
-	board.LoadFromFEN("8/6k1/p7/P5K1/8/8/8/8 b - - 0 1")
+	board.LoadFromFEN("rnbqkbnr/ppppppp1/7p/8/P7/8/1PPPPPPP/RNBQKBNR w KQkq - 0 2")
 	board.GenerateLegalMoves()
 	if len(board.Moves) != 0 {
 		t.Fail()
 	}
+
+	/*
+		board.LoadFromFEN("8/6k1/p7/P5K1/8/8/8/8 b - - 0 1")
+		board.GenerateLegalMoves()
+		if len(board.Moves) != 0 {
+			t.Fail()
+		}
+	*/
 
 }
 
@@ -322,7 +330,7 @@ func TestPerftFile(t *testing.T) {
 	board := libra.NewBoard()
 	board.LoadInitial()
 
-	n3 := board.PerftMoves(5, f)
+	n3 := board.PerftMoves(6, f)
 	f.Close()
 
 	if n3 != 8902 {
