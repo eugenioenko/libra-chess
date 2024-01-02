@@ -1,1 +1,1 @@
-# libra-chess (WIP) chess engine
+# libra-chess (WIP) chess engine 0.1
