@@ -2,16 +2,201 @@ package libra
 
 import (
 	"fmt"
-	"os"
+	"strconv"
 	"strings"
+	"sync"
 )
 
 const BoardInitialFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
-type KingLocations struct {
-	White byte
-	Black byte
+const (
+	WhitePawn   = 80  // P
+	WhiteKnight = 78  // N
+	WhiteBishop = 66  // B
+	WhiteRook   = 82  // R
+	WhiteQueen  = 81  // Q
+	WhiteKing   = 75  // K
+	BlackPawn   = 112 // p
+	BlackKnight = 110 // n
+	BlackBishop = 98  // b
+	BlackRook   = 114 // r
+	BlackQueen  = 113 // q
+	BlackKing   = 107 // k
+)
+
+var pieceCodeToFont = map[byte]string{
+	WhitePawn:   "♟︎",
+	WhiteKnight: "♞",
+	WhiteBishop: "♝",
+	WhiteRook:   "♜",
+	WhiteQueen:  "♛",
+	WhiteKing:   "♚",
+	BlackPawn:   "♙",
+	BlackKnight: "♘",
+	BlackBishop: "♗",
+	BlackRook:   "♖",
+	BlackQueen:  "♕",
+	BlackKing:   "♔",
 }
+
+var PieceCodeToNotation = map[byte]string{
+	WhitePawn:   "",
+	WhiteKnight: "N",
+	WhiteBishop: "B",
+	WhiteRook:   "R",
+	WhiteQueen:  "Q",
+	WhiteKing:   "K",
+	BlackPawn:   "",
+	BlackKnight: "N",
+	BlackBishop: "B",
+	BlackRook:   "R",
+	BlackQueen:  "Q",
+	BlackKing:   "K",
+}
+
+var BoardSquareNames [64]string = [64]string{
+	"a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
+	"a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
+	"a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
+	"a5", "b5", "c5", "d5", "e5", "f5", "g5", "h5",
+	"a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4",
+	"a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
+	"a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
+	"a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
+}
+
+func PieceCodeToFont(piece byte) string {
+	return pieceCodeToFont[piece]
+}
+
+type PieceLocation struct {
+	Pawns   []byte
+	Knights []byte
+	Bishops []byte
+	Rooks   []byte
+	Queens  []byte
+	King    byte
+}
+
+type PieceColorLocation struct {
+	White PieceLocation
+	Black PieceLocation
+}
+
+func NewPieceLocation() PieceLocation {
+	return PieceLocation{
+		Pawns:   []byte{},
+		Knights: []byte{},
+		Bishops: []byte{},
+		Rooks:   []byte{},
+		Queens:  []byte{},
+		King:    0,
+	}
+}
+
+func (pl *PieceLocation) Clone() PieceLocation {
+	return PieceLocation{
+		Pawns:   append([]byte(nil), pl.Pawns...),
+		Knights: append([]byte(nil), pl.Knights...),
+		Bishops: append([]byte(nil), pl.Bishops...),
+		Rooks:   append([]byte(nil), pl.Rooks...),
+		Queens:  append([]byte(nil), pl.Queens...),
+		King:    pl.King,
+	}
+}
+
+func NewPieceColorLocation() PieceColorLocation {
+	return PieceColorLocation{
+		White: NewPieceLocation(),
+		Black: NewPieceLocation(),
+	}
+}
+
+const (
+	MoveQuiet = iota
+	MoveCapture
+	MoveEnPassant
+	MovePromotion
+	MovePromotionCapture
+	MoveCastle
+)
+
+type Move struct {
+	From     byte
+	To       byte
+	MoveType byte
+	Data     [2]byte
+}
+
+type MovesCount struct {
+	All       int
+	Quiet     int
+	Capture   int
+	Promotion int
+}
+
+func NewMovesCount() *MovesCount {
+	return &MovesCount{All: 0,
+		Quiet:     0,
+		Capture:   0,
+		Promotion: 0,
+	}
+}
+
+func NewMove(from byte, to byte, moveType byte, data [2]byte) Move {
+	return Move{
+		From:     from,
+		To:       to,
+		MoveType: moveType,
+		Data:     data,
+	}
+}
+
+func generateSquaresToEdge() [64][8]byte {
+	squares := [64][8]byte{}
+	for i := range squares {
+		index := byte(i)
+		y := index / 8
+		x := index - y*8
+		south := 7 - y
+		north := y
+		west := x
+		east := 7 - x
+		squares[index][0] = north
+		squares[index][1] = east
+		squares[index][2] = south
+		squares[index][3] = west
+		squares[index][4] = MathMinByte(north, east)
+		squares[index][5] = MathMinByte(south, east)
+		squares[index][6] = MathMinByte(south, west)
+		squares[index][7] = MathMinByte(north, west)
+	}
+	return squares
+}
+
+func generateKnightJumps() [64][8]byte {
+	squares := [64][8]byte{}
+	jumpOffsets := [8][2]int8{{1, 2}, {-1, 2}, {2, -1}, {-2, -1}, {-1, -2}, {1, -2}, {-2, 1}, {2, 1}}
+	for x := 0; x < 8; x++ {
+		for y := 0; y < 8; y++ {
+			squareFrom := y*8 + x
+			for offsetIndex, offset := range jumpOffsets {
+				x2 := int8(x) + offset[0]
+				y2 := int8(y) + offset[1]
+				if x2 >= 0 && y2 >= 0 && x2 < 8 && y2 < 8 {
+					squares[squareFrom][offsetIndex] = byte(y2*8 + x2)
+				} else {
+					squares[squareFrom][offsetIndex] = 255
+				}
+			}
+		}
+	}
+	return squares
+}
+
+var SquaresToEdge [64][8]byte = generateSquaresToEdge()
+var BoardDirOffsets [8]int8 = [8]int8{-8, 1, 8, -1, -7, 9, 7, -9}
+var SquareKnightJumps [64][8]byte = generateKnightJumps()
 
 type CastlingAvailability struct {
 	BlackKingSide  bool
@@ -20,25 +205,35 @@ type CastlingAvailability struct {
 	WhiteQueenSide bool
 }
 
+// Board represents the state of a chess game, including piece positions, castling rights, en passant, move clocks, and move history.
 type Board struct {
-	// 0: h1, 63: a8
-	Position             [64]byte
-	AttackedSquares      []bool
+	// Position is a 64-byte array representing the board squares (0 = empty, otherwise piece code)
+	Position [64]byte
+	// AttackedSquares marks which squares are currently attacked by the opponent
+	AttackedSquares []bool
+	// CastlingAvailability tracks which castling rights are still available
 	CastlingAvailability CastlingAvailability
-	Pieces               PieceColorLocation
-	WhiteToMove          bool
-	Moves                []Move
-	OnPassant            byte
-	HalfMoveClock        int
-	FullMoveCounter      int
-	Played               string
+	// Pieces holds the locations of all pieces for both colors
+	Pieces PieceColorLocation
+	// WhiteToMove is true if it's White's turn, false for Black
+	WhiteToMove bool
+	// Moves is a list of generated moves (pseudo-legal or legal, depending on context)
+	Moves []Move
+	// OnPassant is the square index for en passant capture, or 0 if not available
+	OnPassant byte
+	// HalfMoveClock counts half-moves since the last capture or pawn move (for 50-move rule)
+	HalfMoveClock int
+	// FullMoveCounter counts the number of full moves (incremented after Black's move)
+	FullMoveCounter int
 }
 
+// NewBoard creates a new, empty board. You must call LoadInitial or FromFEN to set up a position.
 func NewBoard() *Board {
 	board := &Board{}
 	return board
 }
 
+// Initialize sets up the board with a given position array and resets all state (castling, clocks, etc).
 func (board *Board) Initialize(position [64]byte) {
 	board.Position = position
 	board.CastlingAvailability = CastlingAvailability{
@@ -52,48 +247,28 @@ func (board *Board) Initialize(position [64]byte) {
 	board.Moves = []Move{}
 	board.OnPassant = 0
 	board.HalfMoveClock = 0
-	board.FullMoveCounter = 0
+	board.FullMoveCounter = 1
+	board.AttackedSquares = make([]bool, 64)
 }
 
-func (board *Board) Clone() *Board {
-	clone := NewBoard()
-	clone.Position = board.Position
-	clone.CastlingAvailability = CastlingAvailability{
-		BlackKingSide:  true,
-		BlackQueenSide: true,
-		WhiteKingSide:  true,
-		WhiteQueenSide: true,
-	}
-	clone.Pieces = NewPieceColorLocation()
-	clone.WhiteToMove = board.WhiteToMove
-	clone.Moves = []Move{}
-	clone.OnPassant = board.OnPassant
-	clone.HalfMoveClock = board.HalfMoveClock
-	clone.FullMoveCounter = board.FullMoveCounter
-	clone.Played = board.Played
-	return clone
-}
-
-// https://en.wikipedia.org/wiki/Forsyth–Edwards_Notation
+// LoadInitial sets up the board to the standard chess starting position.
 func (board *Board) LoadInitial() {
 	board.Initialize([64]byte{})
-	board.LoadFromFEN(BoardInitialFEN)
+	board.FromFEN(BoardInitialFEN)
 }
 
-func (board *Board) LoadFromFEN(fen string) (bool, error) {
+// FromFEN loads a position from a FEN string. Returns false and error if the FEN is invalid.
+func (board *Board) FromFEN(fen string) (bool, error) {
 	board.Initialize([64]byte{})
 	parts := strings.Split(fen, " ")
 	if len(parts) == 0 {
 		return false, fmt.Errorf("invalid FEN, missing blocks, at least piece list block required")
 	}
 
-	// 1. Piece placement data
 	ranks := strings.Split(parts[0], "/")
 	if len(ranks) != 8 {
 		return false, fmt.Errorf("invalid FEN, missing ranks")
 	}
-
-	// TODO validate characters in FEN code are valid
 
 	index := 0
 	for _, pieces := range ranks {
@@ -112,15 +287,13 @@ func (board *Board) LoadFromFEN(fen string) (bool, error) {
 		return false, fmt.Errorf("invalid FEN, missing pieces")
 	}
 
-	// 2. Active Color
 	if len(parts) > 1 {
 		board.WhiteToMove = parts[1] == "w"
 	}
 
-	// 3. Castling
 	if len(parts) > 2 {
 		if parts[2] == "-" {
-			// TODO castling
+
 			board.CastlingAvailability = CastlingAvailability{
 				BlackKingSide:  false,
 				BlackQueenSide: false,
@@ -128,16 +301,16 @@ func (board *Board) LoadFromFEN(fen string) (bool, error) {
 				WhiteQueenSide: false,
 			}
 		} else {
+			castleStr := parts[2]
 			board.CastlingAvailability = CastlingAvailability{
-				BlackKingSide:  true,
-				BlackQueenSide: true,
-				WhiteKingSide:  true,
-				WhiteQueenSide: true,
+				WhiteKingSide:  strings.Contains(castleStr, "K"),
+				WhiteQueenSide: strings.Contains(castleStr, "Q"),
+				BlackKingSide:  strings.Contains(castleStr, "k"),
+				BlackQueenSide: strings.Contains(castleStr, "q"),
 			}
 		}
 	}
 
-	// 4. On-passant
 	if len(parts) > 3 && parts[3] != "-" {
 		onPassant, ok := SquareNameToIndex(parts[3])
 		if ok {
@@ -145,11 +318,27 @@ func (board *Board) LoadFromFEN(fen string) (bool, error) {
 		}
 	}
 
-	// generate piece list table
+	if len(parts) > 4 {
+		halfMoveVal, err := strconv.Atoi(parts[4])
+		if err == nil {
+			board.HalfMoveClock = halfMoveVal
+		}
+
+	}
+
+	if len(parts) > 5 {
+		fullMoveVal, err := strconv.Atoi(parts[5])
+		if err == nil {
+			board.FullMoveCounter = fullMoveVal
+		}
+
+	}
+
 	board.UpdatePiecesLocation()
 	return true, nil
 }
 
+// removePieces sets a range of squares to empty (0), used when parsing FEN for empty squares.
 func (board *Board) removePieces(start int, count int) (bool, error) {
 	if start+count > 64 {
 		return false, fmt.Errorf("invalid remove pieces range, out of range")
@@ -160,6 +349,7 @@ func (board *Board) removePieces(start int, count int) (bool, error) {
 	return true, nil
 }
 
+// Print prints the board to the console using Unicode chess symbols.
 func (board *Board) Print() {
 	fmt.Println()
 	for index, piece := range board.Position {
@@ -181,72 +371,96 @@ func (board *Board) Print() {
 	fmt.Print("   ----------------\n    A B C D E F G H\n\n")
 }
 
+// IsSquareValid returns true if the square index is within 0-63.
 func (board *Board) IsSquareValid(square byte) bool {
 	return square <= 63
 }
 
+// IsSquareEmpty returns true if the square is valid and contains no piece.
 func (board *Board) IsSquareEmpty(square byte) bool {
 	return board.IsSquareValid(square) && board.Position[square] == 0
 }
 
+// IsSquareEmptyAndNotAttacked returns true if the square is empty and not attacked by the opponent.
 func (board *Board) IsSquareEmptyAndNotAttacked(square byte) bool {
 	return board.IsSquareEmpty(square) && !board.AttackedSquares[square]
 }
 
+// IsSquareOccupied returns true if the square is valid and contains a piece.
 func (board *Board) IsSquareOccupied(square byte) bool {
 	return board.IsSquareValid(square) && board.Position[square] > 0
 }
 
+// IsSquarePawn returns true if the square contains a pawn (of either color).
 func (board *Board) IsSquarePawn(square byte) bool {
 	return board.Position[square] == WhitePawn || board.Position[square] == BlackPawn
 }
 
+// IsSquareOnPassant returns true if the square is the current en passant target square.
 func (board *Board) IsSquareOnPassant(square byte) bool {
 	return board.OnPassant == square
 }
 
+// IsPieceAtSquareBlack returns true if the piece at the square is black.
 func (board *Board) IsPieceAtSquareBlack(square byte) bool {
 	return board.Position[square] >= 98
 }
 
+// IsPieceAtSquareWhite returns true if the piece at the square is white.
 func (board *Board) IsPieceAtSquareWhite(square byte) bool {
 	return board.Position[square] > 0 && board.Position[square] < 98
 }
 
+// SquareToRank returns the rank (0-7) of a square index (0 = rank 0, 7 = rank 7)
 func (board *Board) SquareToRank(square byte) byte {
-	return 8 - square/8
+	return square / 8
 }
 
+// SquareToFile returns the file (0-7) of a square index (0 = file 0, 7 = file 7)
 func (board *Board) SquareToFile(square byte) byte {
-	return 1 + square%8
+	return square % 8
 }
 
+// AddQuietOrCapture adds a quiet move if the destination is empty, or a capture if occupied by an opponent's piece.
+// Returns true if a quiet move was added, false if a capture or blocked.
 func (board *Board) AddQuietOrCapture(from, to byte, whiteToMove bool) bool {
+
+	if board.Position[to] == WhiteKing || board.Position[to] == BlackKing {
+		return false
+	}
 	if board.IsSquareEmpty(to) {
 		board.AddQuietMove(from, to)
 		return true
 	} else {
+
 		if (whiteToMove && board.IsPieceAtSquareBlack(to)) || (!whiteToMove && board.IsPieceAtSquareWhite(to)) {
-			board.AddCapture(from, to, MoveCapture, whiteToMove)
+
+			if board.Position[to] != WhiteKing && board.Position[to] != BlackKing {
+				board.AddCapture(from, to, MoveCapture, whiteToMove)
+			}
 		}
 		return false
 	}
 }
 
+// AddMove appends a move to the board's move list.
 func (board *Board) AddMove(move Move) {
 	board.Moves = append(board.Moves, move)
 }
 
+// AddQuietMove adds a non-capturing move to the move list.
 func (board *Board) AddQuietMove(from, to byte) {
 	move := NewMove(from, to, MoveQuiet, [2]byte{0, 0})
 	board.Moves = append(board.Moves, move)
 }
 
+// AddCastleMove adds a castling move to the move list.
 func (board *Board) AddCastleMove(from, to byte) {
 	move := NewMove(from, to, MoveCastle, [2]byte{0, 0})
 	board.Moves = append(board.Moves, move)
 }
 
+// AddCapture adds a capturing move to the move list. Handles en passant as a special case.
 func (board *Board) AddCapture(from, to, moveType byte, whiteToMove bool) {
 	captured := board.Position[to]
 	if moveType == MoveEnPassant {
@@ -256,40 +470,30 @@ func (board *Board) AddCapture(from, to, moveType byte, whiteToMove bool) {
 			captured = WhitePawn
 		}
 	}
+
 	move := NewMove(from, to, moveType, [2]byte{captured, 0})
 	board.AddMove(move)
 }
 
+// AddPromotion adds all possible promotion moves (to queen, rook, bishop, knight) for a pawn reaching the last rank.
+// If captured != 0, adds promotion-capture moves.
 func (board *Board) AddPromotion(from, to, captured byte, whiteToMove bool) {
-	var moveType byte = MovePromotion
-	if captured != 0 {
-		moveType = MovePromotionCapture
-	}
-	var queenPiece byte = WhiteQueen
-	var rookPiece byte = WhiteRook
-	var bishopPiece byte = WhiteBishop
-	var knightPiece byte = WhiteKnight
 
+	promotionPieces := []byte{WhiteQueen, WhiteRook, WhiteBishop, WhiteKnight}
 	if !whiteToMove {
-		queenPiece = BlackQueen
-		rookPiece = BlackRook
-		bishopPiece = BlackBishop
-		knightPiece = BlackKnight
+		promotionPieces = []byte{BlackQueen, BlackRook, BlackBishop, BlackKnight}
 	}
-
-	move := NewMove(from, to, moveType, [2]byte{queenPiece, captured})
-	board.AddMove(move)
-
-	move = NewMove(from, to, moveType, [2]byte{rookPiece, captured})
-	board.AddMove(move)
-
-	move = NewMove(from, to, moveType, [2]byte{bishopPiece, captured})
-	board.AddMove(move)
-
-	move = NewMove(from, to, moveType, [2]byte{knightPiece, captured})
-	board.AddMove(move)
+	for _, promo := range promotionPieces {
+		moveType := MovePromotion
+		if captured != 0 {
+			moveType = MovePromotionCapture
+		}
+		move := NewMove(from, to, byte(moveType), [2]byte{promo, captured})
+		board.AddMove(move)
+	}
 }
 
+// CountMoves returns a summary of the number of moves by type in the current move list.
 func (board *Board) CountMoves() *MovesCount {
 	count := NewMovesCount()
 	count.All = len(board.Moves)
@@ -305,161 +509,102 @@ func (board *Board) CountMoves() *MovesCount {
 	return count
 }
 
+// GeneratePawnMoves generates all pawn moves (including promotions, captures, en passant) for the current side.
 func (board *Board) GeneratePawnMoves(whiteToMove bool) {
-	squares := board.Pieces.White.Pawns
-	if !whiteToMove {
+	var squares []byte
+	var dir int8
+	var startRank, promotionRank byte
+	if whiteToMove {
+		squares = board.Pieces.White.Pawns
+		dir = -8
+		startRank = 6
+		promotionRank = 0
+	} else {
 		squares = board.Pieces.Black.Pawns
+		dir = 8
+		startRank = 1
+		promotionRank = 7
 	}
-
 	for _, square := range squares {
+		file := board.SquareToFile(square)
+		rank := board.SquareToRank(square)
 
-		// two space forward, pawns are on initial square
-		if whiteToMove {
-			if board.SquareToRank(square) == 2 {
-				squareToMove := square - 16
-				squareInBetween := square - 8
-				if board.IsSquareEmpty(squareToMove) && board.IsSquareEmpty(squareInBetween) {
-					board.AddQuietMove(square, squareToMove)
-				}
-			}
-		} else {
-			if board.SquareToRank(square) == 7 {
-				squareToMove := square + 16
-				squareInBetween := square + 8
-				if board.IsSquareEmpty(squareToMove) && board.IsSquareEmpty(squareInBetween) {
-					board.AddQuietMove(square, squareToMove)
+		to := int8(square) + dir
+		if to >= 0 && to < 64 && !board.IsSquareOccupied(byte(to)) {
+			if byte(to/8) == promotionRank {
+				board.AddPromotion(square, byte(to), 0, whiteToMove)
+			} else {
+				board.AddQuietMove(square, byte(to))
+				if rank == startRank {
+
+					twoForward := int8(square) + 2*dir
+					if twoForward >= 0 && twoForward < 64 && !board.IsSquareOccupied(byte(twoForward)) {
+						board.AddQuietMove(square, byte(twoForward))
+					}
 				}
 			}
 		}
 
-		// one move forward and promotion
-		if whiteToMove {
-			squareToMove := square - 8
-			if board.IsSquareEmpty(squareToMove) {
-				if board.SquareToRank(squareToMove) == 8 {
-					board.AddPromotion(square, squareToMove, 0, whiteToMove)
-				} else {
-					board.AddQuietMove(square, squareToMove)
-				}
+		for _, df := range []int8{-1, 1} {
+			captureFile := int8(file) + df
+			if captureFile < 0 || captureFile > 7 {
+				continue
 			}
-		} else {
-			squareToMove := square + 8
-			if board.IsSquareEmpty(squareToMove) {
-				if board.SquareToRank(squareToMove) == 1 {
-					board.AddPromotion(square, squareToMove, 0, whiteToMove)
-				} else {
-					board.AddQuietMove(square, squareToMove)
-				}
+			captureTo := int8(square) + dir + df
+			if captureTo < 0 || captureTo >= 64 {
+				continue
 			}
-		}
+			if board.IsSquareOccupied(byte(captureTo)) && board.IsPieceAtSquareWhite(byte(captureTo)) != whiteToMove {
+				if byte(captureTo/8) == promotionRank {
 
-		// captures and promotion captures
-		if whiteToMove {
-			// left capture with white
-			leftSquare := square - 8 - 1
-			if board.SquareToFile(square) != 1 && board.IsSquareOccupied(leftSquare) && board.IsPieceAtSquareBlack(leftSquare) {
-				if board.SquareToRank(leftSquare) == 8 {
-					// promotion capture
-					captured := board.Position[leftSquare]
-					board.AddPromotion(square, leftSquare, captured, whiteToMove)
+					board.AddPromotion(square, byte(captureTo), board.Position[byte(captureTo)], whiteToMove)
 				} else {
-					// normal capture
-					board.AddCapture(square, leftSquare, MoveCapture, whiteToMove)
+					board.AddCapture(square, byte(captureTo), MoveCapture, whiteToMove)
 				}
 			}
-			// en-passant capture left
-			if board.SquareToFile(square) != 1 && board.IsSquareOnPassant(leftSquare) && board.IsPieceAtSquareBlack(leftSquare+8) {
-				board.AddCapture(square, leftSquare, MoveEnPassant, whiteToMove)
-			}
-			// right capture with white
-			rightSquare := square - 8 + 1
-			if board.SquareToFile(square) != 8 && board.IsSquareOccupied(rightSquare) && board.IsPieceAtSquareBlack(rightSquare) {
-				if board.SquareToRank(rightSquare) == 1 {
-					// promotion capture
-					captured := board.Position[rightSquare]
-					board.AddPromotion(square, rightSquare, captured, whiteToMove)
-				} else {
-					// normal capture
-					board.AddCapture(square, rightSquare, MoveCapture, whiteToMove)
+
+			if board.IsSquareOnPassant(byte(captureTo)) {
+
+				if (whiteToMove && rank == 3) || (!whiteToMove && rank == 4) {
+					board.AddCapture(square, byte(captureTo), MoveEnPassant, whiteToMove)
 				}
-			}
-			// en-passant capture right
-			if board.SquareToFile(square) != 8 && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareBlack(rightSquare+8) {
-				board.AddCapture(square, rightSquare, MoveEnPassant, whiteToMove)
-			}
-		} else {
-			// right capture with black
-			rightSquare := square + 8 - 1
-			if board.SquareToFile(square) != 1 && board.IsSquareOccupied(rightSquare) && board.IsPieceAtSquareWhite(rightSquare) {
-				if board.SquareToRank(rightSquare) == 1 {
-					captured := board.Position[rightSquare]
-					board.AddPromotion(square, rightSquare, captured, whiteToMove)
-				} else {
-					board.AddCapture(square, rightSquare, MoveCapture, whiteToMove)
-				}
-			}
-			// en-passant capture right
-			if board.SquareToFile(square) != 1 && board.IsSquareOnPassant(rightSquare) && board.IsPieceAtSquareWhite(rightSquare-8) {
-				board.AddCapture(square, rightSquare, MoveEnPassant, whiteToMove)
-			}
-			// left capture with black
-			leftSquare := square + 8 + 1
-			if board.SquareToFile(square) != 8 && board.IsSquareOccupied(leftSquare) && board.IsPieceAtSquareWhite(leftSquare) {
-				if board.SquareToRank(leftSquare) == 1 {
-					captured := board.Position[leftSquare]
-					board.AddPromotion(square, leftSquare, captured, whiteToMove)
-				} else {
-					board.AddCapture(square, leftSquare, MoveCapture, whiteToMove)
-				}
-			}
-			// en passant capture right
-			if board.SquareToFile(square) != 8 && board.IsSquareOnPassant(leftSquare) && board.IsPieceAtSquareWhite(leftSquare-8) {
-				board.AddCapture(square, leftSquare, MoveEnPassant, whiteToMove)
 			}
 		}
 	}
 }
 
-func (board *Board) GeneratePawnAttackingSquares(whiteToMove bool) {
-	squares := board.Pieces.White.Pawns
-	if !whiteToMove {
-		squares = board.Pieces.Black.Pawns
-	}
-	for _, square := range squares {
-		// captures and promotion captures
-		if whiteToMove {
-			// left attack with white
-			leftSquare := square - 8 - 1
-			if board.SquareToFile(square) != 8 {
-				board.AddCapture(square, leftSquare, MoveCapture, whiteToMove)
-			}
-			// right attack with white
-			rightSquare := square - 8 + 1
-			if board.SquareToFile(square) != 1 {
-				board.AddCapture(square, rightSquare, MoveCapture, whiteToMove)
-			}
-		} else {
-			// right attack with black
-			rightSquare := square + 8 - 1
-			if board.SquareToFile(square) != 8 {
-				board.AddCapture(square, rightSquare, MoveCapture, whiteToMove)
-			}
-			// left attack with black
-			leftSquare := square + 8 + 1
-			if board.SquareToFile(square) != 1 {
-				board.AddCapture(square, leftSquare, MoveCapture, whiteToMove)
+// MarkSlidingAttacks marks all squares attacked by sliding pieces (rooks, bishops, queens) in the given directions.
+// Used for attack maps and move generation.
+func (board *Board) MarkSlidingAttacks(pieces []byte, startDir byte, endDir byte) {
+	for _, square := range pieces {
+		for dirOffset := startDir; dirOffset < endDir; dirOffset++ {
+			offset := BoardDirOffsets[dirOffset]
+			amountToMove := int8(SquaresToEdge[square][dirOffset])
+			for moveIndex := int8(1); moveIndex <= amountToMove; moveIndex++ {
+				squareTo := int8(square) + offset*moveIndex
+				if squareTo < 0 || squareTo >= 64 {
+					break
+				}
+				board.AttackedSquares[byte(squareTo)] = true
+				if board.IsSquareOccupied(byte(squareTo)) {
+					break
+				}
 			}
 		}
 	}
 }
 
+// GenerateSlidingMoves generates all moves for sliding pieces (rooks, bishops, queens) in the given directions.
 func (board *Board) GenerateSlidingMoves(pieces []byte, startDir byte, endDir byte, whiteToMove bool) {
 	for _, square := range pieces {
 		for dirOffset := startDir; dirOffset < endDir; dirOffset++ {
 			offset := BoardDirOffsets[dirOffset]
 			amountToMove := int8(SquaresToEdge[square][dirOffset])
 			for moveIndex := int8(1); moveIndex <= amountToMove; moveIndex++ {
-				squareTo := int8(square) + (offset * moveIndex)
+				squareTo := int8(square) + offset*moveIndex
+				if squareTo < 0 || squareTo >= 64 {
+					break
+				}
 				isQuietMove := board.AddQuietOrCapture(square, byte(squareTo), whiteToMove)
 				if !isQuietMove {
 					break
@@ -469,6 +614,7 @@ func (board *Board) GenerateSlidingMoves(pieces []byte, startDir byte, endDir by
 	}
 }
 
+// GenerateKingMoves generates all king moves (excluding castling) for the current side.
 func (board *Board) GenerateKingMoves(whiteToMove bool) {
 	square := board.Pieces.White.King
 	if !whiteToMove {
@@ -484,22 +630,54 @@ func (board *Board) GenerateKingMoves(whiteToMove bool) {
 	}
 }
 
+// GenerateCastleMoves generates castling moves if the king and rook have not moved and the path is clear and not attacked.
+// Chess rules: King cannot castle out of, through, or into check; squares between must be empty.
 func (board *Board) GenerateCastleMoves(whiteToMove bool) {
+
 	if whiteToMove {
-		if (board.CastlingAvailability.WhiteQueenSide) && board.IsSquareEmptyAndNotAttacked(58) && board.IsSquareEmptyAndNotAttacked(59) {
+
+		if board.CastlingAvailability.WhiteQueenSide &&
+			board.Position[60] == WhiteKing &&
+			board.Position[56] == WhiteRook &&
+			board.IsSquareEmpty(57) &&
+			board.IsSquareEmptyAndNotAttacked(58) &&
+			board.IsSquareEmptyAndNotAttacked(59) &&
+			!board.AttackedSquares[60] {
 			board.AddCastleMove(60, 58)
-		} else if (board.CastlingAvailability.WhiteKingSide) && board.IsSquareEmptyAndNotAttacked(61) && board.IsSquareEmptyAndNotAttacked(62) {
+		}
+
+		if board.CastlingAvailability.WhiteKingSide &&
+			board.Position[60] == WhiteKing &&
+			board.Position[63] == WhiteRook &&
+			board.IsSquareEmptyAndNotAttacked(61) &&
+			board.IsSquareEmptyAndNotAttacked(62) &&
+			!board.AttackedSquares[60] {
 			board.AddCastleMove(60, 62)
 		}
 	} else {
-		if (board.CastlingAvailability.BlackQueenSide) && board.IsSquareEmptyAndNotAttacked(1) && board.IsSquareEmptyAndNotAttacked(2) && board.IsSquareEmptyAndNotAttacked(3) {
+
+		if board.CastlingAvailability.BlackQueenSide &&
+			board.Position[4] == BlackKing &&
+			board.Position[0] == BlackRook &&
+			board.IsSquareEmpty(1) &&
+			board.IsSquareEmptyAndNotAttacked(2) &&
+			board.IsSquareEmptyAndNotAttacked(3) &&
+			!board.AttackedSquares[4] {
 			board.AddCastleMove(4, 2)
-		} else if (board.CastlingAvailability.BlackKingSide) && board.IsSquareEmptyAndNotAttacked(5) && board.IsSquareEmptyAndNotAttacked(6) {
+		}
+
+		if board.CastlingAvailability.BlackKingSide &&
+			board.Position[4] == BlackKing &&
+			board.Position[7] == BlackRook &&
+			board.IsSquareEmptyAndNotAttacked(5) &&
+			board.IsSquareEmptyAndNotAttacked(6) &&
+			!board.AttackedSquares[4] {
 			board.AddCastleMove(4, 6)
 		}
 	}
 }
 
+// GenerateRookMoves generates all rook moves for the current side.
 func (board *Board) GenerateRookMoves(whiteToMove bool) {
 	rooks := board.Pieces.White.Rooks
 	if !whiteToMove {
@@ -508,6 +686,7 @@ func (board *Board) GenerateRookMoves(whiteToMove bool) {
 	board.GenerateSlidingMoves(rooks, 0, 4, whiteToMove)
 }
 
+// GenerateBishopMoves generates all bishop moves for the current side.
 func (board *Board) GenerateBishopMoves(whiteToMove bool) {
 	bishops := board.Pieces.White.Bishops
 	if !whiteToMove {
@@ -516,14 +695,16 @@ func (board *Board) GenerateBishopMoves(whiteToMove bool) {
 	board.GenerateSlidingMoves(bishops, 4, 8, whiteToMove)
 }
 
+// GenerateQueenMoves generates all queen moves for the current side.
 func (board *Board) GenerateQueenMoves(whiteToMove bool) {
-	queues := board.Pieces.White.Queens
+	queens := board.Pieces.White.Queens
 	if !whiteToMove {
-		queues = board.Pieces.Black.Queens
+		queens = board.Pieces.Black.Queens
 	}
-	board.GenerateSlidingMoves(queues, 0, 8, whiteToMove)
+	board.GenerateSlidingMoves(queens, 0, 8, whiteToMove)
 }
 
+// GenerateKnightMoves generates all knight moves for the current side.
 func (board *Board) GenerateKnightMoves(whiteToMove bool) {
 	knights := board.Pieces.White.Knights
 	if !whiteToMove {
@@ -539,24 +720,58 @@ func (board *Board) GenerateKnightMoves(whiteToMove bool) {
 	}
 }
 
-func (board *Board) MakeMove(move Move) {
-	// update counters
-	board.FullMoveCounter += 1
+type MoveState struct {
+	Position             [64]byte
+	CastlingAvailability CastlingAvailability
+	OnPassant            byte
+	HalfMoveClock        int
+	FullMoveCounter      int
+	WhiteToMove          bool
+}
+
+// MakeMove now returns a MoveState for undoing the move
+func (board *Board) MakeMove(move Move) MoveState {
+	// Save current state
+	prev := MoveState{
+		Position:             board.Position,
+		CastlingAvailability: board.CastlingAvailability,
+		OnPassant:            board.OnPassant,
+		HalfMoveClock:        board.HalfMoveClock,
+		FullMoveCounter:      board.FullMoveCounter,
+		WhiteToMove:          board.WhiteToMove,
+	}
+
+	if !board.WhiteToMove {
+		board.FullMoveCounter += 1
+	}
 	if move.MoveType == MoveCapture || board.IsSquarePawn(move.From) {
 		board.HalfMoveClock = 0
 	} else {
 		board.HalfMoveClock += 1
 	}
-	if !board.WhiteToMove {
-		board.FullMoveCounter += 1
-	}
 
-	// update position
 	piece := board.Position[move.From]
+
+	if move.MoveType == MoveCapture || move.MoveType == MovePromotionCapture || move.MoveType == MoveEnPassant {
+		captured := board.Position[move.To]
+		if move.MoveType == MoveEnPassant {
+			if board.WhiteToMove {
+				captured = BlackPawn
+			} else {
+				captured = WhitePawn
+			}
+		}
+		if captured == WhiteKing || captured == BlackKing {
+			panic("BUG: Attempted to capture a king!")
+		}
+	}
 	board.Position[move.To] = piece
 	board.Position[move.From] = 0
 
-	// Remove EnPassant pawn
+	if move.MoveType == MovePromotion || move.MoveType == MovePromotionCapture {
+		board.Position[move.To] = move.Data[0]
+	}
+
 	if move.MoveType == MoveEnPassant {
 		if board.WhiteToMove {
 			board.Position[move.To+8] = 0
@@ -565,29 +780,109 @@ func (board *Board) MakeMove(move Move) {
 		}
 	}
 
-	// move played recording
-	separator := "-"
-	if move.MoveType == MoveCapture {
-		separator = "x"
+	if move.MoveType == MoveCastle {
+		if piece == WhiteKing {
+			if move.To == 62 {
+				board.Position[63] = 0
+				board.Position[61] = WhiteRook
+			} else if move.To == 58 {
+				board.Position[56] = 0
+				board.Position[59] = WhiteRook
+			}
+			board.CastlingAvailability.WhiteKingSide = false
+			board.CastlingAvailability.WhiteQueenSide = false
+		} else if piece == BlackKing {
+			if move.To == 6 {
+				board.Position[7] = 0
+				board.Position[5] = BlackRook
+			} else if move.To == 2 {
+				board.Position[0] = 0
+				board.Position[3] = BlackRook
+			}
+			board.CastlingAvailability.BlackKingSide = false
+			board.CastlingAvailability.BlackQueenSide = false
+		}
 	}
-	board.Played += PieceCodeToNotation[piece] + BoardSquareNames[move.From] + separator + BoardSquareNames[move.To] + ", "
 
-	// Update pieces location
-	// TODO avoid calling this after every move
+	board.OnPassant = 0
+	if piece == WhitePawn && move.From/8 == 6 && move.To/8 == 4 {
+		board.OnPassant = move.From - 8
+	} else if piece == BlackPawn && move.From/8 == 1 && move.To/8 == 3 {
+		board.OnPassant = move.From + 8
+	}
+
+	if piece == WhiteKing {
+		board.CastlingAvailability.WhiteKingSide = false
+		board.CastlingAvailability.WhiteQueenSide = false
+	}
+	if piece == BlackKing {
+		board.CastlingAvailability.BlackKingSide = false
+		board.CastlingAvailability.BlackQueenSide = false
+	}
+	if piece == WhiteRook {
+		if move.From == 63 {
+			board.CastlingAvailability.WhiteKingSide = false
+		}
+		if move.From == 56 {
+			board.CastlingAvailability.WhiteQueenSide = false
+		}
+	}
+	if piece == BlackRook {
+		if move.From == 7 {
+			board.CastlingAvailability.BlackKingSide = false
+		}
+		if move.From == 0 {
+			board.CastlingAvailability.BlackQueenSide = false
+		}
+	}
+
+	if move.MoveType == MoveCapture || move.MoveType == MovePromotionCapture {
+		capturedPieceSquare := move.To
+		var capturedPiece byte
+		if move.MoveType == MovePromotionCapture {
+			capturedPiece = move.Data[1]
+		} else {
+			capturedPiece = move.Data[0]
+		}
+
+		if capturedPiece == WhiteRook {
+			if capturedPieceSquare == 63 {
+				board.CastlingAvailability.WhiteKingSide = false
+			}
+			if capturedPieceSquare == 56 {
+				board.CastlingAvailability.WhiteQueenSide = false
+			}
+		}
+		if capturedPiece == BlackRook {
+			if capturedPieceSquare == 7 {
+				board.CastlingAvailability.BlackKingSide = false
+			}
+			if capturedPieceSquare == 0 {
+				board.CastlingAvailability.BlackQueenSide = false
+			}
+		}
+	}
+
 	board.UpdatePiecesLocation()
 
-	// TODO Handle castling update rook position
-
-	// TODO Update the en passant square if a pawn moved two squares
-
-	// TODO Update castling rights
-
-	// switch active color
 	board.WhiteToMove = !board.WhiteToMove
+
+	return prev
+}
+
+// UndoMove restores the board to a previous MoveState
+func (board *Board) UndoMove(state MoveState) {
+	board.Position = state.Position
+	board.CastlingAvailability = state.CastlingAvailability
+	board.OnPassant = state.OnPassant
+	board.HalfMoveClock = state.HalfMoveClock
+	board.FullMoveCounter = state.FullMoveCounter
+	board.WhiteToMove = state.WhiteToMove
+	board.UpdatePiecesLocation()
 }
 
 func (board *Board) GeneratePseudoLegalMoves() {
-	// generate moving color all moves
+
 	board.GenerateAttackedSquares(!board.WhiteToMove)
 	board.Moves = []Move{}
 	board.GeneratePawnMoves(board.WhiteToMove)
@@ -611,12 +906,28 @@ func (board *Board) GenerateLegalMoves() {
 }
 
 func (board *Board) IsMoveLegal(move Move) bool {
-	tmpBoard := board.Clone()
-	tmpBoard.MakeMove(move)
-	return !tmpBoard.IsKingInCheck(board.WhiteToMove)
+	// Save state, make move, check legality, then undo
+	prev := board.MakeMove(move)
+	var kingSquare byte
+	if !board.WhiteToMove {
+		kingSquare = board.Pieces.White.King
+	} else {
+		kingSquare = board.Pieces.Black.King
+	}
+	if kingSquare > 63 {
+		board.UndoMove(prev)
+		return false
+	}
+
+	inCheck := board.IsKingInCheck(!board.WhiteToMove)
+	board.UndoMove(prev)
+	return !inCheck
 }
 
 func (board *Board) IsKingInCheck(whiteToMove bool) bool {
+
+	board.UpdatePiecesLocation()
+
 	board.GenerateAttackedSquares(!whiteToMove)
 	king := board.Pieces.White.King
 	if !whiteToMove {
@@ -625,67 +936,149 @@ func (board *Board) IsKingInCheck(whiteToMove bool) bool {
 	return board.AttackedSquares[king]
 }
 
-func (board *Board) Perft(depth int) int {
-	if depth == 0 {
-		return 1
-	}
-	board.GenerateLegalMoves()
-
-	if depth == 1 {
-		return len(board.Moves)
-	}
-
-	var count int
-	for _, move := range board.Moves {
-		tmpBoard := board.Clone()
-		tmpBoard.MakeMove(move)
-		count += tmpBoard.Perft(depth - 1)
-	}
-
-	return count
-}
-
-func (board *Board) PerftMoves(depth int, f *os.File) int {
-	if depth == 0 {
-		return 1
-	}
-	board.GenerateLegalMoves()
-
-	if depth == 1 {
-		fmt.Fprintln(f, board.Played)
-		return len(board.Moves)
-	}
-
-	var count int
-	for _, move := range board.Moves {
-		tmpBoard := board.Clone()
-		tmpBoard.MakeMove(move)
-		count += tmpBoard.PerftMoves(depth-1, f)
-	}
-
-	return count
-}
-
 func (board *Board) GenerateAttackedSquares(whiteToMove bool) {
-	board.Moves = []Move{}
 	board.AttackedSquares = make([]bool, 64)
 
-	// generate opposing color attacked squares
-	board.GenerateQueenMoves(whiteToMove)
-	board.GenerateKnightMoves(whiteToMove)
-	board.GenerateBishopMoves(whiteToMove)
-	board.GenerateRookMoves(whiteToMove)
-	board.GenerateKingMoves(whiteToMove)
-	board.GeneratePawnAttackingSquares(whiteToMove)
-	for _, move := range board.Moves {
-		if move.MoveType == MoveCapture || move.MoveType == MoveQuiet || move.MoveType == MovePromotionCapture {
-			board.AttackedSquares[move.To] = true
+	if whiteToMove {
+		board.MarkSlidingAttacks(board.Pieces.White.Queens, 0, 8)
+		board.MarkSlidingAttacks(board.Pieces.White.Bishops, 4, 8)
+		board.MarkSlidingAttacks(board.Pieces.White.Rooks, 0, 4)
+	} else {
+		board.MarkSlidingAttacks(board.Pieces.Black.Queens, 0, 8)
+		board.MarkSlidingAttacks(board.Pieces.Black.Bishops, 4, 8)
+		board.MarkSlidingAttacks(board.Pieces.Black.Rooks, 0, 4)
+	}
+
+	knights := board.Pieces.White.Knights
+	if !whiteToMove {
+		knights = board.Pieces.Black.Knights
+	}
+	for _, square := range knights {
+		for moveIndex := 0; moveIndex < 8; moveIndex++ {
+			squareTo := SquareKnightJumps[square][moveIndex]
+			if squareTo < 255 {
+				board.AttackedSquares[squareTo] = true
+			}
+		}
+	}
+
+	king := board.Pieces.White.King
+	if !whiteToMove {
+		king = board.Pieces.Black.King
+	}
+	for dirOffset := 0; dirOffset < 8; dirOffset++ {
+		offset := BoardDirOffsets[dirOffset]
+		amountToMove := int8(SquaresToEdge[king][dirOffset])
+		if amountToMove > 0 {
+			squareTo := int8(king) + offset
+			if squareTo >= 0 && squareTo < 64 {
+				board.AttackedSquares[byte(squareTo)] = true
+			}
+		}
+	}
+
+	var pawns []byte
+	var dir int8
+	if whiteToMove {
+		pawns = board.Pieces.White.Pawns
+		dir = -8
+	} else {
+		pawns = board.Pieces.Black.Pawns
+		dir = 8
+	}
+	for _, square := range pawns {
+		file := board.SquareToFile(square)
+		if file > 0 {
+			leftAttack := int8(square) + dir - 1
+			if leftAttack >= 0 && leftAttack < 64 {
+				board.AttackedSquares[byte(leftAttack)] = true
+			}
+		}
+		if file < 7 {
+			rightAttack := int8(square) + dir + 1
+			if rightAttack >= 0 && rightAttack < 64 {
+				board.AttackedSquares[byte(rightAttack)] = true
+			}
 		}
 	}
 }
 
+// ToFEN returns the FEN (Forsyth-Edwards Notation) string for the current board position.
+// FEN encodes the board, turn, castling rights, en passant, halfmove clock, and fullmove number.
+func (board *Board) ToFEN() string {
+	// Piece placement
+	fen := ""
+	for rank := 0; rank < 8; rank++ {
+		empty := 0
+		for file := 0; file < 8; file++ {
+			sq := rank*8 + file
+			piece := board.Position[sq]
+			if piece == 0 {
+				empty++
+			} else {
+				if empty > 0 {
+					fen += strconv.Itoa(empty)
+					empty = 0
+				}
+				fen += string(piece)
+			}
+		}
+		if empty > 0 {
+			fen += strconv.Itoa(empty)
+		}
+		if rank != 7 {
+			fen += "/"
+		}
+	}
+
+	// Active color
+	if board.WhiteToMove {
+		fen += " w"
+	} else {
+		fen += " b"
+	}
+
+	// Castling rights
+	castle := ""
+	if board.CastlingAvailability.WhiteKingSide {
+		castle += "K"
+	}
+	if board.CastlingAvailability.WhiteQueenSide {
+		castle += "Q"
+	}
+	if board.CastlingAvailability.BlackKingSide {
+		castle += "k"
+	}
+	if board.CastlingAvailability.BlackQueenSide {
+		castle += "q"
+	}
+	if castle == "" {
+		castle = "-"
+	}
+	fen += " " + castle
+
+	// En passant
+	ep := "-"
+	if board.OnPassant > 0 && board.OnPassant < 64 {
+		if name, ok := SquareIndexToName(board.OnPassant); ok {
+			ep = name
+		}
+	}
+	fen += " " + ep
+
+	// Halfmove clock
+	fen += " " + strconv.Itoa(board.HalfMoveClock)
+	// Fullmove number
+	fen += " " + strconv.Itoa(board.FullMoveCounter)
+
+	return fen
+}
+
+// UpdatePiecesLocation updates the Pieces field to reflect the current board position.
+// This is required after any move or FEN load.
 func (board *Board) UpdatePiecesLocation() {
 	board.Pieces = NewPieceColorLocation()
+
 	for index, piece := range board.Position {
 		switch {
 		case piece == WhitePawn:
@@ -714,4 +1107,76 @@ func (board *Board) UpdatePiecesLocation() {
 			board.Pieces.Black.King = byte(index)
 		}
 	}
+}
+
+func (board *Board) Perft(depth int) int {
+	if depth == 0 {
+		return 1
+	}
+	board.GenerateLegalMoves()
+	if depth == 1 {
+		return len(board.Moves)
+	}
+	nodes := 0
+	for _, move := range board.Moves {
+		prev := board.MakeMove(move)
+		nodes += board.Perft(depth - 1)
+		board.UndoMove(prev)
+	}
+	return nodes
+}
+
+func (board *Board) Clone() *Board {
+	clone := NewBoard()
+	// Deep copy Position
+	copy(clone.Position[:], board.Position[:])
+	clone.CastlingAvailability = board.CastlingAvailability
+	clone.Pieces = board.Pieces
+	clone.WhiteToMove = board.WhiteToMove
+	clone.Moves = []Move{}
+	clone.OnPassant = board.OnPassant
+	clone.HalfMoveClock = board.HalfMoveClock
+	clone.FullMoveCounter = board.FullMoveCounter
+	// Deep copy AttackedSquares
+	if board.AttackedSquares != nil {
+		clone.AttackedSquares = make([]bool, len(board.AttackedSquares))
+		copy(clone.AttackedSquares, board.AttackedSquares)
+	} else {
+		clone.AttackedSquares = make([]bool, 64) // Ensure it's initialized if source was nil
+	}
+	return clone
+}
+
+// PerftParallel parallelizes the top-level perft search using goroutines for each root move.
+func (board *Board) PerftParallel(depth int) int {
+	if depth == 0 {
+		return 1
+	}
+	board.GenerateLegalMoves()
+	if depth == 1 {
+		return len(board.Moves)
+	}
+
+	var wg sync.WaitGroup
+	results := make(chan int, len(board.Moves))
+
+	for _, move := range board.Moves {
+		wg.Add(1)
+		go func(m Move) {
+			defer wg.Done()
+			child := board.Clone()
+			child.MakeMove(m)
+			count := child.Perft(depth - 1)
+			results <- count
+		}(move)
+	}
+
+	wg.Wait()
+	close(results)
+
+	nodes := 0
+	for n := range results {
+		nodes += n
+	}
+	return nodes
 }
