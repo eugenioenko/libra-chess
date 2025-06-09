@@ -61,9 +61,9 @@ func TestPerft4(t *testing.T) {
 	n2 := board.PerftParallel(2)
 	n3 := board.PerftParallel(3)
 	n4 := board.PerftParallel(4)
-	// n5 := board.PerftParallel(5)
+	n5 := board.PerftParallel(5)
 
-	if n1 != 6 || n2 != 264 || n3 != 9467 || n4 != 422333 { // } || n5 != 15833292 {
+	if n1 != 6 || n2 != 264 || n3 != 9467 || n4 != 422333 || n5 != 15833292 {
 		t.Fail()
 	}
 }

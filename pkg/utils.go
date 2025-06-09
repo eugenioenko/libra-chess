@@ -1,7 +1,5 @@
 package libra
 
-import "strconv"
-
 func CharIsNumber(char rune) bool {
 	return char >= '0' && char <= '9'
 }
@@ -157,8 +155,5 @@ func SquareIndexToName(idx byte) (string, bool) {
 	if idx >= 64 {
 		return "", false
 	}
-	files := "abcdefgh"
-	rank := 8 - int(idx/8)
-	file := files[idx%8]
-	return string(file) + strconv.Itoa(rank), true
+	return BoardSquareNames[idx], true
 }

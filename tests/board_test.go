@@ -25,7 +25,7 @@ func TestShouldCalculateZobristHash(t *testing.T) {
 	hashA := ZobristHash(board)
 	board.FromFEN("rnbqkb1r/ppp1p1pp/8/3p1pP1/3Pn3/2N5/PPP1PP1P/R1BQKBNR w KQkq - 1 5")
 	hashB := ZobristHash(board)
-	board.Print()
+	board.PrintPosition()
 	if hashA == 0 {
 		t.Fail()
 	}
@@ -328,7 +328,7 @@ func TestDebugBoardCoordinates(t *testing.T) {
 
 	// Print the board for verification
 	t.Log("Board setup:")
-	board.Print()
+	board.PrintPosition()
 
 	// Calculate black pawn attack squares manually
 	pawnPos := byte(SquareG2) // g2
@@ -364,7 +364,7 @@ func TestDebugBoardCoordinates(t *testing.T) {
 	board2.FromFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1")
 
 	t.Logf("Initial board position:")
-	board2.Print()
+	board2.PrintPosition()
 
 	// Check positions of key pieces
 	t.Logf("White king at: %d (%s)", board2.Pieces.White.King, BoardSquareNames[board2.Pieces.White.King])
@@ -382,7 +382,7 @@ func TestDebugBoardCoordinates(t *testing.T) {
 	board2.MakeMove(rootMove)
 
 	t.Logf("\nAfter white king moves to f1:")
-	board2.Print()
+	board2.PrintPosition()
 	t.Logf("White king now at: %d (%s)",
 		board2.Pieces.White.King, BoardSquareNames[board2.Pieces.White.King])
 
@@ -396,7 +396,7 @@ func TestDebugBoardCoordinates(t *testing.T) {
 	board2.MakeMove(childMove)
 
 	t.Logf("\nAfter black pawn supposedly moves from h3 to h2:")
-	board2.Print()
+	board2.PrintPosition()
 
 	// Show pieces again
 	t.Logf("Piece at h3 (47): %v", board2.Position[47])
@@ -502,5 +502,102 @@ func TestBoardToFEN(t *testing.T) {
 	fen2 := board.ToFEN()
 	if fen2 != fenStr {
 		t.Errorf("ToFEN() did not match. Got: %s, Want: %s", fen2, fenStr)
+	}
+}
+
+// --- Additional edge case tests for 100% coverage ---
+
+func TestPawnBlockedAndNoDoublePush(t *testing.T) {
+	board := NewBoard()
+	// Blocked pawn at e2 by e3
+	board.Position = [64]byte{}
+	board.Position[SquareE2] = WhitePawn
+	board.Position[SquareE3] = BlackPawn
+	board.UpdatePiecesLocation()
+	board.WhiteToMove = true
+	board.GeneratePawnMoves(true)
+	if len(board.Moves) != 0 {
+		t.Errorf("Blocked pawn should have no moves")
+	}
+}
+
+func TestPawnPromotionWithCaptureAndNoCapture(t *testing.T) {
+	board := NewBoard()
+	// White pawn on g7, black rook on h8
+	board.Position = [64]byte{}
+	board.Position[SquareG7] = WhitePawn
+	board.Position[SquareH8] = BlackRook
+	board.UpdatePiecesLocation()
+	board.WhiteToMove = true
+	board.GeneratePawnMoves(true)
+	promotion, capture := false, false
+	for _, move := range board.Moves {
+		if move.MoveType == MovePromotion {
+			promotion = true
+		}
+		if move.MoveType == MovePromotionCapture {
+			capture = true
+		}
+	}
+	if !promotion || !capture {
+		t.Errorf("Pawn promotion and promotion-capture should be generated")
+	}
+}
+
+func TestKnightEdgeCases(t *testing.T) {
+	board := NewBoard()
+	// Knight on a1 and h8
+	board.Position = [64]byte{}
+	board.Position[SquareA1] = WhiteKnight
+	board.Position[SquareH8] = WhiteKnight
+	board.UpdatePiecesLocation()
+	board.WhiteToMove = true
+	board.GenerateKnightMoves(true)
+	if len(board.Moves) != 4 {
+		t.Errorf("Knights on corners should have 2 moves each (total 4 moves), got %d", len(board.Moves))
+	}
+}
+
+func TestRookBlockedAndEdge(t *testing.T) {
+	board := NewBoard()
+	// Rook on a1, blocked by pawn on a2
+	board.Position = [64]byte{}
+	board.Position[SquareA1] = WhiteRook
+	board.Position[SquareA2] = WhitePawn
+	board.UpdatePiecesLocation()
+	board.WhiteToMove = true
+	board.GenerateRookMoves(true)
+	if len(board.Moves) != 7 {
+		t.Errorf("Rook should have 7 moves along the 1st rank, got %d", len(board.Moves))
+	}
+}
+
+func TestQueenBlockedAndEdge(t *testing.T) {
+	board := NewBoard()
+	// Queen on a1, blocked by pawn on a2 and b2
+	board.Position = [64]byte{}
+	board.Position[SquareA1] = WhiteQueen
+	board.Position[SquareA2] = WhitePawn
+	board.Position[SquareB2] = WhitePawn
+	board.UpdatePiecesLocation()
+	board.WhiteToMove = true
+	board.GenerateQueenMoves(true)
+	if len(board.Moves) != 7 {
+		t.Errorf("Queen should have 7 moves along the 1st rank, got %d", len(board.Moves))
+	}
+}
+
+func TestKingCannotMoveIntoCheck(t *testing.T) {
+	board := NewBoard()
+	// King on e1, enemy rook on e2
+	board.Position[SquareE1] = WhiteKing
+	board.Position[SquareE3] = BlackRook
+	board.UpdatePiecesLocation()
+	board.WhiteToMove = true
+	board.GenerateLegalMoves()
+	for _, move := range board.Moves {
+		if move.From == SquareE1 && move.To == SquareE2 {
+			t.Errorf("King should not be able to move into check")
+		}
 	}
 }
