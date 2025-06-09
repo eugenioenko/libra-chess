@@ -214,14 +214,12 @@ func TestShouldGenerateKingMoves(t *testing.T) {
 
 	board.FromFEN("8/8/8/4K3/8/8/8/8")
 	board.GenerateKingMoves(board.WhiteToMove)
-	t.Logf("King moves center: %d", len(board.Moves))
 	if len(board.Moves) != 8 {
 		t.Fail()
 	}
 
 	board.FromFEN("K7/8/8/8/8/8/8/8")
 	board.GenerateKingMoves(board.WhiteToMove)
-	t.Logf("King moves corner: %d", len(board.Moves))
 	if len(board.Moves) != 3 {
 		t.Fail()
 	}
@@ -229,7 +227,6 @@ func TestShouldGenerateKingMoves(t *testing.T) {
 	// King vs queen (king on a8, queen on b8)
 	board.FromFEN("KQ6/8/8/8/8/8/8/8")
 	board.GenerateKingMoves(board.WhiteToMove)
-	t.Logf("King moves vs queen: %d", len(board.Moves))
 	if len(board.Moves) != 2 {
 		t.Fail()
 	}
@@ -237,14 +234,12 @@ func TestShouldGenerateKingMoves(t *testing.T) {
 	// King vs queen 2 (king on h8, queen on g8)
 	board.FromFEN("6QK/8/8/8/8/8/8/8")
 	board.GenerateKingMoves(board.WhiteToMove)
-	t.Logf("King moves vs queen 2: %d", len(board.Moves))
 	if len(board.Moves) != 2 {
 		t.Fail()
 	}
 
 	board.FromFEN("8/8/8/8/8/8/8/K7")
 	board.GenerateKingMoves(board.WhiteToMove)
-	t.Logf("King moves corner 2: %d", len(board.Moves))
 	if len(board.Moves) != 3 {
 		t.Fail()
 	}
@@ -306,125 +301,6 @@ func TestEnPassantExposesKing(t *testing.T) {
 		if move.MoveType == MoveEnPassant {
 			t.Errorf("En passant should not be legal if it exposes the king to check")
 		}
-	}
-}
-
-func TestDebugBoardCoordinates(t *testing.T) {
-	// Print out all board square indexes and names for reference
-	for i := 0; i < 64; i++ {
-		t.Logf("Square %d = %s", i, BoardSquareNames[i])
-	}
-
-	// Create a simple board to test the coordinates
-	board := NewBoard()
-
-	// Put a white king at f1 and black pawn at h2
-	board.Position = [64]byte{}
-	board.Position[SquareF1] = WhiteKing // f1 = 61
-	board.Position[SquareG2] = BlackPawn // g2 = 54
-
-	// Update piece locations
-	board.UpdatePiecesLocation()
-
-	// Print the board for verification
-	t.Log("Board setup:")
-	board.PrintPosition()
-
-	// Calculate black pawn attack squares manually
-	pawnPos := byte(SquareG2) // g2
-	t.Logf("Black pawn at position %d (%s)", pawnPos, BoardSquareNames[pawnPos])
-
-	file := pawnPos % 8
-	rank := pawnPos / 8
-	t.Logf("Pawn file = %d, rank = %d", file, rank)
-
-	// Calculate left diagonal attack
-	if file > 0 {
-		leftAttack := ((rank + 1) * 8) + (file - 1)
-		t.Logf("Left attack would be at %d (%s)", leftAttack, BoardSquareNames[leftAttack])
-	}
-
-	// Calculate right diagonal attack - should not exist for h file
-	if file < 7 {
-		rightAttack := ((rank + 1) * 8) + (file + 1)
-		t.Logf("Right attack would be at %d (%s)", rightAttack, BoardSquareNames[rightAttack])
-	} else {
-		t.Logf("No right diagonal attack (pawn already at rightmost file)")
-	}
-
-	// Check if white king is at any of these diagonal attack positions
-	kingPos := board.Pieces.White.King
-	t.Logf("White king at %d (%s)", kingPos, BoardSquareNames[kingPos])
-
-	// Now let's recreate the exact failing test scenario
-	t.Logf("\n--- Recreating failing test scenario ---")
-
-	// Start with the initial position from the test
-	board2 := NewBoard()
-	board2.FromFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1")
-
-	t.Logf("Initial board position:")
-	board2.PrintPosition()
-
-	// Check positions of key pieces
-	t.Logf("White king at: %d (%s)", board2.Pieces.White.King, BoardSquareNames[board2.Pieces.White.King])
-
-	// Find the black pawn at h3
-	for _, pawn := range board2.Pieces.Black.Pawns {
-		if BoardSquareNames[pawn] == "h3" {
-			t.Logf("Black pawn at h3: position %d", pawn)
-		}
-	}
-
-	// Now make the moves that are causing issues
-	// First move: white king from e1 to f1
-	rootMove := NewMove(SquareE1, SquareF1, 0, [2]byte{0, 0})
-	board2.MakeMove(rootMove)
-
-	t.Logf("\nAfter white king moves to f1:")
-	board2.PrintPosition()
-	t.Logf("White king now at: %d (%s)",
-		board2.Pieces.White.King, BoardSquareNames[board2.Pieces.White.King])
-
-	// Show piece at h3 and g2
-	t.Logf("Piece at h3 (47): %v", board2.Position[47])
-	t.Logf("Piece at g2 (54): %v", board2.Position[54])
-
-	// Second move: black pawn from h3 to h2 (capture)
-	// But the test is defining this move as h3 to g2!
-	childMove := NewMove(SquareH3, SquareG2, 1, [2]byte{80, 0})
-	board2.MakeMove(childMove)
-
-	t.Logf("\nAfter black pawn supposedly moves from h3 to h2:")
-	board2.PrintPosition()
-
-	// Show pieces again
-	t.Logf("Piece at h3 (47): %v", board2.Position[47])
-	t.Logf("Piece at g2 (54): %v", board2.Position[54])
-	t.Logf("Piece at h2 (55): %v", board2.Position[55])
-
-	// Check black pawn positions after move
-	t.Logf("\nBlack pawn positions after move:")
-	for _, pawn := range board2.Pieces.Black.Pawns {
-		t.Logf("Black pawn at: %d (%s)", pawn, BoardSquareNames[pawn])
-	}
-
-	// Generate attacked squares by black
-	board2.GenerateAttackedSquares(false)
-
-	// Check if white king is attacked
-	if board2.AttackedSquares[61] {
-		t.Logf("White king at f1 IS attacked after the move")
-
-		// Print all attacked squares to see what's going on
-		t.Logf("All attacked squares:")
-		for i, attacked := range board2.AttackedSquares {
-			if attacked {
-				t.Logf("Square %d (%s) is attacked", i, BoardSquareNames[i])
-			}
-		}
-	} else {
-		t.Logf("White king at f1 is NOT attacked after the move")
 	}
 }
 
