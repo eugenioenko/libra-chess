@@ -9,51 +9,6 @@ import (
 
 const BoardInitialFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
-const (
-	WhitePawn   = 80  // P
-	WhiteKnight = 78  // N
-	WhiteBishop = 66  // B
-	WhiteRook   = 82  // R
-	WhiteQueen  = 81  // Q
-	WhiteKing   = 75  // K
-	BlackPawn   = 112 // p
-	BlackKnight = 110 // n
-	BlackBishop = 98  // b
-	BlackRook   = 114 // r
-	BlackQueen  = 113 // q
-	BlackKing   = 107 // k
-)
-
-var pieceCodeToFont = map[byte]string{
-	WhitePawn:   "♟︎",
-	WhiteKnight: "♞",
-	WhiteBishop: "♝",
-	WhiteRook:   "♜",
-	WhiteQueen:  "♛",
-	WhiteKing:   "♚",
-	BlackPawn:   "♙",
-	BlackKnight: "♘",
-	BlackBishop: "♗",
-	BlackRook:   "♖",
-	BlackQueen:  "♕",
-	BlackKing:   "♔",
-}
-
-var PieceCodeToNotation = map[byte]string{
-	WhitePawn:   "",
-	WhiteKnight: "N",
-	WhiteBishop: "B",
-	WhiteRook:   "R",
-	WhiteQueen:  "Q",
-	WhiteKing:   "K",
-	BlackPawn:   "",
-	BlackKnight: "N",
-	BlackBishop: "B",
-	BlackRook:   "R",
-	BlackQueen:  "Q",
-	BlackKing:   "K",
-}
-
 var BoardSquareNames [64]string = [64]string{
 	"a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
 	"a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
@@ -64,139 +19,6 @@ var BoardSquareNames [64]string = [64]string{
 	"a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
 	"a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
 }
-
-func PieceCodeToFont(piece byte) string {
-	return pieceCodeToFont[piece]
-}
-
-type PieceLocation struct {
-	Pawns   []byte
-	Knights []byte
-	Bishops []byte
-	Rooks   []byte
-	Queens  []byte
-	King    byte
-}
-
-type PieceColorLocation struct {
-	White PieceLocation
-	Black PieceLocation
-}
-
-func NewPieceLocation() PieceLocation {
-	return PieceLocation{
-		Pawns:   []byte{},
-		Knights: []byte{},
-		Bishops: []byte{},
-		Rooks:   []byte{},
-		Queens:  []byte{},
-		King:    0,
-	}
-}
-
-func (pl *PieceLocation) Clone() PieceLocation {
-	return PieceLocation{
-		Pawns:   append([]byte(nil), pl.Pawns...),
-		Knights: append([]byte(nil), pl.Knights...),
-		Bishops: append([]byte(nil), pl.Bishops...),
-		Rooks:   append([]byte(nil), pl.Rooks...),
-		Queens:  append([]byte(nil), pl.Queens...),
-		King:    pl.King,
-	}
-}
-
-func NewPieceColorLocation() PieceColorLocation {
-	return PieceColorLocation{
-		White: NewPieceLocation(),
-		Black: NewPieceLocation(),
-	}
-}
-
-const (
-	MoveQuiet = iota
-	MoveCapture
-	MoveEnPassant
-	MovePromotion
-	MovePromotionCapture
-	MoveCastle
-)
-
-type Move struct {
-	From     byte
-	To       byte
-	MoveType byte
-	Data     [2]byte
-}
-
-type MovesCount struct {
-	All       int
-	Quiet     int
-	Capture   int
-	Promotion int
-}
-
-func NewMovesCount() *MovesCount {
-	return &MovesCount{All: 0,
-		Quiet:     0,
-		Capture:   0,
-		Promotion: 0,
-	}
-}
-
-func NewMove(from byte, to byte, moveType byte, data [2]byte) Move {
-	return Move{
-		From:     from,
-		To:       to,
-		MoveType: moveType,
-		Data:     data,
-	}
-}
-
-func generateSquaresToEdge() [64][8]byte {
-	squares := [64][8]byte{}
-	for i := range squares {
-		index := byte(i)
-		y := index / 8
-		x := index - y*8
-		south := 7 - y
-		north := y
-		west := x
-		east := 7 - x
-		squares[index][0] = north
-		squares[index][1] = east
-		squares[index][2] = south
-		squares[index][3] = west
-		squares[index][4] = MathMinByte(north, east)
-		squares[index][5] = MathMinByte(south, east)
-		squares[index][6] = MathMinByte(south, west)
-		squares[index][7] = MathMinByte(north, west)
-	}
-	return squares
-}
-
-func generateKnightJumps() [64][8]byte {
-	squares := [64][8]byte{}
-	jumpOffsets := [8][2]int8{{1, 2}, {-1, 2}, {2, -1}, {-2, -1}, {-1, -2}, {1, -2}, {-2, 1}, {2, 1}}
-	for x := 0; x < 8; x++ {
-		for y := 0; y < 8; y++ {
-			squareFrom := y*8 + x
-			for offsetIndex, offset := range jumpOffsets {
-				x2 := int8(x) + offset[0]
-				y2 := int8(y) + offset[1]
-				if x2 >= 0 && y2 >= 0 && x2 < 8 && y2 < 8 {
-					squares[squareFrom][offsetIndex] = byte(y2*8 + x2)
-				} else {
-					squares[squareFrom][offsetIndex] = 255
-				}
-			}
-		}
-	}
-	return squares
-}
-
-var SquaresToEdge [64][8]byte = generateSquaresToEdge()
-var BoardDirOffsets [8]int8 = [8]int8{-8, 1, 8, -1, -7, 9, 7, -9}
-var SquareKnightJumps [64][8]byte = generateKnightJumps()
 
 type CastlingAvailability struct {
 	BlackKingSide  bool
@@ -356,6 +178,35 @@ func (board *Board) FromFEN(fen string) (bool, error) {
 	return true, nil
 }
 
+// ParseAndApplyPosition sets up the board from a UCI "position" command's arguments.
+// It supports "startpos" or "fen" and applies any moves listed after "moves".
+func (b *Board) ParseAndApplyPosition(positionArgs []string) {
+	fen := BoardInitialFEN
+	movesStart := 0
+	if len(positionArgs) > 0 && positionArgs[0] == "startpos" {
+		fen = BoardInitialFEN
+		movesStart = 1
+	} else if len(positionArgs) > 0 && positionArgs[0] == "fen" {
+		fenParts := []string{}
+		for i := 1; i < len(positionArgs) && len(fenParts) < 6; i++ {
+			fenParts = append(fenParts, positionArgs[i])
+			movesStart = i + 1
+		}
+		fen = strings.Join(fenParts, " ")
+	}
+	b.FromFEN(fen)
+	// Play moves if any
+	for i := movesStart; i < len(positionArgs); i++ {
+		if positionArgs[i] == "moves" {
+			for _, moveStr := range positionArgs[i+1:] {
+				move := b.ParseMove(moveStr)
+				b.MakeMove(move)
+			}
+			break
+		}
+	}
+}
+
 // removePieces sets a range of squares to empty (0), used when parsing FEN for empty squares.
 func (board *Board) removePieces(start int, count int) (bool, error) {
 	if start+count > 64 {
@@ -390,6 +241,31 @@ func (board *Board) PrintPosition() {
 }
 
 func (board *Board) PrintMoves() {
+	for i, move := range board.Moves {
+		piece := board.Position[move.From]
+		pieceStr := pieceCodeToFont[piece]
+		fromName, _ := SquareIndexToName(move.From)
+		toName, _ := SquareIndexToName(move.To)
+		moveType := ""
+		switch move.MoveType {
+		case MoveQuiet:
+			moveType = "quiet"
+		case MoveCapture:
+			moveType = "capture"
+		case MoveEnPassant:
+			moveType = "en passant"
+		case MovePromotion:
+			moveType = "promotion"
+		case MovePromotionCapture:
+			moveType = "promotion-capture"
+		case MoveCastle:
+			moveType = "castle"
+		}
+		fmt.Printf("%2d: %s %s -> %s [%s] data: %v\n", i+1, pieceStr, fromName, toName, moveType, move.Data)
+	}
+}
+
+func (board *Board) PrintMove(move Move) {
 	for i, move := range board.Moves {
 		piece := board.Position[move.From]
 		pieceStr := pieceCodeToFont[piece]
@@ -1202,4 +1078,56 @@ func (board *Board) PerftParallel(depth int) int {
 		nodes += n
 	}
 	return nodes
+}
+
+// ParseMove parses a move in UCI format (e.g., "e2e4", "e7e8q") and returns a Move struct.
+func (board *Board) ParseMove(moveStr string) Move {
+	if len(moveStr) < 4 {
+		return Move{}
+	}
+	from, ok1 := SquareNameToIndex(moveStr[0:2])
+	to, ok2 := SquareNameToIndex(moveStr[2:4])
+	if !ok1 || !ok2 {
+		return Move{}
+	}
+	// Generate all legal moves and find the one matching from/to (and promotion if present)
+	board.GenerateLegalMoves()
+	for _, move := range board.Moves {
+		if move.From == from && move.To == to {
+			// Handle promotion
+			if len(moveStr) == 5 {
+				promo := moveStr[4]
+				promoPiece := byte(0)
+				if board.WhiteToMove {
+					switch promo {
+					case 'q':
+						promoPiece = WhiteQueen
+					case 'r':
+						promoPiece = WhiteRook
+					case 'b':
+						promoPiece = WhiteBishop
+					case 'n':
+						promoPiece = WhiteKnight
+					}
+				} else {
+					switch promo {
+					case 'q':
+						promoPiece = BlackQueen
+					case 'r':
+						promoPiece = BlackRook
+					case 'b':
+						promoPiece = BlackBishop
+					case 'n':
+						promoPiece = BlackKnight
+					}
+				}
+				if move.Data[0] == promoPiece {
+					return move
+				}
+			} else if move.MoveType != MovePromotion && move.MoveType != MovePromotionCapture {
+				return move
+			}
+		}
+	}
+	return Move{} // Not found
 }
