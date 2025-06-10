@@ -2,6 +2,7 @@ package libra
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -814,6 +815,26 @@ func (board *Board) GenerateLegalMoves() {
 			legalMoves = append(legalMoves, move)
 		}
 	}
+	// Sort moves by quality: Promotion > PromotionCapture > Capture/EnPassant > Castle > Quiet
+	sort.SliceStable(legalMoves, func(i, j int) bool {
+		score := func(m Move) int {
+			switch m.MoveType {
+			case MovePromotion:
+				return 5
+			case MovePromotionCapture:
+				return 4
+			case MoveCapture, MoveEnPassant:
+				return 3
+			case MoveCastle:
+				return 2
+			case MoveQuiet:
+				return 1
+			default:
+				return 0
+			}
+		}
+		return score(legalMoves[i]) > score(legalMoves[j])
+	})
 	board.Moves = legalMoves
 }
 
