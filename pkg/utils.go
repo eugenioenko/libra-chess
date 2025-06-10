@@ -82,3 +82,78 @@ func MathMinByte(a byte, b byte) byte {
 	}
 	return a
 }
+
+const (
+	SquareA8 = 0
+	SquareB8 = 1
+	SquareC8 = 2
+	SquareD8 = 3
+	SquareE8 = 4
+	SquareF8 = 5
+	SquareG8 = 6
+	SquareH8 = 7
+	SquareA7 = 8
+	SquareB7 = 9
+	SquareC7 = 10
+	SquareD7 = 11
+	SquareE7 = 12
+	SquareF7 = 13
+	SquareG7 = 14
+	SquareH7 = 15
+	SquareA6 = 16
+	SquareB6 = 17
+	SquareC6 = 18
+	SquareD6 = 19
+	SquareE6 = 20
+	SquareF6 = 21
+	SquareG6 = 22
+	SquareH6 = 23
+	SquareA5 = 24
+	SquareB5 = 25
+	SquareC5 = 26
+	SquareD5 = 27
+	SquareE5 = 28
+	SquareF5 = 29
+	SquareG5 = 30
+	SquareH5 = 31
+	SquareA4 = 32
+	SquareB4 = 33
+	SquareC4 = 34
+	SquareD4 = 35
+	SquareE4 = 36
+	SquareF4 = 37
+	SquareG4 = 38
+	SquareH4 = 39
+	SquareA3 = 40
+	SquareB3 = 41
+	SquareC3 = 42
+	SquareD3 = 43
+	SquareE3 = 44
+	SquareF3 = 45
+	SquareG3 = 46
+	SquareH3 = 47
+	SquareA2 = 48
+	SquareB2 = 49
+	SquareC2 = 50
+	SquareD2 = 51
+	SquareE2 = 52
+	SquareF2 = 53
+	SquareG2 = 54
+	SquareH2 = 55
+	SquareA1 = 56
+	SquareB1 = 57
+	SquareC1 = 58
+	SquareD1 = 59
+	SquareE1 = 60
+	SquareF1 = 61
+	SquareG1 = 62
+	SquareH1 = 63
+)
+
+// SquareIndexToName converts a square index (0-63) to its algebraic name (e.g., 0 -> "a8").
+func SquareIndexToName(idx byte) (string, bool) {
+	if idx >= 64 {
+		return "", false
+	}
+	return BoardSquareNames[idx], true
+}

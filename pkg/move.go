@@ -40,8 +40,6 @@ func NewMove(from byte, to byte, moveType byte, data [2]byte) Move {
 	}
 }
 
-// N, S, E, W, NE, SE, SW, SE
-
 func generateSquaresToEdge() [64][8]byte {
 	squares := [64][8]byte{}
 	for i := range squares {
@@ -84,6 +82,27 @@ func generateKnightJumps() [64][8]byte {
 	return squares
 }
 
+func (move Move) ToUCI() string {
+	from, _ := SquareIndexToName(move.From)
+	to, _ := SquareIndexToName(move.To)
+	uci := from + to
+	if move.MoveType == MovePromotion || move.MoveType == MovePromotionCapture {
+		promo := ""
+		switch move.Data[0] {
+		case WhiteQueen, BlackQueen:
+			promo = "q"
+		case WhiteRook, BlackRook:
+			promo = "r"
+		case WhiteBishop, BlackBishop:
+			promo = "b"
+		case WhiteKnight, BlackKnight:
+			promo = "n"
+		}
+		uci += promo
+	}
+	return uci
+}
+
 var SquaresToEdge [64][8]byte = generateSquaresToEdge()
-var BoardDirOffsets [8]int8 = [8]int8{-8, 1, 8, -1, -7, 9, 7, -9}
 var SquareKnightJumps [64][8]byte = generateKnightJumps()
+var BoardDirOffsets [8]int8 = [8]int8{-8, 1, 8, -1, -7, 9, 7, -9}
