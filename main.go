@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	. "libra/pkg"
-	"math/rand"
 	"os"
 	"strings"
 )
@@ -34,8 +33,7 @@ func main() {
 			board.GenerateLegalMoves()
 			fmt.Println("info score cp 0")
 			if len(board.Moves) > 0 {
-				randomMoveIndex := rand.Intn(len(board.Moves))
-				move := board.Moves[randomMoveIndex]
+				move := board.Moves[0]
 				fmt.Printf("bestmove %s\n", move.ToUCI())
 			} else {
 				fmt.Println("bestmove 0000")
