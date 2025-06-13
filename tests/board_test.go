@@ -187,7 +187,7 @@ func TestShouldGenerateQueenMoves(t *testing.T) {
 	}
 
 	board.FromFEN("8/8/8/8/8/8/8/Q7")
-	board.GenerateQueenMoves(board.WhiteToMove)
+	moves = board.GenerateQueenMoves(board.WhiteToMove)
 	if len(moves) != 21 {
 		t.Fail()
 	}
