@@ -3,9 +3,10 @@ package main
 import (
 	"bufio"
 	"fmt"
-	. "libra/pkg"
 	"os"
 	"strings"
+
+	. "github.com/eugenioenko/libra-chess/pkg"
 )
 
 func main() {

@@ -1,8 +1,9 @@
 package libra_test
 
 import (
-	. "libra/pkg"
 	"testing"
+
+	. "github.com/eugenioenko/libra-chess/pkg"
 )
 
 var tt = NewTranspositionTable()

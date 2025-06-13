@@ -1,5 +1,5 @@
 # Variables
-APP_NAME=LibraChess
+APP_NAME=libra-chess
 
 # Default target
 all: build
@@ -28,8 +28,8 @@ lint:
 test-cutechess:
 	make build
 	./dist/cutechess-cli/cutechess-cli \
-		-engine name=PullLibra cmd=./libra \
-		-engine name=MainLibra cmd=./libramain \
+		-engine name=PullLibra cmd=./libra-chess \
+		-engine name=MainLibra cmd=./libra-main \
 		-each proto=uci tc=180+2 \
 		-games 10 \
 		-concurrency 10 \
@@ -41,7 +41,7 @@ test-cutechess:
 test-stockfish:
 	make build
 	./dist/cutechess-cli/cutechess-cli \
-		-engine name=PullLibra cmd=./libra \
+		-engine name=PullLibra cmd=./libra-chess \
 		-engine name=Stockfish cmd=./stockfish/stockfish-cli option.UCI_LimitStrength=true option.UCI_Elo=1320 \
 		-each proto=uci tc=10+0.1 \
 		-games 10 \
@@ -54,8 +54,8 @@ test-stockfish:
 test-debug:
 	make build
 	./dist/cutechess-cli/cutechess-cli \
-		-engine name=PullLibra cmd=./libra \
-		-engine name=MainLibra cmd=./libramain \
+		-engine name=PullLibra cmd=./libra-chess \
+		-engine name=MainLibra cmd=./libra-main \
 		-each proto=uci tc=180+2 \
 		-games 1 \
 		-concurrency 10 \

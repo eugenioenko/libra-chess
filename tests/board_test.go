@@ -2,8 +2,9 @@ package libra_test
 
 import (
 	"fmt"
-	. "libra/pkg"
 	"testing"
+
+	. "github.com/eugenioenko/libra-chess/pkg"
 )
 
 func TestShouldInsertValues(t *testing.T) {
