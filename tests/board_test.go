@@ -22,9 +22,9 @@ func TestShouldInsertValues(t *testing.T) {
 func TestShouldCalculateZobristHash(t *testing.T) {
 	board := NewBoard()
 	board.FromFEN(BoardInitialFEN)
-	hashA := ZobristHash(board)
+	hashA := board.ZobristHash()
 	board.FromFEN("rnbqkb1r/ppp1p1pp/8/3p1pP1/3Pn3/2N5/PPP1PP1P/R1BQKBNR w KQkq - 1 5")
-	hashB := ZobristHash(board)
+	hashB := board.ZobristHash()
 	board.PrintPosition()
 	if hashA == 0 {
 		t.Fail()
@@ -38,45 +38,28 @@ func TestShouldCalculateZobristHash(t *testing.T) {
 func TestShouldGeneratePawnMoves(t *testing.T) {
 	board := NewBoard()
 	board.FromFEN(BoardInitialFEN)
-	board.GeneratePawnMoves(board.WhiteToMove)
-	if len(board.Moves) != 16 {
+	moves := board.GeneratePawnMoves(board.WhiteToMove)
+	if len(moves) != 16 {
 		t.Fail()
 	}
-	if board.CountMoves().Capture != 0 {
+	if CountMoves(moves).Capture != 0 {
 		t.Fail()
 	}
 	board.FromFEN("rnbqkbnr/4p3/pp1p1p1p/2p3p1/1P1PPPP1/P1P5/7P/RNBQKBNR w KQkq - 0 8")
-	board.GeneratePawnMoves(board.WhiteToMove)
-	if len(board.Moves) != 11 {
+	moves = board.GeneratePawnMoves(board.WhiteToMove)
+	if len(moves) != 11 {
 		t.Fail()
 	}
-	if board.CountMoves().Capture != 3 {
+	if CountMoves(moves).Capture != 3 {
 		t.Fail()
 	}
-
-	/*
-		board.FromFEN("rnbqkbnr/ppppppp1/7p/8/P7/8/1PPPPPPP/RNBQKBNR w KQkq - 0 2")
-		board.GenerateLegalMoves()
-		if len(board.Moves) != 0 {
-			t.Fail()
-		}
-
-
-		/*
-			board.FromFEN("8/6k1/p7/P5K1/8/8/8/8 b - - 0 1")
-			board.GenerateLegalMoves()
-			if len(board.Moves) != 0 {
-				t.Fail()
-			}
-	*/
-
 }
 
 func TestShouldGenerateOnPassantPawnMoves(t *testing.T) {
 	board := NewBoard()
 	board.FromFEN("rnbqkbnr/8/pp1p1p1p/2p1pPp1/1P1PP1P1/P1P5/7P/RNBQKBNR w KQkq e6 0 9")
-	board.GeneratePawnMoves(board.WhiteToMove)
-	if board.CountMoves().Capture != 4 {
+	moves := board.GeneratePawnMoves(board.WhiteToMove)
+	if CountMoves(moves).Capture != 4 {
 		t.Fail()
 	}
 }
@@ -84,14 +67,14 @@ func TestShouldGenerateOnPassantPawnMoves(t *testing.T) {
 func TestShouldGeneratePromotionMoves(t *testing.T) {
 	board := NewBoard()
 	board.FromFEN("3n4/4P3/8/8/2K2k2/8/8/8 w - - 0 1")
-	board.GeneratePawnMoves(board.WhiteToMove)
-	if board.CountMoves().Promotion != 8 {
+	moves := board.GeneratePawnMoves(board.WhiteToMove)
+	if CountMoves(moves).Promotion != 8 {
 		t.Fail()
 	}
 
 	board.FromFEN("8/2P5/8/4k3/8/4K3/7p/8 b - - 0 1")
-	board.GeneratePawnMoves(board.WhiteToMove)
-	if board.CountMoves().Promotion != 4 {
+	moves = board.GeneratePawnMoves(board.WhiteToMove)
+	if CountMoves(moves).Promotion != 4 {
 		t.Fail()
 	}
 
@@ -101,41 +84,41 @@ func TestShouldGenerateRookMoves(t *testing.T) {
 	board := NewBoard()
 
 	board.FromFEN("1k4r1/8/2R4p/8/8/8/8/7K")
-	board.GenerateRookMoves(board.WhiteToMove)
-	if len(board.Moves) != 14 {
+	moves := board.GenerateRookMoves(board.WhiteToMove)
+	if len(moves) != 14 {
 		t.Fail()
 	}
-	if board.CountMoves().Capture != 1 {
+	if CountMoves(moves).Capture != 1 {
 		t.Fail()
 	}
 
 	board.FromFEN("8/8/8/8/8/8/8/R7")
-	board.GenerateRookMoves(board.WhiteToMove)
-	if len(board.Moves) != 14 {
+	moves = board.GenerateRookMoves(board.WhiteToMove)
+	if len(moves) != 14 {
 		t.Fail()
 	}
 
 	board.FromFEN("R7/8/8/8/8/8/8/8")
-	board.GenerateRookMoves(board.WhiteToMove)
-	if len(board.Moves) != 14 {
+	moves = board.GenerateRookMoves(board.WhiteToMove)
+	if len(moves) != 14 {
 		t.Fail()
 	}
 
 	board.FromFEN("7R/8/8/8/8/8/8/8")
-	board.GenerateRookMoves(board.WhiteToMove)
-	if len(board.Moves) != 14 {
+	moves = board.GenerateRookMoves(board.WhiteToMove)
+	if len(moves) != 14 {
 		t.Fail()
 	}
 
 	board.FromFEN("8/8/8/8/8/8/8/7R")
-	board.GenerateRookMoves(board.WhiteToMove)
-	if len(board.Moves) != 14 {
+	moves = board.GenerateRookMoves(board.WhiteToMove)
+	if len(moves) != 14 {
 		t.Fail()
 	}
 
 	board.FromFEN("8/8/4R3/8/8/8/8/8")
-	board.GenerateRookMoves(board.WhiteToMove)
-	if len(board.Moves) != 14 {
+	moves = board.GenerateRookMoves(board.WhiteToMove)
+	if len(moves) != 14 {
 		t.Fail()
 	}
 
@@ -145,32 +128,32 @@ func TestShouldGenerateBishopMoves(t *testing.T) {
 	board := NewBoard()
 
 	board.FromFEN("8/8/8/4B3/8/8/8/8")
-	board.GenerateBishopMoves(board.WhiteToMove)
-	if len(board.Moves) != 13 {
+	moves := board.GenerateBishopMoves(board.WhiteToMove)
+	if len(moves) != 13 {
 		t.Fail()
 	}
 
 	board.FromFEN("B7/8/8/8/8/8/8/8")
-	board.GenerateBishopMoves(board.WhiteToMove)
-	if len(board.Moves) != 7 {
+	moves = board.GenerateBishopMoves(board.WhiteToMove)
+	if len(moves) != 7 {
 		t.Fail()
 	}
 
 	board.FromFEN("7B/8/8/8/8/8/8/8")
-	board.GenerateBishopMoves(board.WhiteToMove)
-	if len(board.Moves) != 7 {
+	moves = board.GenerateBishopMoves(board.WhiteToMove)
+	if len(moves) != 7 {
 		t.Fail()
 	}
 
 	board.FromFEN("8/8/8/8/8/8/8/7B")
-	board.GenerateBishopMoves(board.WhiteToMove)
-	if len(board.Moves) != 7 {
+	moves = board.GenerateBishopMoves(board.WhiteToMove)
+	if len(moves) != 7 {
 		t.Fail()
 	}
 
 	board.FromFEN("8/8/8/8/8/8/8/B7")
-	board.GenerateBishopMoves(board.WhiteToMove)
-	if len(board.Moves) != 7 {
+	moves = board.GenerateBishopMoves(board.WhiteToMove)
+	if len(moves) != 7 {
 		t.Fail()
 	}
 }
@@ -179,32 +162,32 @@ func TestShouldGenerateQueenMoves(t *testing.T) {
 	board := NewBoard()
 
 	board.FromFEN("8/8/8/4Q3/8/8/8/8")
-	board.GenerateQueenMoves(board.WhiteToMove)
-	if len(board.Moves) != 27 {
+	moves := board.GenerateQueenMoves(board.WhiteToMove)
+	if len(moves) != 27 {
 		t.Fail()
 	}
 
 	board.FromFEN("Q7/8/8/8/8/8/8/8")
-	board.GenerateQueenMoves(board.WhiteToMove)
-	if len(board.Moves) != 21 {
+	moves = board.GenerateQueenMoves(board.WhiteToMove)
+	if len(moves) != 21 {
 		t.Fail()
 	}
 
 	board.FromFEN("7Q/8/8/8/8/8/8/8")
 	board.GenerateQueenMoves(board.WhiteToMove)
-	if len(board.Moves) != 21 {
+	if len(moves) != 21 {
 		t.Fail()
 	}
 
 	board.FromFEN("8/8/8/8/8/8/8/7Q")
-	board.GenerateQueenMoves(board.WhiteToMove)
-	if len(board.Moves) != 21 {
+	moves = board.GenerateQueenMoves(board.WhiteToMove)
+	if len(moves) != 21 {
 		t.Fail()
 	}
 
 	board.FromFEN("8/8/8/8/8/8/8/Q7")
 	board.GenerateQueenMoves(board.WhiteToMove)
-	if len(board.Moves) != 21 {
+	if len(moves) != 21 {
 		t.Fail()
 	}
 }
@@ -213,34 +196,34 @@ func TestShouldGenerateKingMoves(t *testing.T) {
 	board := NewBoard()
 
 	board.FromFEN("8/8/8/4K3/8/8/8/8")
-	board.GenerateKingMoves(board.WhiteToMove)
-	if len(board.Moves) != 8 {
+	moves := board.GenerateKingMoves(board.WhiteToMove)
+	if len(moves) != 8 {
 		t.Fail()
 	}
 
 	board.FromFEN("K7/8/8/8/8/8/8/8")
-	board.GenerateKingMoves(board.WhiteToMove)
-	if len(board.Moves) != 3 {
+	moves = board.GenerateKingMoves(board.WhiteToMove)
+	if len(moves) != 3 {
 		t.Fail()
 	}
 
 	// King vs queen (king on a8, queen on b8)
 	board.FromFEN("KQ6/8/8/8/8/8/8/8")
-	board.GenerateKingMoves(board.WhiteToMove)
-	if len(board.Moves) != 2 {
+	moves = board.GenerateKingMoves(board.WhiteToMove)
+	if len(moves) != 2 {
 		t.Fail()
 	}
 
 	// King vs queen 2 (king on h8, queen on g8)
 	board.FromFEN("6QK/8/8/8/8/8/8/8")
-	board.GenerateKingMoves(board.WhiteToMove)
-	if len(board.Moves) != 2 {
+	moves = board.GenerateKingMoves(board.WhiteToMove)
+	if len(moves) != 2 {
 		t.Fail()
 	}
 
 	board.FromFEN("8/8/8/8/8/8/8/K7")
-	board.GenerateKingMoves(board.WhiteToMove)
-	if len(board.Moves) != 3 {
+	moves = board.GenerateKingMoves(board.WhiteToMove)
+	if len(moves) != 3 {
 		t.Fail()
 	}
 }
@@ -249,33 +232,33 @@ func TestShouldGenerateKnightMoves(t *testing.T) {
 	board := NewBoard()
 
 	board.FromFEN("8/8/8/4N3/8/8/8/8")
-	board.GenerateKnightMoves(board.WhiteToMove)
-	if len(board.Moves) != 8 {
+	moves := board.GenerateKnightMoves(board.WhiteToMove)
+	if len(moves) != 8 {
 		t.Fail()
 	}
 
 	board.FromFEN("N7/8/8/8/8/8/8/8")
-	board.GenerateKnightMoves(board.WhiteToMove)
-	if len(board.Moves) != 2 {
+	moves = board.GenerateKnightMoves(board.WhiteToMove)
+	if len(moves) != 2 {
 		t.Fail()
 	}
 
 	board.FromFEN("7N/8/8/8/8/8/8/8")
-	board.GenerateKnightMoves(board.WhiteToMove)
-	if len(board.Moves) != 2 {
+	moves = board.GenerateKnightMoves(board.WhiteToMove)
+	if len(moves) != 2 {
 		t.Fail()
 	}
 
 	board.FromFEN("8/8/8/8/8/8/8/7N")
-	board.GenerateKnightMoves(board.WhiteToMove)
-	if len(board.Moves) != 2 {
+	moves = board.GenerateKnightMoves(board.WhiteToMove)
+	if len(moves) != 2 {
 		t.Fail()
 	}
 
 	board.FromFEN("8/8/8/8/8/8/8/N7")
 
-	board.GenerateKnightMoves(board.WhiteToMove)
-	if len(board.Moves) != 2 {
+	moves = board.GenerateKnightMoves(board.WhiteToMove)
+	if len(moves) != 2 {
 		t.Fail()
 	}
 }
@@ -283,9 +266,9 @@ func TestShouldGenerateKnightMoves(t *testing.T) {
 func TestShouldGenerateOnlyLegalMoves(t *testing.T) {
 	board := NewBoard()
 	board.FromFEN("8/8/5k2/8/q5q1/q5q1/2P1P3/3K4 w - - 0 1")
-	board.GenerateLegalMoves()
+	moves := board.GenerateLegalMoves()
 
-	if len(board.Moves) != 1 {
+	if len(moves) != 1 {
 		t.Fail()
 	}
 }
@@ -296,8 +279,8 @@ func TestEnPassantExposesKing(t *testing.T) {
 	// After d5-d4, e5xd6 en passant would expose the white king to check from the rook
 	board := NewBoard()
 	board.FromFEN("4k3/8/8/3pP3/4r3/8/8/4K3 w - - 0 1")
-	board.GenerateLegalMoves()
-	for _, move := range board.Moves {
+	moves := board.GenerateLegalMoves()
+	for _, move := range moves {
 		if move.MoveType == MoveEnPassant {
 			t.Errorf("En passant should not be legal if it exposes the king to check")
 		}
@@ -310,9 +293,9 @@ func TestPromotionCaptureRemovesCastlingRights(t *testing.T) {
 	// White plays g8=Q capturing rook on h8
 	board := NewBoard()
 	board.FromFEN("4k2r/6P1/8/8/8/8/8/4K3 w Kk - 0 1")
-	board.GeneratePawnMoves(true)
+	moves := board.GeneratePawnMoves(true)
 	found := false
-	for _, move := range board.Moves {
+	for _, move := range moves {
 		if move.MoveType == MovePromotionCapture && move.To == SquareH8 {
 			found = true
 			board.MakeMove(move)
@@ -334,9 +317,9 @@ func TestMoveKingIntoCheck(t *testing.T) {
 	board.Position[SquareE8] = BlackRook
 	board.WhiteToMove = true
 	board.UpdatePiecesLocation()
-	board.GenerateLegalMoves()
+	moves := board.GenerateLegalMoves()
 	// Check that moves where the king would move into the rook's attack line are not generated
-	for _, move := range board.Moves {
+	for _, move := range moves {
 		if move.From == SquareE1 && (move.To == SquareE2 || move.To == SquareE3 || move.To == SquareE4 || move.To == SquareE5 || move.To == SquareE6 || move.To == SquareE7 || move.To == SquareE8) {
 			t.Errorf("King should not be able to move to %d which is in the rook's attack line", move.To)
 		}
@@ -350,8 +333,8 @@ func TestMoveKingAdjacentToEnemyKing(t *testing.T) {
 	board.Position[SquareE2] = BlackKing
 	board.WhiteToMove = true
 	board.UpdatePiecesLocation()
-	board.GenerateLegalMoves()
-	for _, move := range board.Moves {
+	moves := board.GenerateLegalMoves()
+	for _, move := range moves {
 		if move.From == SquareE1 && move.To == SquareE2 {
 			t.Errorf("Move king from e1 to e2 should not be legal (adjacent to enemy king)")
 		}
@@ -391,8 +374,8 @@ func TestPawnBlockedAndNoDoublePush(t *testing.T) {
 	board.Position[SquareE3] = BlackPawn
 	board.UpdatePiecesLocation()
 	board.WhiteToMove = true
-	board.GeneratePawnMoves(true)
-	if len(board.Moves) != 0 {
+	moves := board.GeneratePawnMoves(true)
+	if len(moves) != 0 {
 		t.Errorf("Blocked pawn should have no moves")
 	}
 }
@@ -405,9 +388,9 @@ func TestPawnPromotionWithCaptureAndNoCapture(t *testing.T) {
 	board.Position[SquareH8] = BlackRook
 	board.UpdatePiecesLocation()
 	board.WhiteToMove = true
-	board.GeneratePawnMoves(true)
+	moves := board.GeneratePawnMoves(true)
 	promotion, capture := false, false
-	for _, move := range board.Moves {
+	for _, move := range moves {
 		if move.MoveType == MovePromotion {
 			promotion = true
 		}
@@ -428,9 +411,9 @@ func TestKnightEdgeCases(t *testing.T) {
 	board.Position[SquareH8] = WhiteKnight
 	board.UpdatePiecesLocation()
 	board.WhiteToMove = true
-	board.GenerateKnightMoves(true)
-	if len(board.Moves) != 4 {
-		t.Errorf("Knights on corners should have 2 moves each (total 4 moves), got %d", len(board.Moves))
+	moves := board.GenerateKnightMoves(true)
+	if len(moves) != 4 {
+		t.Errorf("Knights on corners should have 2 moves each (total 4 moves), got %d", len(moves))
 	}
 }
 
@@ -442,9 +425,9 @@ func TestRookBlockedAndEdge(t *testing.T) {
 	board.Position[SquareA2] = WhitePawn
 	board.UpdatePiecesLocation()
 	board.WhiteToMove = true
-	board.GenerateRookMoves(true)
-	if len(board.Moves) != 7 {
-		t.Errorf("Rook should have 7 moves along the 1st rank, got %d", len(board.Moves))
+	moves := board.GenerateRookMoves(true)
+	if len(moves) != 7 {
+		t.Errorf("Rook should have 7 moves along the 1st rank, got %d", len(moves))
 	}
 }
 
@@ -457,9 +440,9 @@ func TestQueenBlockedAndEdge(t *testing.T) {
 	board.Position[SquareB2] = WhitePawn
 	board.UpdatePiecesLocation()
 	board.WhiteToMove = true
-	board.GenerateQueenMoves(true)
-	if len(board.Moves) != 7 {
-		t.Errorf("Queen should have 7 moves along the 1st rank, got %d", len(board.Moves))
+	moves := board.GenerateQueenMoves(true)
+	if len(moves) != 7 {
+		t.Errorf("Queen should have 7 moves along the 1st rank, got %d", len(moves))
 	}
 }
 
@@ -470,8 +453,8 @@ func TestKingCannotMoveIntoCheck(t *testing.T) {
 	board.Position[SquareE3] = BlackRook
 	board.UpdatePiecesLocation()
 	board.WhiteToMove = true
-	board.GenerateLegalMoves()
-	for _, move := range board.Moves {
+	moves := board.GenerateLegalMoves()
+	for _, move := range moves {
 		if move.From == SquareE1 && move.To == SquareE2 {
 			t.Errorf("King should not be able to move into check")
 		}

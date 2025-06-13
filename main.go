@@ -20,7 +20,7 @@ func main() {
 		switch fields[0] {
 		case "uci":
 			fmt.Println("id name LibraChess")
-			fmt.Println("id author YourName")
+			fmt.Println("id author eugenioenko")
 			fmt.Println("uciok")
 		case "isready":
 			fmt.Println("readyok")
@@ -30,10 +30,18 @@ func main() {
 		case "position":
 			board.ParseAndApplyPosition(fields[1:])
 		case "go":
-			board.GenerateLegalMoves()
-			fmt.Println("info score cp 0")
-			if len(board.Moves) > 0 {
-				move := board.Moves[0]
+			tt := NewTranspositionTable()
+			depth := 4
+			material := board.CountPieces()
+			if material < 20 {
+				depth = 4
+			}
+			if board.OnlyKingLeft() {
+				depth = 4
+			}
+			score, move := board.Search(depth, tt)
+			fmt.Printf("info score cp %d\n", score)
+			if move != nil {
 				fmt.Printf("bestmove %s\n", move.ToUCI())
 			} else {
 				fmt.Println("bestmove 0000")
