@@ -10,6 +10,12 @@ import (
 )
 
 func main() {
+	fmt.Println("Welcome to LibraChess v1.0.1!")
+	fmt.Println("Ready to play? Type 'uci' to begin your chess adventure!")
+	fmt.Println("Type 'quit' to exit the CLI at any time.")
+	fmt.Println("LibraChess is a UCI chess engine, designed to be used with a chess GUI (like CuteChess, CoreChess, PyChess, etc.)")
+	fmt.Println("For more information, visit: https://github.com/eugenioenko/libra-chess")
+
 	scanner := bufio.NewScanner(os.Stdin)
 	board := NewBoard()
 	for scanner.Scan() {

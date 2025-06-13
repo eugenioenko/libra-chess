@@ -8,6 +8,22 @@ all: build
 build:
 	go build -o $(APP_NAME) main.go
 
+# Build release binaries for Linux, macOS, and Windows
+.PHONY: build-release
+build-release:
+	mkdir -p release
+	# Linux
+	GOOS=linux GOARCH=amd64 go build -o release/$(APP_NAME)-linux-amd64 main.go
+	GOOS=linux GOARCH=arm64 go build -o release/$(APP_NAME)-linux-arm64 main.go
+	GOOS=linux GOARCH=386 go build -o release/$(APP_NAME)-linux-386 main.go
+	# macOS
+	GOOS=darwin GOARCH=amd64 go build -o release/$(APP_NAME)-darwin-amd64 main.go
+	GOOS=darwin GOARCH=arm64 go build -o release/$(APP_NAME)-darwin-arm64 main.go
+	# Windows
+	GOOS=windows GOARCH=amd64 go build -o release/$(APP_NAME)-windows-amd64.exe main.go
+	GOOS=windows GOARCH=arm64 go build -o release/$(APP_NAME)-windows-arm64.exe main.go
+	GOOS=windows GOARCH=386 go build -o release/$(APP_NAME)-windows-386.exe main.go
+
 # Run the application
 run:
 	go run main.go
