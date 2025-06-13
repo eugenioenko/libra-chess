@@ -51,7 +51,7 @@ func GenerateZobristOnPassantTable() [64]uint64 {
 	return table
 }
 
-func ZobristHash(board *Board) uint64 {
+func (board *Board) ZobristHash() uint64 {
 	var hash uint64 = 0
 
 	// hash pieces
@@ -74,11 +74,11 @@ func ZobristHash(board *Board) uint64 {
 	if board.CastlingAvailability.WhiteKingSide {
 		hash ^= zobristCastlingAvailability.WhiteKingSide
 	}
-	if board.CastlingAvailability.WhiteKingSide {
-		hash ^= zobristCastlingAvailability.WhiteKingSide
+	if board.CastlingAvailability.WhiteQueenSide {
+		hash ^= zobristCastlingAvailability.WhiteQueenSide
 	}
 
-	// hash on passant
+	// hash en passant (should only hash file if a pawn can capture)
 	if board.OnPassant != 0 {
 		hash ^= zobristOnPassantTable[board.OnPassant]
 	}
