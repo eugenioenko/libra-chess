@@ -17,51 +17,51 @@ func (board *Board) EvaluateMaterialAndPST() (int, int) {
 	whiteScore := 0
 	blackScore := 0
 	for _, sq := range board.Pieces.White.Pawns {
-		whiteScore += 100
+		whiteScore += PieceCodeToValue[WhitePawn]
 		whiteScore += pawnPST[sq]
 	}
 	for _, sq := range board.Pieces.Black.Pawns {
-		blackScore += 100
+		blackScore += PieceCodeToValue[BlackPawn]
 		blackScore += pawnPST[mirrorIndex(sq)]
 	}
 	for _, sq := range board.Pieces.White.Knights {
-		whiteScore += 300
+		whiteScore += PieceCodeToValue[WhiteKnight]
 		whiteScore += knightPST[sq]
 	}
 	for _, sq := range board.Pieces.Black.Knights {
-		blackScore += 300
+		blackScore += PieceCodeToValue[BlackKnight]
 		blackScore += knightPST[mirrorIndex(sq)]
 	}
 	for _, sq := range board.Pieces.White.Bishops {
-		whiteScore += 300
+		whiteScore += PieceCodeToValue[WhiteBishop]
 		whiteScore += bishopPST[sq]
 	}
 	for _, sq := range board.Pieces.Black.Bishops {
-		blackScore += 300
+		blackScore += PieceCodeToValue[BlackBishop]
 		blackScore += bishopPST[mirrorIndex(sq)]
 	}
 	for _, sq := range board.Pieces.White.Rooks {
-		whiteScore += 500
+		whiteScore += PieceCodeToValue[WhiteRook]
 		whiteScore += rookPST[sq]
 	}
 	for _, sq := range board.Pieces.Black.Rooks {
-		blackScore += 500
+		blackScore += PieceCodeToValue[BlackRook]
 		blackScore += rookPST[mirrorIndex(sq)]
 	}
 	for _, sq := range board.Pieces.White.Queens {
-		whiteScore += 900
+		whiteScore += PieceCodeToValue[WhiteQueen]
 		whiteScore += queenPST[sq]
 	}
 	for _, sq := range board.Pieces.Black.Queens {
-		blackScore += 900
+		blackScore += PieceCodeToValue[BlackQueen]
 		blackScore += queenPST[mirrorIndex(sq)]
 	}
 	if board.Pieces.White.King != 0 {
-		whiteScore += 0
+		whiteScore += PieceCodeToValue[WhiteKing]
 		whiteScore += kingPST[board.Pieces.White.King]
 	}
 	if board.Pieces.Black.King != 0 {
-		blackScore += 0
+		blackScore += PieceCodeToValue[BlackKing]
 		blackScore += kingPST[mirrorIndex(board.Pieces.Black.King)]
 	}
 

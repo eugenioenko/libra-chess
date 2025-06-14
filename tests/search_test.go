@@ -41,14 +41,29 @@ func TestSearch4(t *testing.T) {
 		t.Errorf("Expected move g1h1, got %s", uci)
 	}
 }
-
-/*
-func TestSearchMate(t *testing.T) {
+func TestCaptureWithLessFirst(t *testing.T) {
 	board := NewBoard()
-	board.FromFEN("2Q1k3/8/7Q/8/8/8/8/4K3 w - - 0 1")
-	score, move := board.Search(7, tt)
+	board.FromFEN("k7/8/4p3/3r4/2B1Q3/8/8/7K w - - 0 1")
+	_, move := board.Search(1, tt)
 
-	fmt.Printf("Score: %d, Move: %s\n", score, move.ToUCI())
+	if move == nil || move.ToUCI() != "c4d5" {
+		t.Errorf("Expected move c4d5, got %s", move.ToUCI())
+	}
 
+	board.FromFEN("k7/8/4p3/3r4/2Q1B3/8/8/7K w - - 0 1")
+	_, move = board.Search(2, tt)
+
+	if move == nil || move.ToUCI() != "e4d5" {
+		t.Errorf("Expected move e4d5, got %s", move.ToUCI())
+	}
 }
-*/
+
+func TestPreferMateInsteadOfCapture(t *testing.T) {
+	board := NewBoard()
+	board.FromFEN("k7/8/4p3/3r4/2Q1B3/8/8/7K w - - 0 1")
+	_, move := board.Search(5, tt)
+
+	if move == nil || move.ToUCI() != "c4c7" {
+		t.Errorf("Expected move c4c7, got %s", move.ToUCI())
+	}
+}

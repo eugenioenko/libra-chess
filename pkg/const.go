@@ -193,18 +193,18 @@ var PieceCodeToNotation = map[byte]string{
 }
 
 var PieceCodeToValue = map[byte]int{
-	WhitePawn:   1,
-	WhiteKnight: 3,
-	WhiteBishop: 3,
-	WhiteRook:   5,
-	WhiteQueen:  9,
-	WhiteKing:   100,
-	BlackPawn:   1,
-	BlackKnight: 3,
-	BlackBishop: 3,
-	BlackRook:   5,
-	BlackQueen:  9,
-	BlackKing:   100,
+	WhitePawn:   100,
+	WhiteKnight: 300,
+	WhiteBishop: 300,
+	WhiteRook:   500,
+	WhiteQueen:  900,
+	WhiteKing:   0,
+	BlackPawn:   100,
+	BlackKnight: 300,
+	BlackBishop: 300,
+	BlackRook:   500,
+	BlackQueen:  900,
+	BlackKing:   0,
 }
 
 var WhitePromotionMap = map[byte]byte{
