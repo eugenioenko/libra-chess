@@ -1,5 +1,7 @@
 package libra
 
+import "fmt"
+
 const (
 	MoveQuiet = iota
 	MoveCapture
@@ -128,6 +130,17 @@ func (move Move) ToUCI() string {
 		uci += promo
 	}
 	return uci
+}
+
+func (move Move) ToMove() string {
+	from := BoardSquareNames[move.From]
+	to := BoardSquareNames[move.To]
+	piece := pieceCodeToFont[move.Data[0]]
+	capture := " "
+	if move.MoveType == MoveCapture || move.MoveType == MovePromotionCapture || move.MoveType == MoveEnPassant {
+		capture = "x"
+	}
+	return fmt.Sprintf("%s%s%s%s\n", piece, from, capture, to)
 }
 
 var SquaresToEdge [64][8]byte = generateSquaresToEdge()

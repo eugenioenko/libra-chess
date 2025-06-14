@@ -316,9 +316,31 @@ func (board *Board) GenerateLegalMoves() []Move {
 			legalMoves = append(legalMoves, move)
 		}
 	}
-	// Sort moves by MoveType descending (higher MoveType is better)
+	// Sort moves by MoveType descending, then by From, To, and promotion piece for full determinism
 	sort.SliceStable(legalMoves, func(i, j int) bool {
-		return legalMoves[i].MoveType > legalMoves[j].MoveType
+		if legalMoves[i].MoveType != legalMoves[j].MoveType {
+			// Promotion and captures are prioritized
+			return legalMoves[i].MoveType > legalMoves[j].MoveType
+		}
+		if legalMoves[i].From != legalMoves[j].From {
+			// Lower 'From' square first
+			return legalMoves[i].From < legalMoves[j].From
+		}
+		if legalMoves[i].To != legalMoves[j].To {
+			// Lower 'To' square first
+			return legalMoves[i].To < legalMoves[j].To
+		}
+		// For promotions, ensure consistent order by promotion piece
+		if legalMoves[i].MoveType == MovePromotion || legalMoves[i].MoveType == MovePromotionCapture {
+			if legalMoves[i].Data[0] != legalMoves[j].Data[0] {
+				// For promotions, sort by piece value in ascending order: Knight < Bishop < Rook < Queen.
+				// This ensures deterministic move ordering, so that when multiple promotions have equal evaluation,
+				// the queen promotion (highest value) is preferred if all else is equal.
+				return legalMoves[i].Data[0] < legalMoves[j].Data[0]
+			}
+		}
+		// Moves are considered equal for sorting if all criteria match
+		return false
 	})
 	return legalMoves
 }

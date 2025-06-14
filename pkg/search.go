@@ -7,8 +7,9 @@ const (
 )
 
 type searchResult struct {
-	score int
-	move  Move
+	score         int
+	move          Move
+	originalIndex int
 }
 
 func (board *Board) Search(depth int, tt *TranspositionTable) (int, *Move) {
@@ -23,13 +24,14 @@ func (board *Board) Search(depth int, tt *TranspositionTable) (int, *Move) {
 	}
 
 	var bestMove *Move
+	var bestMoveOriginalIndex int = -1 // Initialize with an invalid index
 	numMoves := len(moves)
 	moveChan := make(chan searchResult, numMoves)
 	var wg sync.WaitGroup
 
-	for _, currentMove := range moves {
+	for i, currentMove := range moves {
 		wg.Add(1)
-		go func(m Move) {
+		go func(m Move, index int) {
 			defer wg.Done()
 			clone := board.Clone()
 			clone.Move(m)
@@ -37,8 +39,8 @@ func (board *Board) Search(depth int, tt *TranspositionTable) (int, *Move) {
 				depth-1, !maximizing,
 				-MaxEvaluationScore, MaxEvaluationScore, tt,
 			)
-			moveChan <- searchResult{score: score, move: m}
-		}(currentMove)
+			moveChan <- searchResult{score: score, move: m, originalIndex: index}
+		}(currentMove, i)
 	}
 
 	go func() {
@@ -48,18 +50,20 @@ func (board *Board) Search(depth int, tt *TranspositionTable) (int, *Move) {
 
 	for result := range moveChan {
 		if maximizing {
-			if result.score > bestScore || bestMove == nil {
+			if result.score > bestScore || (result.score == bestScore && (bestMove == nil || result.originalIndex < bestMoveOriginalIndex)) {
 				bestScore = result.score
 				// Assign a copy of the move from the result
 				tempMove := result.move
 				bestMove = &tempMove
+				bestMoveOriginalIndex = result.originalIndex
 			}
 		} else {
-			if result.score < bestScore || bestMove == nil {
+			if result.score < bestScore || (result.score == bestScore && (bestMove == nil || result.originalIndex < bestMoveOriginalIndex)) {
 				bestScore = result.score
 				// Assign a copy of the move from the result
 				tempMove := result.move
 				bestMove = &tempMove
+				bestMoveOriginalIndex = result.originalIndex
 			}
 		}
 	}

@@ -16,6 +16,7 @@ func TestSearch5(t *testing.T) {
 	if score < 200 {
 		t.Errorf("Expected score > 200, got %d", score)
 	}
+
 	if move == nil || move.ToUCI() != "d7c8q" {
 		t.Errorf("Expected move d7c8q, got %s", move.ToUCI())
 	}
