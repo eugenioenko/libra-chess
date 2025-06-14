@@ -6,19 +6,6 @@ import (
 	"strings"
 )
 
-const BoardInitialFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-
-var BoardSquareNames [64]string = [64]string{
-	"a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
-	"a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
-	"a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
-	"a5", "b5", "c5", "d5", "e5", "f5", "g5", "h5",
-	"a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4",
-	"a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
-	"a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
-	"a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
-}
-
 type CastlingAvailability struct {
 	BlackKingSide  bool
 	BlackQueenSide bool
@@ -31,7 +18,7 @@ type Board struct {
 	// Position is a 64-byte array representing the board squares (0 = empty, otherwise piece code)
 	Position [64]byte
 	// AttackedSquares marks which squares are currently attacked by the opponent
-	AttackedSquares []bool
+	AttackedSquares [64]bool
 	// CastlingAvailability tracks which castling rights are still available
 	CastlingAvailability CastlingAvailability
 	// Pieces holds the locations of all pieces for both colors
@@ -48,14 +35,28 @@ type Board struct {
 
 // NewBoard creates a new, empty board. You must call LoadInitial or FromFEN to set up a position.
 func NewBoard() *Board {
-	board := &Board{}
-	board.Initialize([64]byte{})
+	board := &Board{
+		Position:        [64]byte{},
+		AttackedSquares: [64]bool{},
+		CastlingAvailability: CastlingAvailability{
+			BlackKingSide:  true,
+			BlackQueenSide: true,
+			WhiteKingSide:  true,
+			WhiteQueenSide: true,
+		},
+		Pieces:          NewPieceColorLocation(),
+		WhiteToMove:     true,
+		OnPassant:       0,
+		HalfMoveClock:   0,
+		FullMoveCounter: 1,
+	}
 	return board
 }
 
 func (board *Board) Reset() {
 	for i := range board.Position {
 		board.Position[i] = 0
+		board.AttackedSquares[i] = false
 	}
 	board.CastlingAvailability = CastlingAvailability{
 		BlackKingSide:  false,
@@ -68,24 +69,6 @@ func (board *Board) Reset() {
 	board.OnPassant = 0
 	board.HalfMoveClock = 0
 	board.FullMoveCounter = 1
-	board.AttackedSquares = make([]bool, 64)
-}
-
-// Initialize sets up the board with a given position array and resets all state (castling, clocks, etc).
-func (board *Board) Initialize(position [64]byte) {
-	board.Position = position
-	board.CastlingAvailability = CastlingAvailability{
-		BlackKingSide:  true,
-		BlackQueenSide: true,
-		WhiteKingSide:  true,
-		WhiteQueenSide: true,
-	}
-	board.Pieces = NewPieceColorLocation()
-	board.WhiteToMove = true
-	board.OnPassant = 0
-	board.HalfMoveClock = 0
-	board.FullMoveCounter = 1
-	board.AttackedSquares = make([]bool, 64)
 }
 
 // LoadInitial sets up the board to the standard chess starting position.
@@ -196,7 +179,7 @@ func (board *Board) ParseAndApplyPosition(positionArgs []string) {
 			for _, moveStr := range positionArgs[i+1:] {
 				move := board.ParseUCIMove(moveStr)
 				if move != nil {
-					board.MakeMove(*move)
+					board.Move(*move)
 				}
 			}
 			break
@@ -410,19 +393,13 @@ func (board *Board) Clone() *Board {
 	clone := NewBoard()
 	// Deep copy Position
 	copy(clone.Position[:], board.Position[:])
+	copy(clone.AttackedSquares[:], board.AttackedSquares[:])
 	clone.CastlingAvailability = board.CastlingAvailability
-	clone.Pieces = board.Pieces
 	clone.WhiteToMove = board.WhiteToMove
 	clone.OnPassant = board.OnPassant
 	clone.HalfMoveClock = board.HalfMoveClock
 	clone.FullMoveCounter = board.FullMoveCounter
-	// Deep copy AttackedSquares
-	if board.AttackedSquares != nil {
-		clone.AttackedSquares = make([]bool, len(board.AttackedSquares))
-		copy(clone.AttackedSquares, board.AttackedSquares)
-	} else {
-		clone.AttackedSquares = make([]bool, 64) // Ensure it's initialized if source was nil
-	}
+	clone.Pieces = board.Pieces.Clone()
 	return clone
 }
 

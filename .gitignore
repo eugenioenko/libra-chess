@@ -3,3 +3,5 @@ libra
 stockfish
 libra-chess
 release
+cpu.prof
+libra-main

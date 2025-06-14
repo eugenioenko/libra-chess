@@ -299,7 +299,7 @@ func TestPromotionCaptureRemovesCastlingRights(t *testing.T) {
 	for _, move := range moves {
 		if move.MoveType == MovePromotionCapture && move.To == SquareH8 {
 			found = true
-			board.MakeMove(move)
+			board.Move(move)
 			if board.CastlingAvailability.BlackKingSide {
 				t.Errorf("Castling rights should be lost after rook is captured by promotion-capture")
 			}
@@ -312,7 +312,6 @@ func TestPromotionCaptureRemovesCastlingRights(t *testing.T) {
 
 func TestMoveKingIntoCheck(t *testing.T) {
 	board := NewBoard()
-	board.Initialize([64]byte{}) // Properly initialize the board
 	// Place white king on e1 (SquareE1), black rook on e8 (SquareE8), white to move
 	board.Position[SquareE1] = WhiteKing
 	board.Position[SquareE8] = BlackRook

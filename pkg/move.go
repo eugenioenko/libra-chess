@@ -1,5 +1,7 @@
 package libra
 
+import "fmt"
+
 const (
 	MoveQuiet = iota
 	MoveCapture
@@ -38,6 +40,17 @@ func NewMove(from byte, to byte, moveType byte, data [2]byte) Move {
 		MoveType: moveType,
 		Data:     data,
 	}
+}
+
+type MoveState struct {
+	Position             [64]byte
+	AttackedSquares      [64]bool
+	Pieces               PieceColorLocation
+	CastlingAvailability CastlingAvailability
+	OnPassant            byte
+	HalfMoveClock        int
+	FullMoveCounter      int
+	WhiteToMove          bool
 }
 
 func generateSquaresToEdge() [64][8]byte {
@@ -119,21 +132,23 @@ func (move Move) ToUCI() string {
 	return uci
 }
 
+func (move Move) ToMove() string {
+	from := BoardSquareNames[move.From]
+	to := BoardSquareNames[move.To]
+	piece := pieceCodeToFont[move.Data[0]]
+	capture := " "
+	if move.MoveType == MoveCapture || move.MoveType == MovePromotionCapture || move.MoveType == MoveEnPassant {
+		capture = "x"
+	}
+	return fmt.Sprintf("%s%s%s%s\n", piece, from, capture, to)
+}
+
 var SquaresToEdge [64][8]byte = generateSquaresToEdge()
 var SquareKnightJumps [64][8]byte = generateKnightJumps()
 var BoardDirOffsets [8]int8 = [8]int8{-8, 1, 8, -1, -7, 9, 7, -9}
 
-type MoveState struct {
-	Position             [64]byte
-	CastlingAvailability CastlingAvailability
-	OnPassant            byte
-	HalfMoveClock        int
-	FullMoveCounter      int
-	WhiteToMove          bool
-}
-
-// MakeMove now returns a MoveState for undoing the move
-func (board *Board) MakeMove(move Move) MoveState {
+// Move returns a MoveState for undoing the move
+func (board *Board) Move(move Move) MoveState {
 	// Save current state
 	prev := MoveState{
 		Position:             board.Position,
@@ -142,6 +157,8 @@ func (board *Board) MakeMove(move Move) MoveState {
 		HalfMoveClock:        board.HalfMoveClock,
 		FullMoveCounter:      board.FullMoveCounter,
 		WhiteToMove:          board.WhiteToMove,
+		AttackedSquares:      board.AttackedSquares,
+		Pieces:               board.Pieces,
 	}
 
 	if !board.WhiteToMove {
@@ -274,5 +291,6 @@ func (board *Board) UndoMove(state MoveState) {
 	board.HalfMoveClock = state.HalfMoveClock
 	board.FullMoveCounter = state.FullMoveCounter
 	board.WhiteToMove = state.WhiteToMove
-	board.UpdatePiecesLocation()
+	board.AttackedSquares = state.AttackedSquares
+	board.Pieces = state.Pieces
 }
