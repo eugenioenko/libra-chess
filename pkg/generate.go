@@ -324,7 +324,7 @@ func (board *Board) GenerateLegalMoves() []Move {
 }
 
 func (board *Board) IsMoveLegal(move Move) bool {
-	prev := board.MakeMove(move)
+	prev := board.Move(move)
 	// Generate attacked squares for the opponent after the move
 	inCheck := board.IsKingInCheck(!board.WhiteToMove)
 	board.UndoMove(prev)
@@ -332,8 +332,6 @@ func (board *Board) IsMoveLegal(move Move) bool {
 }
 
 func (board *Board) IsKingInCheck(whiteToMove bool) bool {
-	board.UpdatePiecesLocation()
-
 	board.GenerateAttackedSquares(!whiteToMove)
 	king := board.Pieces.White.King
 	if !whiteToMove {
@@ -342,8 +340,14 @@ func (board *Board) IsKingInCheck(whiteToMove bool) bool {
 	return board.AttackedSquares[king]
 }
 
+func (board *Board) ResetAttackedSquares() {
+	for i := range board.AttackedSquares {
+		board.AttackedSquares[i] = false
+	}
+}
+
 func (board *Board) GenerateAttackedSquares(whiteToMove bool) {
-	board.AttackedSquares = make([]bool, 64)
+	board.ResetAttackedSquares()
 
 	if whiteToMove {
 		board.MarkSlidingAttacks(board.Pieces.White.Queens, 0, 8)

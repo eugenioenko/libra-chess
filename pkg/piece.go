@@ -1,79 +1,5 @@
 package libra
 
-const (
-	WhitePawn   = 80  // P
-	WhiteKnight = 78  // N
-	WhiteBishop = 66  // B
-	WhiteRook   = 82  // R
-	WhiteQueen  = 81  // Q
-	WhiteKing   = 75  // K
-	BlackPawn   = 112 // p
-	BlackKnight = 110 // n
-	BlackBishop = 98  // b
-	BlackRook   = 114 // r
-	BlackQueen  = 113 // q
-	BlackKing   = 107 // k
-)
-
-var pieceCodeToFont = map[byte]string{
-	WhitePawn:   "♟︎",
-	WhiteKnight: "♞",
-	WhiteBishop: "♝",
-	WhiteRook:   "♜",
-	WhiteQueen:  "♛",
-	WhiteKing:   "♚",
-	BlackPawn:   "♙",
-	BlackKnight: "♘",
-	BlackBishop: "♗",
-	BlackRook:   "♖",
-	BlackQueen:  "♕",
-	BlackKing:   "♔",
-}
-
-var PieceCodeToNotation = map[byte]string{
-	WhitePawn:   "",
-	WhiteKnight: "N",
-	WhiteBishop: "B",
-	WhiteRook:   "R",
-	WhiteQueen:  "Q",
-	WhiteKing:   "K",
-	BlackPawn:   "",
-	BlackKnight: "N",
-	BlackBishop: "B",
-	BlackRook:   "R",
-	BlackQueen:  "Q",
-	BlackKing:   "K",
-}
-
-var PieceCodeToValue = map[byte]int{
-	WhitePawn:   1,
-	WhiteKnight: 3,
-	WhiteBishop: 3,
-	WhiteRook:   5,
-	WhiteQueen:  9,
-	WhiteKing:   100,
-	BlackPawn:   1,
-	BlackKnight: 3,
-	BlackBishop: 3,
-	BlackRook:   5,
-	BlackQueen:  9,
-	BlackKing:   100,
-}
-
-var WhitePromotionMap = map[byte]byte{
-	'q': WhiteQueen,
-	'r': WhiteRook,
-	'b': WhiteBishop,
-	'n': WhiteKnight,
-}
-
-var BlackPromotionMap = map[byte]byte{
-	'q': BlackQueen,
-	'r': BlackRook,
-	'b': BlackBishop,
-	'n': BlackKnight,
-}
-
 func PieceCodeToFont(piece byte) string {
 	return pieceCodeToFont[piece]
 }
@@ -122,7 +48,10 @@ func NewPieceColorLocation() PieceColorLocation {
 }
 
 // UpdatePiecesLocation updates the Pieces field to reflect the current board position.
-// This is required after any move or FEN load.
+// TODO: this function is currently the slowest part of the board update process.
+// It appends the location of each piece to the corresponding slice in the Pieces field which can be inefficient.
+// Preallocating slices for each piece type does improve performance but not significantly and the resulting code is less readable.
+// Consider using a more efficient data structure or approach if performance becomes a concern.
 func (board *Board) UpdatePiecesLocation() {
 	board.Pieces = NewPieceColorLocation()
 
@@ -165,4 +94,11 @@ func (board *Board) CountPieces() int {
 		}
 	}
 	return count
+}
+
+func (pcl *PieceColorLocation) Clone() PieceColorLocation {
+	return PieceColorLocation{
+		White: pcl.White.Clone(),
+		Black: pcl.Black.Clone(),
+	}
 }

@@ -48,7 +48,7 @@ test-cutechess:
 		-engine name=MainLibra cmd=./libra-main \
 		-each proto=uci tc=180+2 \
 		-games 10 \
-		-concurrency 10 \
+		-concurrency 1 \
 		-openings file=./books/chess.epd format=epd order=random plies=8 \
 		-ratinginterval 10 \
 		-draw movenumber=40 movecount=6 score=10 \
@@ -58,10 +58,10 @@ test-stockfish:
 	make build
 	./dist/cutechess-cli/cutechess-cli \
 		-engine name=PullLibra cmd=./libra-chess \
-		-engine name=Stockfish cmd=./stockfish/stockfish-cli option.UCI_LimitStrength=true option.UCI_Elo=1320 \
-		-each proto=uci tc=10+0.1 \
+		-engine name=Stockfish cmd=./stockfish/stockfish-cli option.UCI_LimitStrength=true option.UCI_Elo=1500 \
+		-each proto=uci tc=90+1 \
 		-games 10 \
-		-concurrency 10 \
+		-concurrency 1 \
 		-openings file=./books/chess.epd format=epd order=random plies=8 \
 		-ratinginterval 10 \
 		-draw movenumber=40 movecount=6 score=10 \
@@ -71,11 +71,16 @@ test-debug:
 	make build
 	./dist/cutechess-cli/cutechess-cli \
 		-engine name=PullLibra cmd=./libra-chess \
-		-engine name=MainLibra cmd=./libra-main \
-		-each proto=uci tc=180+2 \
+		-engine name=Stockfish cmd=./stockfish/stockfish-cli option.UCI_LimitStrength=true option.UCI_Elo=1400 \
+		-each proto=uci tc=20+1 \
 		-games 1 \
-		-concurrency 10 \
+		-concurrency 1 \
 		-ratinginterval 1 \
 		-draw movenumber=40 movecount=6 score=10 \
-		-debug \
 		-rounds 1
+
+profiler-start:
+	go tool pprof -http=:8080 cpu.prof
+
+profiler-profile:
+	go test -timeout 30s -count=1 -run ^TestSearch5$$ github.com/eugenioenko/libra-chess/tests -bench=. -cpuprofile=cpu.prof

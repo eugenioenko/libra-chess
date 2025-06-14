@@ -1,18 +1,17 @@
 package libra
 
+import "sync"
+
 const (
 	MaxEvaluationScore = 1000000
 )
 
-type SearchDebug struct {
-	EvalCount    int
-	TTWriteCount int
-	TTHitCount   int
-	TTMissCount  int
+type searchResult struct {
+	score int
+	move  Move
 }
 
 func (board *Board) Search(depth int, tt *TranspositionTable) (int, *Move) {
-	debug := &SearchDebug{}
 	maximizing := board.WhiteToMove
 	bestScore := -MaxEvaluationScore
 	if !maximizing {
@@ -22,45 +21,61 @@ func (board *Board) Search(depth int, tt *TranspositionTable) (int, *Move) {
 	if len(moves) == 0 {
 		return board.MateOrStalemateScore(maximizing), nil
 	}
+
 	var bestMove *Move
-	for _, move := range moves {
-		clone := board.Clone()
-		clone.MakeMove(move)
-		score := minimax(
-			clone, depth-1, !maximizing,
-			-MaxEvaluationScore, MaxEvaluationScore, tt,
-			debug,
-		)
+	numMoves := len(moves)
+	moveChan := make(chan searchResult, numMoves)
+	var wg sync.WaitGroup
+
+	for _, currentMove := range moves {
+		wg.Add(1)
+		go func(m Move) {
+			defer wg.Done()
+			clone := board.Clone()
+			clone.Move(m)
+			score := clone.AlphaBeta(
+				depth-1, !maximizing,
+				-MaxEvaluationScore, MaxEvaluationScore, tt,
+			)
+			moveChan <- searchResult{score: score, move: m}
+		}(currentMove)
+	}
+
+	go func() {
+		wg.Wait()
+		close(moveChan)
+	}()
+
+	for result := range moveChan {
 		if maximizing {
-			if score > bestScore || bestMove == nil {
-				bestScore = score
-				m := move
-				bestMove = &m
+			if result.score > bestScore || bestMove == nil {
+				bestScore = result.score
+				// Assign a copy of the move from the result
+				tempMove := result.move
+				bestMove = &tempMove
 			}
 		} else {
-			if score < bestScore || bestMove == nil {
-				bestScore = score
-				m := move
-				bestMove = &m
+			if result.score < bestScore || bestMove == nil {
+				bestScore = result.score
+				// Assign a copy of the move from the result
+				tempMove := result.move
+				bestMove = &tempMove
 			}
 		}
 	}
+
 	// Print debug info
 	return bestScore, bestMove
 }
 
-func minimax(board *Board, depth int, maximizing bool, alpha int, beta int, tt *TranspositionTable, debug *SearchDebug) int {
+func (board *Board) AlphaBeta(depth int, maximizing bool, alpha int, beta int, tt *TranspositionTable) int {
 	if depth == 0 {
-		debug.EvalCount++
 		return board.Evaluate()
 	}
 
 	hash := board.ZobristHash()
 	if entry, ok := tt.Get(hash, depth); ok {
-		debug.TTHitCount++
 		return entry
-	} else {
-		debug.TTMissCount++
 	}
 
 	moves := board.GenerateLegalMoves()
@@ -72,8 +87,8 @@ func minimax(board *Board, depth int, maximizing bool, alpha int, beta int, tt *
 	if maximizing {
 		maxEval := -MaxEvaluationScore
 		for _, move := range moves {
-			prev := board.MakeMove(move)
-			eval := minimax(board, depth-1, false, alpha, beta, tt, debug)
+			prev := board.Move(move)
+			eval := board.AlphaBeta(depth-1, false, alpha, beta, tt)
 			board.UndoMove(prev)
 			if eval > maxEval {
 				maxEval = eval
@@ -89,8 +104,8 @@ func minimax(board *Board, depth int, maximizing bool, alpha int, beta int, tt *
 	} else {
 		minEval := MaxEvaluationScore
 		for _, move := range moves {
-			prev := board.MakeMove(move)
-			eval := minimax(board, depth-1, true, alpha, beta, tt, debug)
+			prev := board.Move(move)
+			eval := board.AlphaBeta(depth-1, true, alpha, beta, tt)
 			board.UndoMove(prev)
 			if eval < minEval {
 				minEval = eval
@@ -105,7 +120,6 @@ func minimax(board *Board, depth int, maximizing bool, alpha int, beta int, tt *
 		result = minEval
 	}
 
-	debug.TTWriteCount++
 	tt.Set(hash, depth, result)
 	return result
 }
