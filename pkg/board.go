@@ -15,14 +15,23 @@ type CastlingAvailability struct {
 
 // Board represents the state of a chess game, including piece positions, castling rights, en passant, move clocks, and move history.
 type Board struct {
-	// Position is a 64-byte array representing the board squares (0 = empty, otherwise piece code)
-	Position [64]byte
+	// Bitboards for each piece type and color
+	WhitePawns   uint64
+	WhiteKnights uint64
+	WhiteBishops uint64
+	WhiteRooks   uint64
+	WhiteQueens  uint64
+	WhiteKing    uint64
+	BlackPawns   uint64
+	BlackKnights uint64
+	BlackBishops uint64
+	BlackRooks   uint64
+	BlackQueens  uint64
+	BlackKing    uint64
 	// AttackedSquares marks which squares are currently attacked by the opponent
 	AttackedSquares [64]bool
 	// CastlingAvailability tracks which castling rights are still available
 	CastlingAvailability CastlingAvailability
-	// Pieces holds the locations of all pieces for both colors
-	Pieces PieceColorLocation
 	// WhiteToMove is true if it's White's turn, false for Black
 	WhiteToMove bool
 	// OnPassant is the square index for en passant capture, or 0 if not available
@@ -36,7 +45,18 @@ type Board struct {
 // NewBoard creates a new, empty board. You must call LoadInitial or FromFEN to set up a position.
 func NewBoard() *Board {
 	board := &Board{
-		Position:        [64]byte{},
+		WhitePawns:      0,
+		WhiteKnights:    0,
+		WhiteBishops:    0,
+		WhiteRooks:      0,
+		WhiteQueens:     0,
+		WhiteKing:       0,
+		BlackPawns:      0,
+		BlackKnights:    0,
+		BlackBishops:    0,
+		BlackRooks:      0,
+		BlackQueens:     0,
+		BlackKing:       0,
 		AttackedSquares: [64]bool{},
 		CastlingAvailability: CastlingAvailability{
 			BlackKingSide:  true,
@@ -44,7 +64,6 @@ func NewBoard() *Board {
 			WhiteKingSide:  true,
 			WhiteQueenSide: true,
 		},
-		Pieces:          NewPieceColorLocation(),
 		WhiteToMove:     true,
 		OnPassant:       0,
 		HalfMoveClock:   0,
@@ -54,8 +73,19 @@ func NewBoard() *Board {
 }
 
 func (board *Board) Reset() {
-	for i := range board.Position {
-		board.Position[i] = 0
+	board.WhitePawns = 0
+	board.WhiteKnights = 0
+	board.WhiteBishops = 0
+	board.WhiteRooks = 0
+	board.WhiteQueens = 0
+	board.WhiteKing = 0
+	board.BlackPawns = 0
+	board.BlackKnights = 0
+	board.BlackBishops = 0
+	board.BlackRooks = 0
+	board.BlackQueens = 0
+	board.BlackKing = 0
+	for i := range board.AttackedSquares {
 		board.AttackedSquares[i] = false
 	}
 	board.CastlingAvailability = CastlingAvailability{
@@ -64,7 +94,6 @@ func (board *Board) Reset() {
 		WhiteKingSide:  false,
 		WhiteQueenSide: false,
 	}
-	board.Pieces = NewPieceColorLocation()
 	board.WhiteToMove = true
 	board.OnPassant = 0
 	board.HalfMoveClock = 0
@@ -79,7 +108,10 @@ func (board *Board) LoadInitial() {
 
 // FromFEN loads a position from a FEN string. Returns false and error if the FEN is invalid.
 func (board *Board) FromFEN(fen string) (bool, error) {
-	board.Reset()
+	// Reset all bitboards
+	board.WhitePawns, board.WhiteKnights, board.WhiteBishops, board.WhiteRooks, board.WhiteQueens, board.WhiteKing = 0, 0, 0, 0, 0, 0
+	board.BlackPawns, board.BlackKnights, board.BlackBishops, board.BlackRooks, board.BlackQueens, board.BlackKing = 0, 0, 0, 0, 0, 0
+
 	parts := strings.Split(fen, " ")
 	if len(parts) == 0 {
 		return false, fmt.Errorf("invalid FEN, missing blocks, at least piece list block required")
@@ -95,11 +127,36 @@ func (board *Board) FromFEN(fen string) (bool, error) {
 		for _, piece := range pieces {
 			if CharIsNumber(piece) {
 				emptyCount := int(piece - '0')
-				board.removePieces(index, emptyCount)
 				index += emptyCount
 			} else {
-				board.Position[index] = byte(piece)
-				index += 1
+				bb := uint64(1) << index
+				switch piece {
+				case 'P':
+					board.WhitePawns |= bb
+				case 'N':
+					board.WhiteKnights |= bb
+				case 'B':
+					board.WhiteBishops |= bb
+				case 'R':
+					board.WhiteRooks |= bb
+				case 'Q':
+					board.WhiteQueens |= bb
+				case 'K':
+					board.WhiteKing |= bb
+				case 'p':
+					board.BlackPawns |= bb
+				case 'n':
+					board.BlackKnights |= bb
+				case 'b':
+					board.BlackBishops |= bb
+				case 'r':
+					board.BlackRooks |= bb
+				case 'q':
+					board.BlackQueens |= bb
+				case 'k':
+					board.BlackKing |= bb
+				}
+				index++
 			}
 		}
 	}
@@ -187,26 +244,15 @@ func (board *Board) ParseAndApplyPosition(positionArgs []string) {
 	}
 }
 
-// removePieces sets a range of squares to empty (0), used when parsing FEN for empty squares.
-func (board *Board) removePieces(start int, count int) (bool, error) {
-	if start+count > 64 {
-		return false, fmt.Errorf("invalid remove pieces range, out of range")
-	}
-	for index := 0; index < count; index++ {
-		board.Position[start+index] = 0
-	}
-	return true, nil
-}
-
 // PrintPosition prints the board to the console using Unicode chess symbols.
 func (board *Board) PrintPosition() {
 	fmt.Println()
-	for index, piece := range board.Position {
-
+	for index := 0; index < 64; index++ {
 		if index%8 == 0 {
 			fmt.Print(8 - index/8)
 			fmt.Print(" | ")
 		}
+		piece := board.pieceAtSquare(byte(index))
 		if piece != 0 {
 			fmt.Print(PieceCodeToFont(piece))
 		} else {
@@ -220,8 +266,42 @@ func (board *Board) PrintPosition() {
 	fmt.Print("   ----------------\n    A B C D E F G H\n\n")
 }
 
+// pieceAtSquare returns the piece code at a given square, or 0 if empty.
+func (board *Board) pieceAtSquare(square byte) byte {
+	mask := uint64(1) << square
+	switch {
+	case (board.WhitePawns & mask) != 0:
+		return WhitePawn
+	case (board.WhiteKnights & mask) != 0:
+		return WhiteKnight
+	case (board.WhiteBishops & mask) != 0:
+		return WhiteBishop
+	case (board.WhiteRooks & mask) != 0:
+		return WhiteRook
+	case (board.WhiteQueens & mask) != 0:
+		return WhiteQueen
+	case (board.WhiteKing & mask) != 0:
+		return WhiteKing
+	case (board.BlackPawns & mask) != 0:
+		return BlackPawn
+	case (board.BlackKnights & mask) != 0:
+		return BlackKnight
+	case (board.BlackBishops & mask) != 0:
+		return BlackBishop
+	case (board.BlackRooks & mask) != 0:
+		return BlackRook
+	case (board.BlackQueens & mask) != 0:
+		return BlackQueen
+	case (board.BlackKing & mask) != 0:
+		return BlackKing
+	default:
+		return 0
+	}
+}
+
+// PrintMove prints a move using bitboards.
 func (board *Board) PrintMove(move Move) {
-	piece := board.Position[move.From]
+	piece := board.pieceAtSquare(move.From)
 	pieceStr := pieceCodeToFont[piece]
 	fromName, _ := SquareIndexToName(move.From)
 	toName, _ := SquareIndexToName(move.To)
@@ -250,7 +330,13 @@ func (board *Board) IsSquareValid(square byte) bool {
 
 // IsSquareEmpty returns true if the square is valid and contains no piece.
 func (board *Board) IsSquareEmpty(square byte) bool {
-	return board.IsSquareValid(square) && board.Position[square] == 0
+	if !board.IsSquareValid(square) {
+		return false
+	}
+	mask := uint64(1) << square
+	occupied := board.WhitePawns | board.WhiteKnights | board.WhiteBishops | board.WhiteRooks | board.WhiteQueens | board.WhiteKing |
+		board.BlackPawns | board.BlackKnights | board.BlackBishops | board.BlackRooks | board.BlackQueens | board.BlackKing
+	return (occupied & mask) == 0
 }
 
 // IsSquareEmptyAndNotAttacked returns true if the square is empty and not attacked by the opponent.
@@ -265,12 +351,19 @@ func (board *Board) IsSquareAttacked(square byte) bool {
 
 // IsSquareOccupied returns true if the square is valid and contains a piece.
 func (board *Board) IsSquareOccupied(square byte) bool {
-	return board.IsSquareValid(square) && board.Position[square] > 0
+	if !board.IsSquareValid(square) {
+		return false
+	}
+	mask := uint64(1) << square
+	occupied := board.WhitePawns | board.WhiteKnights | board.WhiteBishops | board.WhiteRooks | board.WhiteQueens | board.WhiteKing |
+		board.BlackPawns | board.BlackKnights | board.BlackBishops | board.BlackRooks | board.BlackQueens | board.BlackKing
+	return (occupied & mask) != 0
 }
 
 // IsSquarePawn returns true if the square contains a pawn (of either color).
 func (board *Board) IsSquarePawn(square byte) bool {
-	return board.Position[square] == WhitePawn || board.Position[square] == BlackPawn
+	mask := uint64(1) << square
+	return (board.WhitePawns&mask) != 0 || (board.BlackPawns&mask) != 0
 }
 
 // IsSquareOnPassant returns true if the square is the current en passant target square.
@@ -280,12 +373,14 @@ func (board *Board) IsSquareOnPassant(square byte) bool {
 
 // IsPieceAtSquareBlack returns true if the piece at the square is black.
 func (board *Board) IsPieceAtSquareBlack(square byte) bool {
-	return board.Position[square] >= 98
+	mask := uint64(1) << square
+	return (board.BlackPawns|board.BlackKnights|board.BlackBishops|board.BlackRooks|board.BlackQueens|board.BlackKing)&mask != 0
 }
 
 // IsPieceAtSquareWhite returns true if the piece at the square is white.
 func (board *Board) IsPieceAtSquareWhite(square byte) bool {
-	return board.Position[square] > 0 && board.Position[square] < 98
+	mask := uint64(1) << square
+	return (board.WhitePawns|board.WhiteKnights|board.WhiteBishops|board.WhiteRooks|board.WhiteQueens|board.WhiteKing)&mask != 0
 }
 
 // SquareToRank returns the rank (0-7) of a square index (0 = rank 0, 7 = rank 7)
@@ -302,19 +397,19 @@ func (board *Board) SquareToFile(square byte) byte {
 // Pass true for white, false for black.
 func (board *Board) OnlyKingLeft() bool {
 	if board.WhiteToMove {
-		return len(board.Pieces.Black.Pawns) == 0 &&
-			len(board.Pieces.Black.Knights) == 0 &&
-			len(board.Pieces.Black.Bishops) == 0 &&
-			len(board.Pieces.Black.Rooks) == 0 &&
-			len(board.Pieces.Black.Queens) == 0 &&
-			board.Pieces.Black.King != 0
+		return board.BlackPawns == 0 &&
+			board.BlackKnights == 0 &&
+			board.BlackBishops == 0 &&
+			board.BlackRooks == 0 &&
+			board.BlackQueens == 0 &&
+			board.BlackKing != 0
 	} else {
-		return len(board.Pieces.White.Pawns) == 0 &&
-			len(board.Pieces.White.Knights) == 0 &&
-			len(board.Pieces.White.Bishops) == 0 &&
-			len(board.Pieces.White.Rooks) == 0 &&
-			len(board.Pieces.White.Queens) == 0 &&
-			board.Pieces.White.King != 0
+		return board.WhitePawns == 0 &&
+			board.WhiteKnights == 0 &&
+			board.WhiteBishops == 0 &&
+			board.WhiteRooks == 0 &&
+			board.WhiteQueens == 0 &&
+			board.WhiteKing != 0
 	}
 }
 
@@ -327,7 +422,7 @@ func (board *Board) ToFEN() string {
 		empty := 0
 		for file := 0; file < 8; file++ {
 			sq := rank*8 + file
-			piece := board.Position[sq]
+			piece := board.pieceAtSquare(byte(sq))
 			if piece == 0 {
 				empty++
 			} else {
@@ -389,17 +484,27 @@ func (board *Board) ToFEN() string {
 	return fen
 }
 
+// Clone returns a deep copy of the board.
 func (board *Board) Clone() *Board {
 	clone := NewBoard()
-	// Deep copy Position
-	copy(clone.Position[:], board.Position[:])
+	clone.WhitePawns = board.WhitePawns
+	clone.WhiteKnights = board.WhiteKnights
+	clone.WhiteBishops = board.WhiteBishops
+	clone.WhiteRooks = board.WhiteRooks
+	clone.WhiteQueens = board.WhiteQueens
+	clone.WhiteKing = board.WhiteKing
+	clone.BlackPawns = board.BlackPawns
+	clone.BlackKnights = board.BlackKnights
+	clone.BlackBishops = board.BlackBishops
+	clone.BlackRooks = board.BlackRooks
+	clone.BlackQueens = board.BlackQueens
+	clone.BlackKing = board.BlackKing
 	copy(clone.AttackedSquares[:], board.AttackedSquares[:])
 	clone.CastlingAvailability = board.CastlingAvailability
 	clone.WhiteToMove = board.WhiteToMove
 	clone.OnPassant = board.OnPassant
 	clone.HalfMoveClock = board.HalfMoveClock
 	clone.FullMoveCounter = board.FullMoveCounter
-	clone.Pieces = board.Pieces.Clone()
 	return clone
 }
 
@@ -435,4 +540,52 @@ func (board *Board) ParseUCIMove(moveStr string) *Move {
 		}
 	}
 	return nil // Not found
+}
+
+// SetPiece sets the given piece on the given square, clearing any existing piece at that square.
+func (board *Board) SetPiece(square byte, piece byte) {
+	// Clear any piece at the square
+	mask := ^(uint64(1) << square)
+	board.WhitePawns &= mask
+	board.WhiteKnights &= mask
+	board.WhiteBishops &= mask
+	board.WhiteRooks &= mask
+	board.WhiteQueens &= mask
+	board.WhiteKing &= mask
+	board.BlackPawns &= mask
+	board.BlackKnights &= mask
+	board.BlackBishops &= mask
+	board.BlackRooks &= mask
+	board.BlackQueens &= mask
+	board.BlackKing &= mask
+	// Set the new piece
+	if piece != 0 {
+		bit := uint64(1) << square
+		switch piece {
+		case WhitePawn:
+			board.WhitePawns |= bit
+		case WhiteKnight:
+			board.WhiteKnights |= bit
+		case WhiteBishop:
+			board.WhiteBishops |= bit
+		case WhiteRook:
+			board.WhiteRooks |= bit
+		case WhiteQueen:
+			board.WhiteQueens |= bit
+		case WhiteKing:
+			board.WhiteKing |= bit
+		case BlackPawn:
+			board.BlackPawns |= bit
+		case BlackKnight:
+			board.BlackKnights |= bit
+		case BlackBishop:
+			board.BlackBishops |= bit
+		case BlackRook:
+			board.BlackRooks |= bit
+		case BlackQueen:
+			board.BlackQueens |= bit
+		case BlackKing:
+			board.BlackKing |= bit
+		}
+	}
 }

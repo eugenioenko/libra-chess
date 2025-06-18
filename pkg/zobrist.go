@@ -1,6 +1,9 @@
 package libra
 
-import "math/rand"
+import (
+	"math/bits"
+	"math/rand"
+)
 
 type ZobristCastlingAvailability struct {
 	BlackKingSide  uint64
@@ -53,17 +56,32 @@ func GenerateZobristOnPassantTable() [64]uint64 {
 
 func (board *Board) ZobristHash() uint64 {
 	var hash uint64 = 0
-
-	// hash pieces
-	for index, piece := range board.Position {
-		if piece != 0 {
-			code, ok := zobristPieceTable[index][piece]
-			if ok {
-				hash ^= code
-			}
+	// hash pieces using bitboards
+	pieceBitboards := []struct {
+		bb   uint64
+		code byte
+	}{
+		{board.WhitePawns, WhitePawn},
+		{board.WhiteKnights, WhiteKnight},
+		{board.WhiteBishops, WhiteBishop},
+		{board.WhiteRooks, WhiteRook},
+		{board.WhiteQueens, WhiteQueen},
+		{board.WhiteKing, WhiteKing},
+		{board.BlackPawns, BlackPawn},
+		{board.BlackKnights, BlackKnight},
+		{board.BlackBishops, BlackBishop},
+		{board.BlackRooks, BlackRook},
+		{board.BlackQueens, BlackQueen},
+		{board.BlackKing, BlackKing},
+	}
+	for _, entry := range pieceBitboards {
+		b := entry.bb
+		for b != 0 {
+			sq := bits.TrailingZeros64(b)
+			hash ^= zobristPieceTable[sq][entry.code]
+			b &= b - 1
 		}
 	}
-
 	// hash castling availability
 	if board.CastlingAvailability.BlackKingSide {
 		hash ^= zobristCastlingAvailability.BlackKingSide
@@ -77,18 +95,15 @@ func (board *Board) ZobristHash() uint64 {
 	if board.CastlingAvailability.WhiteQueenSide {
 		hash ^= zobristCastlingAvailability.WhiteQueenSide
 	}
-
 	// hash en passant (should only hash file if a pawn can capture)
 	if board.OnPassant != 0 {
 		hash ^= zobristOnPassantTable[board.OnPassant]
 	}
-
 	// hash color to move
 	if board.WhiteToMove {
 		hash ^= zobristWhiteToMove
 	} else {
 		hash ^= zobristBlackToMove
 	}
-
 	return hash
 }
