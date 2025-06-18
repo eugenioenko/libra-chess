@@ -13,7 +13,7 @@ func (board *Board) AddQuietOrCapture(from, to byte, whiteToMove bool, moves []M
 		return moves, true
 	}
 
-	piece := board.pieceAtSquare(to)
+	piece := board.PieceAtSquare(to)
 	if piece == WhiteKing || piece == BlackKing {
 		return moves, false
 	}
@@ -52,7 +52,7 @@ func (board *Board) getCapturedPiece(moveType byte, to byte, whiteToMove bool) b
 			return WhitePawn
 		}
 	}
-	return board.pieceAtSquare(to)
+	return board.PieceAtSquare(to)
 }
 
 // AddCapture adds a capturing move to the move list. Handles en passant as a special case. Returns the new slice.
@@ -127,7 +127,7 @@ func (board *Board) GeneratePawnMoves(whiteToMove bool) []Move {
 			}
 			if board.IsSquareOccupied(byte(captureTo)) && board.IsPieceAtSquareWhite(byte(captureTo)) != whiteToMove {
 				if byte(captureTo/8) == promotionRank {
-					moves = board.AddPromotion(square, byte(captureTo), board.pieceAtSquare(byte(captureTo)), whiteToMove, moves)
+					moves = board.AddPromotion(square, byte(captureTo), board.PieceAtSquare(byte(captureTo)), whiteToMove, moves)
 				} else {
 					moves = board.AddCapture(square, byte(captureTo), MoveCapture, whiteToMove, moves)
 				}
@@ -223,8 +223,8 @@ func (board *Board) GenerateCastleMoves(whiteToMove bool) []Move {
 	moves := []Move{}
 	if whiteToMove {
 		if board.CastlingAvailability.WhiteQueenSide &&
-			board.pieceAtSquare(SquareE1) == WhiteKing &&
-			board.pieceAtSquare(SquareA1) == WhiteRook &&
+			board.PieceAtSquare(SquareE1) == WhiteKing &&
+			board.PieceAtSquare(SquareA1) == WhiteRook &&
 			board.IsSquareEmpty(SquareB1) &&
 			board.IsSquareEmptyAndNotAttacked(SquareC1) &&
 			board.IsSquareEmptyAndNotAttacked(SquareD1) &&
@@ -233,8 +233,8 @@ func (board *Board) GenerateCastleMoves(whiteToMove bool) []Move {
 		}
 
 		if board.CastlingAvailability.WhiteKingSide &&
-			board.pieceAtSquare(SquareE1) == WhiteKing &&
-			board.pieceAtSquare(SquareH1) == WhiteRook &&
+			board.PieceAtSquare(SquareE1) == WhiteKing &&
+			board.PieceAtSquare(SquareH1) == WhiteRook &&
 			board.IsSquareEmptyAndNotAttacked(SquareF1) &&
 			board.IsSquareEmptyAndNotAttacked(SquareG1) &&
 			!board.IsSquareAttacked(SquareE1) {
@@ -242,8 +242,8 @@ func (board *Board) GenerateCastleMoves(whiteToMove bool) []Move {
 		}
 	} else {
 		if board.CastlingAvailability.BlackQueenSide &&
-			board.pieceAtSquare(SquareE8) == BlackKing &&
-			board.pieceAtSquare(SquareA8) == BlackRook &&
+			board.PieceAtSquare(SquareE8) == BlackKing &&
+			board.PieceAtSquare(SquareA8) == BlackRook &&
 			board.IsSquareEmpty(SquareB8) &&
 			board.IsSquareEmptyAndNotAttacked(SquareC8) &&
 			board.IsSquareEmptyAndNotAttacked(SquareD8) &&
@@ -252,8 +252,8 @@ func (board *Board) GenerateCastleMoves(whiteToMove bool) []Move {
 		}
 
 		if board.CastlingAvailability.BlackKingSide &&
-			board.pieceAtSquare(SquareE8) == BlackKing &&
-			board.pieceAtSquare(SquareH8) == BlackRook &&
+			board.PieceAtSquare(SquareE8) == BlackKing &&
+			board.PieceAtSquare(SquareH8) == BlackRook &&
 			board.IsSquareEmptyAndNotAttacked(SquareF8) &&
 			board.IsSquareEmptyAndNotAttacked(SquareG8) &&
 			!board.IsSquareAttacked(SquareE8) {
@@ -367,9 +367,9 @@ func (board *Board) GenerateLegalMoves() []Move {
 		// Sort by capture value if both moves are captures
 		// This ensures that if two captures are available, the one with the higher value piece captured is preferred.
 		if moveA.MoveType == MoveCapture && moveB.MoveType == MoveCapture {
-			attackerA := board.pieceAtSquare(moveA.From)
+			attackerA := board.PieceAtSquare(moveA.From)
 			captureA := moveA.Data[0]
-			attackerB := board.pieceAtSquare(moveB.From)
+			attackerB := board.PieceAtSquare(moveB.From)
 			captureB := moveB.Data[0]
 			valueA := PieceCodeToValue[captureA] - PieceCodeToValue[attackerA]
 			valueB := PieceCodeToValue[captureB] - PieceCodeToValue[attackerB]

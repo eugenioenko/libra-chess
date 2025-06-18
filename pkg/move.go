@@ -188,7 +188,7 @@ func (board *Board) Move(move Move) MoveState {
 	}
 	from := move.From
 	to := move.To
-	piece := board.pieceAtSquare(from)
+	piece := board.PieceAtSquare(from)
 
 	if move.MoveType == MoveCapture || board.IsSquarePawn(from) {
 		board.HalfMoveClock = 0

@@ -51,9 +51,6 @@ func NewPieceColorLocation() PieceColorLocation {
 	}
 }
 
-// UpdatePiecesLocation is now a no-op since bitboards are the source of truth.
-func (board *Board) UpdatePiecesLocation() {}
-
 // CountPieces returns the total number of pieces on the board.
 func (board *Board) CountPieces() int {
 	return bits.OnesCount64(board.WhitePawns) + bits.OnesCount64(board.WhiteKnights) + bits.OnesCount64(board.WhiteBishops) +

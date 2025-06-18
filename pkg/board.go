@@ -129,29 +129,29 @@ func (board *Board) FromFEN(fen string) (bool, error) {
 			} else {
 				bb := uint64(1) << index
 				switch piece {
-				case 'P':
+				case WhitePawn:
 					board.WhitePawns |= bb
-				case 'N':
+				case WhiteKnight:
 					board.WhiteKnights |= bb
-				case 'B':
+				case WhiteBishop:
 					board.WhiteBishops |= bb
-				case 'R':
+				case WhiteRook:
 					board.WhiteRooks |= bb
-				case 'Q':
+				case WhiteQueen:
 					board.WhiteQueens |= bb
-				case 'K':
+				case WhiteKing:
 					board.WhiteKing |= bb
-				case 'p':
+				case BlackPawn:
 					board.BlackPawns |= bb
-				case 'n':
+				case BlackKnight:
 					board.BlackKnights |= bb
-				case 'b':
+				case BlackBishop:
 					board.BlackBishops |= bb
-				case 'r':
+				case BlackRook:
 					board.BlackRooks |= bb
-				case 'q':
+				case BlackQueen:
 					board.BlackQueens |= bb
-				case 'k':
+				case BlackKing:
 					board.BlackKing |= bb
 				}
 				index++
@@ -207,7 +207,6 @@ func (board *Board) FromFEN(fen string) (bool, error) {
 		}
 	}
 
-	board.UpdatePiecesLocation()
 	return true, nil
 }
 
@@ -250,7 +249,7 @@ func (board *Board) PrintPosition() {
 			fmt.Print(8 - index/8)
 			fmt.Print(" | ")
 		}
-		piece := board.pieceAtSquare(byte(index))
+		piece := board.PieceAtSquare(byte(index))
 		if piece != 0 {
 			fmt.Print(PieceCodeToFont(piece))
 		} else {
@@ -264,8 +263,8 @@ func (board *Board) PrintPosition() {
 	fmt.Print("   ----------------\n    A B C D E F G H\n\n")
 }
 
-// pieceAtSquare returns the piece code at a given square, or 0 if empty.
-func (board *Board) pieceAtSquare(square byte) byte {
+// PieceAtSquare returns the piece code at a given square, or 0 if empty.
+func (board *Board) PieceAtSquare(square byte) byte {
 	mask := uint64(1) << square
 	switch {
 	case (board.WhitePawns & mask) != 0:
@@ -299,7 +298,7 @@ func (board *Board) pieceAtSquare(square byte) byte {
 
 // PrintMove prints a move using bitboards.
 func (board *Board) PrintMove(move Move) {
-	piece := board.pieceAtSquare(move.From)
+	piece := board.PieceAtSquare(move.From)
 	pieceStr := pieceCodeToFont[piece]
 	fromName, _ := SquareIndexToName(move.From)
 	toName, _ := SquareIndexToName(move.To)
@@ -339,10 +338,10 @@ func (board *Board) IsSquareEmpty(square byte) bool {
 
 // IsSquareEmptyAndNotAttacked returns true if the square is empty and not attacked by the opponent.
 func (board *Board) IsSquareEmptyAndNotAttacked(square byte) bool {
-	return board.IsSquareEmpty(square) && (board.AttackedSquares&(uint64(1)<<square) == 0)
+	return board.IsSquareEmpty(square) && !board.IsSquareAttacked(square)
 }
 
-// IsSquareAttacked returns true if the square is under attack (using bitboard).
+// IsSquareAttacked returns true if the square is under attack
 func (board *Board) IsSquareAttacked(square byte) bool {
 	return (board.AttackedSquares & (uint64(1) << square)) != 0
 }
@@ -392,8 +391,7 @@ func (board *Board) SquareToFile(square byte) byte {
 }
 
 // OnlyKingLeft returns true if the given color has only the king left on the board.
-// Pass true for white, false for black.
-func (board *Board) OnlyKingLeft() bool {
+func (board *Board) IsOnlyKingLeft() bool {
 	if board.WhiteToMove {
 		return board.BlackPawns == 0 &&
 			board.BlackKnights == 0 &&
@@ -420,7 +418,7 @@ func (board *Board) ToFEN() string {
 		empty := 0
 		for file := 0; file < 8; file++ {
 			sq := rank*8 + file
-			piece := board.pieceAtSquare(byte(sq))
+			piece := board.PieceAtSquare(byte(sq))
 			if piece == 0 {
 				empty++
 			} else {
