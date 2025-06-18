@@ -306,6 +306,7 @@ func TestPromotionCaptureRemovesCastlingRights(t *testing.T) {
 		}
 	}
 	if !found {
+		t.Errorf("No promotion-capture move found to h8")
 	}
 }
 

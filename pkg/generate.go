@@ -13,8 +13,7 @@ func (board *Board) AddQuietOrCapture(from, to byte, whiteToMove bool, moves []M
 		return moves, true
 	}
 
-	piece := board.PieceAtSquare(to)
-	if piece == WhiteKing || piece == BlackKing {
+	if board.IsSquareKing(to) {
 		return moves, false
 	}
 
@@ -223,8 +222,8 @@ func (board *Board) GenerateCastleMoves(whiteToMove bool) []Move {
 	moves := []Move{}
 	if whiteToMove {
 		if board.CastlingAvailability.WhiteQueenSide &&
-			board.PieceAtSquare(SquareE1) == WhiteKing &&
-			board.PieceAtSquare(SquareA1) == WhiteRook &&
+			board.IsSquareWhiteKing(SquareE1) &&
+			board.IsSquareWhiteRook(SquareA1) &&
 			board.IsSquareEmpty(SquareB1) &&
 			board.IsSquareEmptyAndNotAttacked(SquareC1) &&
 			board.IsSquareEmptyAndNotAttacked(SquareD1) &&
@@ -233,8 +232,8 @@ func (board *Board) GenerateCastleMoves(whiteToMove bool) []Move {
 		}
 
 		if board.CastlingAvailability.WhiteKingSide &&
-			board.PieceAtSquare(SquareE1) == WhiteKing &&
-			board.PieceAtSquare(SquareH1) == WhiteRook &&
+			board.IsSquareWhiteKing(SquareE1) &&
+			board.IsSquareWhiteRook(SquareH1) &&
 			board.IsSquareEmptyAndNotAttacked(SquareF1) &&
 			board.IsSquareEmptyAndNotAttacked(SquareG1) &&
 			!board.IsSquareAttacked(SquareE1) {
@@ -242,8 +241,8 @@ func (board *Board) GenerateCastleMoves(whiteToMove bool) []Move {
 		}
 	} else {
 		if board.CastlingAvailability.BlackQueenSide &&
-			board.PieceAtSquare(SquareE8) == BlackKing &&
-			board.PieceAtSquare(SquareA8) == BlackRook &&
+			board.IsSquareBlackKing(SquareE8) &&
+			board.IsSquareBlackRook(SquareA8) &&
 			board.IsSquareEmpty(SquareB8) &&
 			board.IsSquareEmptyAndNotAttacked(SquareC8) &&
 			board.IsSquareEmptyAndNotAttacked(SquareD8) &&
@@ -252,8 +251,8 @@ func (board *Board) GenerateCastleMoves(whiteToMove bool) []Move {
 		}
 
 		if board.CastlingAvailability.BlackKingSide &&
-			board.PieceAtSquare(SquareE8) == BlackKing &&
-			board.PieceAtSquare(SquareH8) == BlackRook &&
+			board.IsSquareBlackKing(SquareE8) &&
+			board.IsSquareBlackRook(SquareH8) &&
 			board.IsSquareEmptyAndNotAttacked(SquareF8) &&
 			board.IsSquareEmptyAndNotAttacked(SquareG8) &&
 			!board.IsSquareAttacked(SquareE8) {

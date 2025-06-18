@@ -363,6 +363,32 @@ func (board *Board) IsSquarePawn(square byte) bool {
 	return (board.WhitePawns&mask) != 0 || (board.BlackPawns&mask) != 0
 }
 
+// IsSquareKing returns true if the piece on the given square is a king.
+func (board *Board) IsSquareKing(square byte) bool {
+	mask := uint64(1) << square
+	return (board.WhiteKing&mask) != 0 || (board.BlackKing&mask) != 0
+}
+
+func (board *Board) IsSquareBlackKing(square byte) bool {
+	mask := uint64(1) << square
+	return (board.BlackKing & mask) != 0
+}
+
+func (board *Board) IsSquareWhiteKing(square byte) bool {
+	mask := uint64(1) << square
+	return (board.WhiteKing & mask) != 0
+}
+
+func (board *Board) IsSquareBlackRook(square byte) bool {
+	mask := uint64(1) << square
+	return (board.BlackRooks & mask) != 0
+}
+
+func (board *Board) IsSquareWhiteRook(square byte) bool {
+	mask := uint64(1) << square
+	return (board.WhiteRooks & mask) != 0
+}
+
 // IsSquareOnPassant returns true if the square is the current en passant target square.
 func (board *Board) IsSquareOnPassant(square byte) bool {
 	return board.OnPassant == square
