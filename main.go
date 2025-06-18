@@ -38,7 +38,7 @@ func main() {
 			board.ParseAndApplyPosition(fields[1:])
 		case "go":
 			tt := NewTranspositionTable()
-			baseDepth := 6
+			baseDepth := 5
 			depth := baseDepth
 			material := board.CountPieces()
 			if material < 20 {
