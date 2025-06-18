@@ -1,67 +1,5 @@
 package libra
 
-// Piece-Square Tables (simplified, values in centipawns)
-var pawnPST = [64]int{
-	0, 0, 0, 0, 0, 0, 0, 0,
-	50, 50, 50, 50, 50, 50, 50, 50,
-	10, 10, 20, 30, 30, 20, 10, 10,
-	5, 5, 10, 25, 25, 10, 5, 5,
-	0, 0, 0, 20, 20, 0, 0, 0,
-	5, -5, -10, 0, 0, -10, -5, 5,
-	5, 10, 10, -20, -20, 10, 10, 5,
-	0, 0, 0, 0, 0, 0, 0, 0,
-}
-var knightPST = [64]int{
-	-50, -40, -30, -30, -30, -30, -40, -50,
-	-40, -20, 0, 0, 0, 0, -20, -40,
-	-30, 0, 10, 15, 15, 10, 0, -30,
-	-30, 5, 15, 20, 20, 15, 5, -30,
-	-30, 0, 15, 20, 20, 15, 0, -30,
-	-30, 5, 10, 15, 15, 10, 5, -30,
-	-40, -20, 0, 5, 5, 0, -20, -40,
-	-50, -40, -30, -30, -30, -30, -40, -50,
-}
-var bishopPST = [64]int{
-	-20, -10, -10, -10, -10, -10, -10, -20,
-	-10, 5, 0, 0, 0, 0, 5, -10,
-	-10, 10, 10, 10, 10, 10, 10, -10,
-	-10, 0, 10, 10, 10, 10, 0, -10,
-	-10, 5, 5, 10, 10, 5, 5, -10,
-	-10, 0, 5, 10, 10, 5, 0, -10,
-	-10, 0, 0, 0, 0, 0, 0, -10,
-	-20, -10, -10, -10, -10, -10, -10, -20,
-}
-var rookPST = [64]int{
-	0, 0, 0, 0, 0, 0, 0, 0,
-	5, 10, 10, 10, 10, 10, 10, 5,
-	-5, 0, 0, 0, 0, 0, 0, -5,
-	-5, 0, 0, 0, 0, 0, 0, -5,
-	-5, 0, 0, 0, 0, 0, 0, -5,
-	-5, 0, 0, 0, 0, 0, 0, -5,
-	-5, 0, 0, 0, 0, 0, 0, -5,
-	0, 0, 0, 5, 5, 0, 0, 0,
-}
-var queenPST = [64]int{
-	-20, -10, -10, -5, -5, -10, -10, -20,
-	-10, 0, 0, 0, 0, 0, 0, -10,
-	-10, 0, 5, 5, 5, 5, 0, -10,
-	-5, 0, 5, 5, 5, 5, 0, -5,
-	0, 0, 5, 5, 5, 5, 0, -5,
-	-10, 5, 5, 5, 5, 5, 0, -10,
-	-10, 0, 5, 0, 0, 0, 0, -10,
-	-20, -10, -10, -5, -5, -10, -10, -20,
-}
-var kingPST = [64]int{
-	-30, -40, -40, -50, -50, -40, -40, -30,
-	-30, -40, -40, -50, -50, -40, -40, -30,
-	-30, -40, -40, -50, -50, -40, -40, -30,
-	-30, -40, -40, -50, -50, -40, -40, -30,
-	-20, -30, -30, -40, -40, -30, -30, -20,
-	-10, -20, -20, -20, -20, -20, -20, -10,
-	20, 20, 0, 0, 0, 0, 20, 20,
-	20, 30, 10, 0, 0, 10, 30, 20,
-}
-
 // mirrorIndex mirrors a square index for black's perspective
 func mirrorIndex(idx byte) byte {
 	return 56 ^ (idx & 56) | (idx & 7)
@@ -79,51 +17,51 @@ func (board *Board) EvaluateMaterialAndPST() (int, int) {
 	whiteScore := 0
 	blackScore := 0
 	for _, sq := range board.Pieces.White.Pawns {
-		whiteScore += 100
+		whiteScore += PieceCodeToValue[WhitePawn]
 		whiteScore += pawnPST[sq]
 	}
 	for _, sq := range board.Pieces.Black.Pawns {
-		blackScore += 100
+		blackScore += PieceCodeToValue[BlackPawn]
 		blackScore += pawnPST[mirrorIndex(sq)]
 	}
 	for _, sq := range board.Pieces.White.Knights {
-		whiteScore += 300
+		whiteScore += PieceCodeToValue[WhiteKnight]
 		whiteScore += knightPST[sq]
 	}
 	for _, sq := range board.Pieces.Black.Knights {
-		blackScore += 300
+		blackScore += PieceCodeToValue[BlackKnight]
 		blackScore += knightPST[mirrorIndex(sq)]
 	}
 	for _, sq := range board.Pieces.White.Bishops {
-		whiteScore += 300
+		whiteScore += PieceCodeToValue[WhiteBishop]
 		whiteScore += bishopPST[sq]
 	}
 	for _, sq := range board.Pieces.Black.Bishops {
-		blackScore += 300
+		blackScore += PieceCodeToValue[BlackBishop]
 		blackScore += bishopPST[mirrorIndex(sq)]
 	}
 	for _, sq := range board.Pieces.White.Rooks {
-		whiteScore += 500
+		whiteScore += PieceCodeToValue[WhiteRook]
 		whiteScore += rookPST[sq]
 	}
 	for _, sq := range board.Pieces.Black.Rooks {
-		blackScore += 500
+		blackScore += PieceCodeToValue[BlackRook]
 		blackScore += rookPST[mirrorIndex(sq)]
 	}
 	for _, sq := range board.Pieces.White.Queens {
-		whiteScore += 900
+		whiteScore += PieceCodeToValue[WhiteQueen]
 		whiteScore += queenPST[sq]
 	}
 	for _, sq := range board.Pieces.Black.Queens {
-		blackScore += 900
+		blackScore += PieceCodeToValue[BlackQueen]
 		blackScore += queenPST[mirrorIndex(sq)]
 	}
 	if board.Pieces.White.King != 0 {
-		whiteScore += 0
+		whiteScore += PieceCodeToValue[WhiteKing]
 		whiteScore += kingPST[board.Pieces.White.King]
 	}
 	if board.Pieces.Black.King != 0 {
-		blackScore += 0
+		blackScore += PieceCodeToValue[BlackKing]
 		blackScore += kingPST[mirrorIndex(board.Pieces.Black.King)]
 	}
 

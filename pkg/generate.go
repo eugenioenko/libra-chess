@@ -316,15 +316,51 @@ func (board *Board) GenerateLegalMoves() []Move {
 			legalMoves = append(legalMoves, move)
 		}
 	}
-	// Sort moves by MoveType descending (higher MoveType is better)
+	// Sort moves by MoveType descending, then by From, To, and promotion piece for full determinism
 	sort.SliceStable(legalMoves, func(i, j int) bool {
-		return legalMoves[i].MoveType > legalMoves[j].MoveType
+		moveA := legalMoves[i]
+		moveB := legalMoves[j]
+		if moveA.MoveType != moveB.MoveType {
+			// Sort by MoveType descending: captures and promotions first, then quiet moves
+			return moveA.MoveType > moveB.MoveType
+		}
+		if moveA.From != moveB.From {
+			// Sort by From square ascending
+			return moveA.From < moveB.From
+		}
+		if moveA.To != moveB.To {
+			// Sort by To square ascending
+			return moveA.To < moveB.To
+		}
+		// For promotions, ensure consistent order by promotion piece
+		if moveA.MoveType == MovePromotion || moveA.MoveType == MovePromotionCapture {
+			if moveA.Data[0] != moveB.Data[0] {
+				// For promotions, sort by piece value in ascending order: Knight < Bishop < Rook < Queen.
+				// This ensures deterministic move ordering, so that when multiple promotions have equal evaluation,
+				// the queen promotion (highest value) is preferred if all else is equal.
+				return moveA.Data[0] < moveB.Data[0]
+			}
+		}
+		// Sort by capture value if both moves are captures
+		// This ensures that if two captures are available, the one with the higher value piece captured is preferred.
+		if moveA.MoveType == MoveCapture && moveB.MoveType == MoveCapture {
+			attackerA := board.Position[moveA.From]
+			captureA := moveA.Data[0]
+			attackerB := board.Position[moveB.From]
+			captureB := moveB.Data[0]
+			valueA := PieceCodeToValue[captureA] - PieceCodeToValue[attackerA]
+			valueB := PieceCodeToValue[captureB] - PieceCodeToValue[attackerB]
+			if valueA != valueB {
+				return valueA > valueB
+			}
+		}
+		return false
 	})
 	return legalMoves
 }
 
 func (board *Board) IsMoveLegal(move Move) bool {
-	prev := board.MakeMove(move)
+	prev := board.Move(move)
 	// Generate attacked squares for the opponent after the move
 	inCheck := board.IsKingInCheck(!board.WhiteToMove)
 	board.UndoMove(prev)
@@ -332,8 +368,6 @@ func (board *Board) IsMoveLegal(move Move) bool {
 }
 
 func (board *Board) IsKingInCheck(whiteToMove bool) bool {
-	board.UpdatePiecesLocation()
-
 	board.GenerateAttackedSquares(!whiteToMove)
 	king := board.Pieces.White.King
 	if !whiteToMove {
@@ -342,8 +376,14 @@ func (board *Board) IsKingInCheck(whiteToMove bool) bool {
 	return board.AttackedSquares[king]
 }
 
+func (board *Board) ResetAttackedSquares() {
+	for i := range board.AttackedSquares {
+		board.AttackedSquares[i] = false
+	}
+}
+
 func (board *Board) GenerateAttackedSquares(whiteToMove bool) {
-	board.AttackedSquares = make([]bool, 64)
+	board.ResetAttackedSquares()
 
 	if whiteToMove {
 		board.MarkSlidingAttacks(board.Pieces.White.Queens, 0, 8)

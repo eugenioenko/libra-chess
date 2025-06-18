@@ -19,10 +19,10 @@ func (board *Board) PerftParallel(depth int) int {
 		wg.Add(1)
 		go func(m Move) {
 			defer wg.Done()
-			child := board.Clone()
-			child.MakeMove(m)
-			count := child.Perft(depth - 1)
-			results <- count
+			clone := board.Clone()
+			clone.Move(m)
+			nodes := clone.Perft(depth - 1)
+			results <- nodes
 		}(move)
 	}
 
@@ -46,9 +46,9 @@ func (board *Board) Perft(depth int) int {
 	}
 	nodes := 0
 	for _, move := range moves {
-		prev := board.MakeMove(move)
+		state := board.Move(move)
 		nodes += board.Perft(depth - 1)
-		board.UndoMove(prev)
+		board.UndoMove(state)
 	}
 	return nodes
 }
