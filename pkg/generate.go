@@ -156,7 +156,7 @@ func (board *Board) MarkSlidingAttacks(bitboard uint64, startDir byte, endDir by
 				if squareTo < 0 || squareTo >= 64 {
 					break
 				}
-				board.AttackedSquares[byte(squareTo)] = true
+				board.AttackedSquares |= (uint64(1) << byte(squareTo))
 				if board.IsSquareOccupied(byte(squareTo)) {
 					break
 				}
@@ -228,7 +228,7 @@ func (board *Board) GenerateCastleMoves(whiteToMove bool) []Move {
 			board.IsSquareEmpty(SquareB1) &&
 			board.IsSquareEmptyAndNotAttacked(SquareC1) &&
 			board.IsSquareEmptyAndNotAttacked(SquareD1) &&
-			!board.AttackedSquares[SquareE1] {
+			!board.IsSquareAttacked(SquareE1) {
 			moves = board.AddCastleMove(SquareE1, SquareC1, moves)
 		}
 
@@ -237,7 +237,7 @@ func (board *Board) GenerateCastleMoves(whiteToMove bool) []Move {
 			board.pieceAtSquare(SquareH1) == WhiteRook &&
 			board.IsSquareEmptyAndNotAttacked(SquareF1) &&
 			board.IsSquareEmptyAndNotAttacked(SquareG1) &&
-			!board.AttackedSquares[SquareE1] {
+			!board.IsSquareAttacked(SquareE1) {
 			moves = board.AddCastleMove(SquareE1, SquareG1, moves)
 		}
 	} else {
@@ -247,7 +247,7 @@ func (board *Board) GenerateCastleMoves(whiteToMove bool) []Move {
 			board.IsSquareEmpty(SquareB8) &&
 			board.IsSquareEmptyAndNotAttacked(SquareC8) &&
 			board.IsSquareEmptyAndNotAttacked(SquareD8) &&
-			!board.AttackedSquares[SquareE8] {
+			!board.IsSquareAttacked(SquareE8) {
 			moves = board.AddCastleMove(SquareE8, SquareC8, moves)
 		}
 
@@ -256,7 +256,7 @@ func (board *Board) GenerateCastleMoves(whiteToMove bool) []Move {
 			board.pieceAtSquare(SquareH8) == BlackRook &&
 			board.IsSquareEmptyAndNotAttacked(SquareF8) &&
 			board.IsSquareEmptyAndNotAttacked(SquareG8) &&
-			!board.AttackedSquares[SquareE8] {
+			!board.IsSquareAttacked(SquareE8) {
 			moves = board.AddCastleMove(SquareE8, SquareG8, moves)
 		}
 	}
@@ -404,13 +404,11 @@ func (board *Board) IsKingInCheck(whiteToMove bool) bool {
 		}
 		kingSq = byte(bits.TrailingZeros64(board.BlackKing))
 	}
-	return board.AttackedSquares[kingSq]
+	return board.IsSquareAttacked(kingSq)
 }
 
 func (board *Board) ResetAttackedSquares() {
-	for i := range board.AttackedSquares {
-		board.AttackedSquares[i] = false
-	}
+	board.AttackedSquares = 0
 }
 
 func (board *Board) GenerateAttackedSquares(whiteToMove bool) {
@@ -437,7 +435,7 @@ func (board *Board) GenerateAttackedSquares(whiteToMove bool) {
 		for moveIndex := 0; moveIndex < 8; moveIndex++ {
 			squareTo := SquareKnightJumps[square][moveIndex]
 			if squareTo < 255 {
-				board.AttackedSquares[squareTo] = true
+				board.AttackedSquares |= (uint64(1) << squareTo)
 			}
 		}
 		bb &= bb - 1
@@ -461,7 +459,7 @@ func (board *Board) GenerateAttackedSquares(whiteToMove bool) {
 		if amountToMove > 0 {
 			squareTo := int8(kingSq) + offset
 			if squareTo >= 0 && squareTo < 64 {
-				board.AttackedSquares[byte(squareTo)] = true
+				board.AttackedSquares |= (uint64(1) << byte(squareTo))
 			}
 		}
 	}
@@ -485,7 +483,7 @@ func (board *Board) GenerateAttackedSquares(whiteToMove bool) {
 			}
 			attack := int8(square) + dir + df
 			if attack >= 0 && attack < 64 {
-				board.AttackedSquares[byte(attack)] = true
+				board.AttackedSquares |= (uint64(1) << byte(attack))
 			}
 		}
 		bb &= bb - 1

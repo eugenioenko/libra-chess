@@ -57,7 +57,7 @@ type MoveState struct {
 	BlackRooks           uint64
 	BlackQueens          uint64
 	BlackKing            uint64
-	AttackedSquares      [64]bool
+	AttackedSquares      uint64
 	CastlingAvailability CastlingAvailability
 	OnPassant            byte
 	HalfMoveClock        int

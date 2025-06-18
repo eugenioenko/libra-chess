@@ -28,8 +28,8 @@ type Board struct {
 	BlackRooks   uint64
 	BlackQueens  uint64
 	BlackKing    uint64
-	// AttackedSquares marks which squares are currently attacked by the opponent
-	AttackedSquares [64]bool
+	// AttackedSquares is a bitboard marking which squares are currently attacked by the opponent
+	AttackedSquares uint64
 	// CastlingAvailability tracks which castling rights are still available
 	CastlingAvailability CastlingAvailability
 	// WhiteToMove is true if it's White's turn, false for Black
@@ -57,7 +57,7 @@ func NewBoard() *Board {
 		BlackRooks:      0,
 		BlackQueens:     0,
 		BlackKing:       0,
-		AttackedSquares: [64]bool{},
+		AttackedSquares: 0,
 		CastlingAvailability: CastlingAvailability{
 			BlackKingSide:  true,
 			BlackQueenSide: true,
@@ -85,9 +85,7 @@ func (board *Board) Reset() {
 	board.BlackRooks = 0
 	board.BlackQueens = 0
 	board.BlackKing = 0
-	for i := range board.AttackedSquares {
-		board.AttackedSquares[i] = false
-	}
+	board.AttackedSquares = 0
 	board.CastlingAvailability = CastlingAvailability{
 		BlackKingSide:  false,
 		BlackQueenSide: false,
@@ -341,12 +339,12 @@ func (board *Board) IsSquareEmpty(square byte) bool {
 
 // IsSquareEmptyAndNotAttacked returns true if the square is empty and not attacked by the opponent.
 func (board *Board) IsSquareEmptyAndNotAttacked(square byte) bool {
-	return board.IsSquareEmpty(square) && !board.AttackedSquares[square]
+	return board.IsSquareEmpty(square) && (board.AttackedSquares&(uint64(1)<<square) == 0)
 }
 
-// IsSquareAttacked returns true if the square is under attack
+// IsSquareAttacked returns true if the square is under attack (using bitboard).
 func (board *Board) IsSquareAttacked(square byte) bool {
-	return board.AttackedSquares[square]
+	return (board.AttackedSquares & (uint64(1) << square)) != 0
 }
 
 // IsSquareOccupied returns true if the square is valid and contains a piece.
@@ -499,7 +497,7 @@ func (board *Board) Clone() *Board {
 	clone.BlackRooks = board.BlackRooks
 	clone.BlackQueens = board.BlackQueens
 	clone.BlackKing = board.BlackKing
-	copy(clone.AttackedSquares[:], board.AttackedSquares[:])
+	clone.AttackedSquares = board.AttackedSquares
 	clone.CastlingAvailability = board.CastlingAvailability
 	clone.WhiteToMove = board.WhiteToMove
 	clone.OnPassant = board.OnPassant
