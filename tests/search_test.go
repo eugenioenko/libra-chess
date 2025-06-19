@@ -11,7 +11,7 @@ var tt = NewTranspositionTable()
 func TestSearch5(t *testing.T) {
 	board := NewBoard()
 	board.FromFEN("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8")
-	score, move := board.Search(4, tt)
+	score, move := board.Search(5, tt)
 
 	if score < 200 {
 		t.Errorf("Expected score > 200, got %d", score)

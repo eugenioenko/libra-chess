@@ -319,7 +319,7 @@ func (board *Board) GenerateKnightMoves(whiteToMove bool) []Move {
 
 func (board *Board) GeneratePseudoLegalMoves() []Move {
 	moves := []Move{}
-	board.GenerateAttackedSquares(!board.WhiteToMove)
+	board.MarkAttackedSquares(!board.WhiteToMove)
 	moves = append(moves, board.GeneratePawnMoves(board.WhiteToMove)...)
 	moves = append(moves, board.GenerateKnightMoves(board.WhiteToMove)...)
 	moves = append(moves, board.GenerateBishopMoves(board.WhiteToMove)...)
@@ -390,7 +390,7 @@ func (board *Board) IsMoveLegal(move Move) bool {
 }
 
 func (board *Board) IsKingInCheck(whiteToMove bool) bool {
-	board.GenerateAttackedSquares(!whiteToMove)
+	board.MarkAttackedSquares(!whiteToMove)
 	var kingSq byte
 	if whiteToMove {
 		if board.WhiteKing == 0 {
@@ -406,23 +406,42 @@ func (board *Board) IsKingInCheck(whiteToMove bool) bool {
 	return board.IsSquareAttacked(kingSq)
 }
 
-func (board *Board) ResetAttackedSquares() {
-	board.AttackedSquares = 0
+func (board *Board) MarkPawnAttacks(whiteToMove bool) {
+	var pawns uint64
+	if whiteToMove {
+		pawns = board.WhitePawns
+	} else {
+		pawns = board.BlackPawns
+	}
+	for bb := pawns; bb != 0; {
+		square := byte(bits.TrailingZeros64(bb))
+		file := board.SquareToFile(square)
+		rank := board.SquareToRank(square)
+
+		if whiteToMove {
+			if rank > 0 {
+				if file > 0 {
+					board.AttackedSquares |= (uint64(1) << (square - 9)) // Capture left
+				}
+				if file < 7 {
+					board.AttackedSquares |= (uint64(1) << (square - 7)) // Capture right
+				}
+			}
+		} else {
+			if rank < 7 {
+				if file > 0 {
+					board.AttackedSquares |= (uint64(1) << (square + 7)) // Capture left
+				}
+				if file < 7 {
+					board.AttackedSquares |= (uint64(1) << (square + 9)) // Capture right
+				}
+			}
+		}
+		bb &= bb - 1
+	}
 }
 
-func (board *Board) GenerateAttackedSquares(whiteToMove bool) {
-	board.ResetAttackedSquares()
-
-	if whiteToMove {
-		board.MarkSlidingAttacks(board.WhiteQueens, 0, 8)
-		board.MarkSlidingAttacks(board.WhiteBishops, 4, 8)
-		board.MarkSlidingAttacks(board.WhiteRooks, 0, 4)
-	} else {
-		board.MarkSlidingAttacks(board.BlackQueens, 0, 8)
-		board.MarkSlidingAttacks(board.BlackBishops, 4, 8)
-		board.MarkSlidingAttacks(board.BlackRooks, 0, 4)
-	}
-
+func (board *Board) MarkKnightAttacks(whiteToMove bool) {
 	var knights uint64
 	if whiteToMove {
 		knights = board.WhiteKnights
@@ -439,52 +458,42 @@ func (board *Board) GenerateAttackedSquares(whiteToMove bool) {
 		}
 		bb &= bb - 1
 	}
+}
 
-	var kingSq byte
+func (board *Board) MarkKingAttacks(whiteToMove bool) {
+	var kings uint64
 	if whiteToMove {
-		if board.WhiteKing == 0 {
-			return
-		}
-		kingSq = byte(bits.TrailingZeros64(board.WhiteKing))
+		kings = board.WhiteKing
 	} else {
-		if board.BlackKing == 0 {
-			return
-		}
-		kingSq = byte(bits.TrailingZeros64(board.BlackKing))
+		kings = board.BlackKing
 	}
-	for dirOffset := 0; dirOffset < 8; dirOffset++ {
-		offset := BoardDirOffsets[dirOffset]
-		amountToMove := int8(SquaresToEdge[kingSq][dirOffset])
-		if amountToMove > 0 {
-			squareTo := int8(kingSq) + offset
-			if squareTo >= 0 && squareTo < 64 {
-				board.AttackedSquares |= (uint64(1) << byte(squareTo))
-			}
-		}
-	}
-
-	var pawns uint64
-	var dir int8
-	if whiteToMove {
-		pawns = board.WhitePawns
-		dir = -8
-	} else {
-		pawns = board.BlackPawns
-		dir = 8
-	}
-	for bb := pawns; bb != 0; {
+	for bb := kings; bb != 0; {
 		square := byte(bits.TrailingZeros64(bb))
-		file := board.SquareToFile(square)
-		for _, df := range []int8{-1, 1} {
-			attackFile := int8(file) + df
-			if attackFile < 0 || attackFile > 7 {
-				continue
-			}
-			attack := int8(square) + dir + df
-			if attack >= 0 && attack < 64 {
-				board.AttackedSquares |= (uint64(1) << byte(attack))
+		for moveIndex := 0; moveIndex < 8; moveIndex++ {
+			squareTo := SquareKingJumps[square][moveIndex]
+			if squareTo < 255 {
+				board.AttackedSquares |= (uint64(1) << squareTo)
 			}
 		}
 		bb &= bb - 1
 	}
+}
+
+func (board *Board) MarkAttackedSquares(whiteToMove bool) {
+	board.AttackedSquares = 0
+
+	board.MarkKingAttacks(whiteToMove)
+	board.MarkPawnAttacks(whiteToMove)
+	board.MarkKnightAttacks(whiteToMove)
+
+	if whiteToMove {
+		board.MarkSlidingAttacks(board.WhiteQueens, 0, 8)
+		board.MarkSlidingAttacks(board.WhiteBishops, 4, 8)
+		board.MarkSlidingAttacks(board.WhiteRooks, 0, 4)
+	} else {
+		board.MarkSlidingAttacks(board.BlackQueens, 0, 8)
+		board.MarkSlidingAttacks(board.BlackBishops, 4, 8)
+		board.MarkSlidingAttacks(board.BlackRooks, 0, 4)
+	}
+
 }
