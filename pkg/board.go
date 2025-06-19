@@ -2,6 +2,7 @@ package libra
 
 import (
 	"fmt"
+	"math/bits"
 	"strconv"
 	"strings"
 )
@@ -504,6 +505,14 @@ func (board *Board) ToFEN() string {
 	fen += " " + strconv.Itoa(board.FullMoveCounter)
 
 	return fen
+}
+
+// CountPieces returns the total number of pieces on the board.
+func (board *Board) CountPieces() int {
+	return bits.OnesCount64(board.WhitePawns) + bits.OnesCount64(board.WhiteKnights) + bits.OnesCount64(board.WhiteBishops) +
+		bits.OnesCount64(board.WhiteRooks) + bits.OnesCount64(board.WhiteQueens) + bits.OnesCount64(board.WhiteKing) +
+		bits.OnesCount64(board.BlackPawns) + bits.OnesCount64(board.BlackKnights) + bits.OnesCount64(board.BlackBishops) +
+		bits.OnesCount64(board.BlackRooks) + bits.OnesCount64(board.BlackQueens) + bits.OnesCount64(board.BlackKing)
 }
 
 // Clone returns a deep copy of the board.

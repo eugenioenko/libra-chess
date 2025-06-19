@@ -23,3 +23,7 @@ func SquareIndexToName(idx byte) (string, bool) {
 	}
 	return BoardSquareNames[idx], true
 }
+
+func PieceCodeToFont(piece byte) string {
+	return pieceCodeToFont[piece]
+}
