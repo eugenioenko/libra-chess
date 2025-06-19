@@ -1,6 +1,9 @@
 package libra
 
-import "sync"
+import (
+	"runtime"
+	"sync"
+)
 
 const (
 	MaxEvaluationScore = 1000000
@@ -23,36 +26,52 @@ func (board *Board) Search(depth int, tt *TranspositionTable) (int, *Move) {
 		return board.MateOrStalemateScore(maximizing), nil
 	}
 
-	var bestMove *Move
-	var bestMoveOriginalIndex int = -1 // Initialize with an invalid index
-	numMoves := len(moves)
-	moveChan := make(chan searchResult, numMoves)
+	numWorkers := runtime.GOMAXPROCS(0)
+	moveChan := make(chan struct {
+		move  Move
+		index int
+	}, len(moves))
+	resultChan := make(chan searchResult, len(moves))
 	var wg sync.WaitGroup
 
-	for i, currentMove := range moves {
+	// Start workers
+	for w := 0; w < numWorkers; w++ {
 		wg.Add(1)
-		go func(m Move, index int) {
+		go func() {
 			defer wg.Done()
-			clone := board.Clone()
-			clone.Move(m)
-			score := clone.AlphaBeta(
-				depth-1, !maximizing,
-				-MaxEvaluationScore, MaxEvaluationScore, tt,
-			)
-			moveChan <- searchResult{score: score, move: m, originalIndex: index}
-		}(currentMove, i)
+			for job := range moveChan {
+				clone := board.Clone()
+				clone.Move(job.move)
+				score := clone.AlphaBeta(
+					depth-1, !maximizing,
+					-MaxEvaluationScore, MaxEvaluationScore, tt,
+				)
+				resultChan <- searchResult{score: score, move: job.move, originalIndex: job.index}
+			}
+		}()
 	}
 
+	// Send jobs
+	for i, m := range moves {
+		moveChan <- struct {
+			move  Move
+			index int
+		}{move: m, index: i}
+	}
+	close(moveChan)
+
+	// Wait for workers to finish and close resultChan
 	go func() {
 		wg.Wait()
-		close(moveChan)
+		close(resultChan)
 	}()
 
-	for result := range moveChan {
+	var bestMove *Move
+	var bestMoveOriginalIndex int = -1
+	for result := range resultChan {
 		if maximizing {
 			if result.score > bestScore || (result.score == bestScore && (bestMove == nil || result.originalIndex < bestMoveOriginalIndex)) {
 				bestScore = result.score
-				// Assign a copy of the move from the result
 				tempMove := result.move
 				bestMove = &tempMove
 				bestMoveOriginalIndex = result.originalIndex
@@ -60,15 +79,12 @@ func (board *Board) Search(depth int, tt *TranspositionTable) (int, *Move) {
 		} else {
 			if result.score < bestScore || (result.score == bestScore && (bestMove == nil || result.originalIndex < bestMoveOriginalIndex)) {
 				bestScore = result.score
-				// Assign a copy of the move from the result
 				tempMove := result.move
 				bestMove = &tempMove
 				bestMoveOriginalIndex = result.originalIndex
 			}
 		}
 	}
-
-	// Print debug info
 	return bestScore, bestMove
 }
 

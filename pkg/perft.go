@@ -1,8 +1,11 @@
 package libra
 
-import "sync"
+import (
+	"runtime"
+	"sync"
+)
 
-// PerftParallel parallelizes the top-level perft search using goroutines for each root move.
+// PerftParallel parallelizes the top-level perft search using a worker pool limited by GOMAXPROCS.
 func (board *Board) PerftParallel(depth int) int {
 	if depth == 0 {
 		return 1
@@ -12,19 +15,30 @@ func (board *Board) PerftParallel(depth int) int {
 		return len(moves)
 	}
 
-	var wg sync.WaitGroup
+	numWorkers := runtime.GOMAXPROCS(0)
+	moveChan := make(chan Move, len(moves))
 	results := make(chan int, len(moves))
+	var wg sync.WaitGroup
 
-	for _, move := range moves {
+	// Start workers
+	for w := 0; w < numWorkers; w++ {
 		wg.Add(1)
-		go func(m Move) {
+		go func() {
 			defer wg.Done()
-			clone := board.Clone()
-			clone.Move(m)
-			nodes := clone.Perft(depth - 1)
-			results <- nodes
-		}(move)
+			for m := range moveChan {
+				clone := board.Clone()
+				clone.Move(m)
+				nodes := clone.Perft(depth - 1)
+				results <- nodes
+			}
+		}()
 	}
+
+	// Send jobs
+	for _, move := range moves {
+		moveChan <- move
+	}
+	close(moveChan)
 
 	wg.Wait()
 	close(results)

@@ -338,22 +338,37 @@ func (board *Board) GenerateLegalMoves() []Move {
 			legalMoves = append(legalMoves, move)
 		}
 	}
-	// Sort moves by MoveType descending, then by From, To, and promotion piece for full determinism
+	// Sort moves by MoveType preferring captures, then by From, To, and promotion piece for full determinism
 	sort.SliceStable(legalMoves, func(i, j int) bool {
 		moveA := legalMoves[i]
 		moveB := legalMoves[j]
-		if moveA.MoveType != moveB.MoveType {
-			// Sort by MoveType descending: captures and promotions first, then quiet moves
-			return moveA.MoveType > moveB.MoveType
+
+		isCaptureA := moveA.MoveType == MoveCapture || moveA.MoveType == MovePromotionCapture
+		isCaptureB := moveB.MoveType == MoveCapture || moveB.MoveType == MovePromotionCapture
+		if isCaptureA != isCaptureB {
+			return isCaptureA
 		}
-		if moveA.From != moveB.From {
-			// Sort by From square ascending
-			return moveA.From < moveB.From
+
+		isPromoA := moveA.MoveType == MovePromotion
+		isPromoB := moveB.MoveType == MovePromotion
+		if isPromoA != isPromoB {
+			return isPromoA
 		}
-		if moveA.To != moveB.To {
-			// Sort by To square ascending
-			return moveA.To < moveB.To
+
+		// Sort by capture value if both moves are captures
+		// This ensures that if two captures are available, the one with the higher value piece captured is preferred.
+		if isCaptureA && isCaptureB {
+			victimA := moveA.Data[0]
+			attackerA := board.PieceAtSquare(moveA.From)
+			victimB := moveB.Data[0]
+			attackerB := board.PieceAtSquare(moveB.From)
+			scoreA := PieceCodeToValue[victimA] - PieceCodeToValue[attackerA]
+			scoreB := PieceCodeToValue[victimB] - PieceCodeToValue[attackerB]
+			if scoreA != scoreB {
+				return scoreA > scoreB
+			}
 		}
+
 		// For promotions, ensure consistent order by promotion piece
 		if moveA.MoveType == MovePromotion || moveA.MoveType == MovePromotionCapture {
 			if moveA.Data[0] != moveB.Data[0] {
@@ -363,20 +378,11 @@ func (board *Board) GenerateLegalMoves() []Move {
 				return moveA.Data[0] < moveB.Data[0]
 			}
 		}
-		// Sort by capture value if both moves are captures
-		// This ensures that if two captures are available, the one with the higher value piece captured is preferred.
-		if moveA.MoveType == MoveCapture && moveB.MoveType == MoveCapture {
-			attackerA := board.PieceAtSquare(moveA.From)
-			captureA := moveA.Data[0]
-			attackerB := board.PieceAtSquare(moveB.From)
-			captureB := moveB.Data[0]
-			valueA := PieceCodeToValue[captureA] - PieceCodeToValue[attackerA]
-			valueB := PieceCodeToValue[captureB] - PieceCodeToValue[attackerB]
-			if valueA != valueB {
-				return valueA > valueB
-			}
+
+		if moveA.From != moveB.From {
+			return moveA.From < moveB.From
 		}
-		return false
+		return moveA.To < moveB.To
 	})
 	return legalMoves
 }
