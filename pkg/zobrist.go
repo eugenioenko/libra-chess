@@ -56,33 +56,80 @@ func GenerateZobristOnPassantTable() [64]uint64 {
 
 func (board *Board) ZobristHash() uint64 {
 	var hash uint64 = 0
-	// hash pieces using bitboards
-	pieceBitboards := []struct {
-		bb   uint64
-		code byte
-	}{
-		{board.WhitePawns, WhitePawn},
-		{board.WhiteKnights, WhiteKnight},
-		{board.WhiteBishops, WhiteBishop},
-		{board.WhiteRooks, WhiteRook},
-		{board.WhiteQueens, WhiteQueen},
-		{board.WhiteKing, WhiteKing},
-		{board.BlackPawns, BlackPawn},
-		{board.BlackKnights, BlackKnight},
-		{board.BlackBishops, BlackBishop},
-		{board.BlackRooks, BlackRook},
-		{board.BlackQueens, BlackQueen},
-		{board.BlackKing, BlackKing},
+
+	b := board.WhitePawns
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][WhitePawn]
+		b &= b - 1
 	}
-	for _, entry := range pieceBitboards {
-		b := entry.bb
-		for b != 0 {
-			sq := bits.TrailingZeros64(b)
-			hash ^= zobristPieceTable[sq][entry.code]
-			b &= b - 1
-		}
+	b = board.WhiteKnights
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][WhiteKnight]
+		b &= b - 1
 	}
-	// hash castling availability
+	b = board.WhiteBishops
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][WhiteBishop]
+		b &= b - 1
+	}
+	b = board.WhiteRooks
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][WhiteRook]
+		b &= b - 1
+	}
+	b = board.WhiteQueens
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][WhiteQueen]
+		b &= b - 1
+	}
+	b = board.WhiteKing
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][WhiteKing]
+		b &= b - 1
+	}
+	b = board.BlackPawns
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][BlackPawn]
+		b &= b - 1
+	}
+	b = board.BlackKnights
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][BlackKnight]
+		b &= b - 1
+	}
+	b = board.BlackBishops
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][BlackBishop]
+		b &= b - 1
+	}
+	b = board.BlackRooks
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][BlackRook]
+		b &= b - 1
+	}
+	b = board.BlackQueens
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][BlackQueen]
+		b &= b - 1
+	}
+	b = board.BlackKing
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][BlackKing]
+		b &= b - 1
+	}
+
 	if board.CastlingAvailability.BlackKingSide {
 		hash ^= zobristCastlingAvailability.BlackKingSide
 	}
@@ -95,11 +142,9 @@ func (board *Board) ZobristHash() uint64 {
 	if board.CastlingAvailability.WhiteQueenSide {
 		hash ^= zobristCastlingAvailability.WhiteQueenSide
 	}
-	// hash en passant (should only hash file if a pawn can capture)
 	if board.OnPassant != 0 {
 		hash ^= zobristOnPassantTable[board.OnPassant]
 	}
-	// hash color to move
 	if board.WhiteToMove {
 		hash ^= zobristWhiteToMove
 	} else {
