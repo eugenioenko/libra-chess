@@ -95,3 +95,58 @@ func TestPerft6(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestPerft7(t *testing.T) {
+	board := NewBoard()
+	board.FromFEN("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10 ")
+	n1 := board.PerftParallel(1)
+	n2 := board.PerftParallel(2)
+	n3 := board.PerftParallel(3)
+	n4 := board.PerftParallel(4)
+
+	if n1 != 46 || n2 != 2079 || n3 != 89890 || n4 != 3894594 {
+		t.Fail()
+	}
+}
+
+func TestPerft8(t *testing.T) {
+	board := NewBoard()
+	board.FromFEN("4k2r/2b2ppp/5n2/7P/1Q1N4/4P3/5PP1/KR6 w k - 0 1")
+	n1 := board.PerftParallel(1)
+	n2 := board.PerftParallel(2)
+	n3 := board.PerftParallel(3)
+	n4 := board.PerftParallel(4)
+
+	if n1 != 41 || n2 != 824 || n3 != 33818 || n4 != 684104 {
+		t.Fail()
+	}
+}
+
+func TestPerft9(t *testing.T) {
+	board := NewBoard()
+	board.FromFEN("1r5k/2b2ppp/5n2/NPP4P/PKR2B2/8/8/8 w - - 0 1")
+	n1 := board.PerftParallel(1)
+	n2 := board.PerftParallel(2)
+	n3 := board.PerftParallel(3)
+	n4 := board.PerftParallel(4)
+
+	if n1 != 24 || n2 != 623 || n3 != 14368 || n4 != 354843 {
+		t.Fail()
+	}
+}
+
+func TestPerft10(t *testing.T) {
+	board := NewBoard()
+	board.FromFEN("8/8/ppk5/2p5/1P6/PKP5/8/8 w - - 0 1")
+	n1 := board.PerftParallel(1)
+	n2 := board.PerftParallel(2)
+	n3 := board.PerftParallel(3)
+	n4 := board.PerftParallel(4)
+	n5 := board.PerftParallel(5)
+	n6 := board.PerftParallel(6)
+	n7 := board.PerftParallel(7)
+
+	if n1 != 9 || n2 != 78 || n3 != 600 || n4 != 5369 || n5 != 42632 || n6 != 381238 || n7 != 3058563 {
+		t.Fail()
+	}
+}
