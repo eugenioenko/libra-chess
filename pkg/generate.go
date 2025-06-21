@@ -423,7 +423,7 @@ func (board *Board) IsSquareAttackedByKing(square byte, whiteToMove bool) bool {
 
 	for i := 0; i < 8; i++ {
 		sq := SquareKingOffsets[square][i]
-		if sq >= 0 && sq < 64 && ((enemyKingBB & (uint64(1) << sq)) != 0) {
+		if sq < 64 && ((enemyKingBB & (uint64(1) << sq)) != 0) {
 			return true
 		}
 	}
@@ -441,7 +441,7 @@ func (board *Board) IsSquareAttackedByKnights(square byte, whiteToMove bool) boo
 
 	for i := 0; i < 8; i++ {
 		sq := SquareKnightOffsets[square][i]
-		if sq >= 0 && sq < 64 && ((enemyKnights & (uint64(1) << sq)) != 0) {
+		if sq < 64 && ((enemyKnights & (uint64(1) << sq)) != 0) {
 			return true
 		}
 	}
