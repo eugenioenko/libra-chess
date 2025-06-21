@@ -1,6 +1,8 @@
 package libra
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const (
 	MoveQuiet = iota
@@ -43,9 +45,19 @@ func NewMove(from byte, to byte, moveType byte, data [2]byte) Move {
 }
 
 type MoveState struct {
-	Position             [64]byte
-	AttackedSquares      [64]bool
-	Pieces               PieceColorLocation
+	WhitePawns           uint64
+	WhiteKnights         uint64
+	WhiteBishops         uint64
+	WhiteRooks           uint64
+	WhiteQueens          uint64
+	WhiteKing            uint64
+	BlackPawns           uint64
+	BlackKnights         uint64
+	BlackBishops         uint64
+	BlackRooks           uint64
+	BlackQueens          uint64
+	BlackKing            uint64
+	AttackedSquares      uint64
 	CastlingAvailability CastlingAvailability
 	OnPassant            byte
 	HalfMoveClock        int
@@ -78,6 +90,26 @@ func generateSquaresToEdge() [64][8]byte {
 func generateKnightJumps() [64][8]byte {
 	squares := [64][8]byte{}
 	jumpOffsets := [8][2]int8{{1, 2}, {-1, 2}, {2, -1}, {-2, -1}, {-1, -2}, {1, -2}, {-2, 1}, {2, 1}}
+	for x := 0; x < 8; x++ {
+		for y := 0; y < 8; y++ {
+			squareFrom := y*8 + x
+			for offsetIndex, offset := range jumpOffsets {
+				x2 := int8(x) + offset[0]
+				y2 := int8(y) + offset[1]
+				if x2 >= 0 && y2 >= 0 && x2 < 8 && y2 < 8 {
+					squares[squareFrom][offsetIndex] = byte(y2*8 + x2)
+				} else {
+					squares[squareFrom][offsetIndex] = 255
+				}
+			}
+		}
+	}
+	return squares
+}
+
+func generateKingMoves() [64][8]byte {
+	squares := [64][8]byte{}
+	jumpOffsets := [8][2]int8{{1, 1}, {-1, 1}, {1, -1}, {-1, -1}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}}
 	for x := 0; x < 8; x++ {
 		for y := 0; y < 8; y++ {
 			squareFrom := y*8 + x
@@ -145,72 +177,83 @@ func (move Move) ToMove() string {
 
 var SquaresToEdge [64][8]byte = generateSquaresToEdge()
 var SquareKnightJumps [64][8]byte = generateKnightJumps()
+var SquareKingJumps [64][8]byte = generateKingMoves()
 var BoardDirOffsets [8]int8 = [8]int8{-8, 1, 8, -1, -7, 9, 7, -9}
 
 // Move returns a MoveState for undoing the move
 func (board *Board) Move(move Move) MoveState {
 	// Save current state
 	prev := MoveState{
-		Position:             board.Position,
+		WhitePawns:           board.WhitePawns,
+		WhiteKnights:         board.WhiteKnights,
+		WhiteBishops:         board.WhiteBishops,
+		WhiteRooks:           board.WhiteRooks,
+		WhiteQueens:          board.WhiteQueens,
+		WhiteKing:            board.WhiteKing,
+		BlackPawns:           board.BlackPawns,
+		BlackKnights:         board.BlackKnights,
+		BlackBishops:         board.BlackBishops,
+		BlackRooks:           board.BlackRooks,
+		BlackQueens:          board.BlackQueens,
+		BlackKing:            board.BlackKing,
 		CastlingAvailability: board.CastlingAvailability,
 		OnPassant:            board.OnPassant,
 		HalfMoveClock:        board.HalfMoveClock,
 		FullMoveCounter:      board.FullMoveCounter,
 		WhiteToMove:          board.WhiteToMove,
 		AttackedSquares:      board.AttackedSquares,
-		Pieces:               board.Pieces,
 	}
 
 	if !board.WhiteToMove {
 		board.FullMoveCounter += 1
 	}
-	if move.MoveType == MoveCapture || board.IsSquarePawn(move.From) {
+	from := move.From
+	to := move.To
+	piece := board.PieceAtSquare(from)
+
+	if move.MoveType == MoveCapture || board.IsSquarePawn(from) {
 		board.HalfMoveClock = 0
 	} else {
 		board.HalfMoveClock += 1
 	}
 
-	piece := board.Position[move.From]
-
-	if move.MoveType == MoveCapture || move.MoveType == MovePromotionCapture || move.MoveType == MoveEnPassant {
-		captured := board.getCapturedPiece(move.MoveType, move.To, board.WhiteToMove)
-		if captured == WhiteKing || captured == BlackKing {
-			panic("Attempted to capture a king!")
-		}
-	}
-	board.Position[move.To] = piece
-	board.Position[move.From] = 0
-
+	// Remove piece from 'from' square
+	board.clearPieceAtSquare(from, piece)
+	// Place piece at 'to' square
 	if move.MoveType == MovePromotion || move.MoveType == MovePromotionCapture {
-		board.Position[move.To] = move.Data[0]
+		board.setPieceAtSquare(to, move.Data[0])
+	} else {
+		board.setPieceAtSquare(to, piece)
 	}
 
+	// Handle en passant
 	if move.MoveType == MoveEnPassant {
 		if board.WhiteToMove {
-			board.Position[move.To+8] = 0
+			board.clearPieceAtSquare(to+8, BlackPawn)
 		} else {
-			board.Position[move.To-8] = 0
+			board.clearPieceAtSquare(to-8, WhitePawn)
 		}
 	}
 
+	// Handle castling
 	if move.MoveType == MoveCastle {
 		if piece == WhiteKing {
-			if move.To == SquareG1 {
-				board.Position[SquareH1] = 0
-				board.Position[SquareF1] = WhiteRook
-			} else if move.To == SquareC1 {
-				board.Position[SquareA1] = 0
-				board.Position[SquareD1] = WhiteRook
+			if to == SquareG1 {
+				board.clearPieceAtSquare(SquareH1, WhiteRook)
+				board.setPieceAtSquare(SquareF1, WhiteRook)
+			} else if to == SquareC1 {
+				board.clearPieceAtSquare(SquareA1, WhiteRook)
+				board.setPieceAtSquare(SquareD1, WhiteRook)
 			}
 			board.CastlingAvailability.WhiteKingSide = false
 			board.CastlingAvailability.WhiteQueenSide = false
 		} else if piece == BlackKing {
-			if move.To == SquareG8 {
-				board.Position[SquareH8] = 0
-				board.Position[SquareF8] = BlackRook
-			} else if move.To == SquareC8 {
-				board.Position[SquareA8] = 0
-				board.Position[SquareD8] = BlackRook
+			if to == SquareG8 {
+				board.clearPieceAtSquare(SquareH8, BlackRook)
+				board.setPieceAtSquare(SquareF8, BlackRook)
+			} else if to == SquareC8 {
+				board.clearPieceAtSquare(SquareA8, BlackRook)
+				board.setPieceAtSquare(SquareD8, BlackRook)
 			}
 			board.CastlingAvailability.BlackKingSide = false
 			board.CastlingAvailability.BlackQueenSide = false
@@ -218,10 +261,10 @@ func (board *Board) Move(move Move) MoveState {
 	}
 
 	board.OnPassant = 0
-	if piece == WhitePawn && move.From/8 == 6 && move.To/8 == 4 {
-		board.OnPassant = move.From - 8
-	} else if piece == BlackPawn && move.From/8 == 1 && move.To/8 == 3 {
-		board.OnPassant = move.From + 8
+	if piece == WhitePawn && from/8 == 6 && to/8 == 4 {
+		board.OnPassant = from - 8
+	} else if piece == BlackPawn && from/8 == 1 && to/8 == 3 {
+		board.OnPassant = from + 8
 	}
 
 	if piece == WhiteKing {
@@ -233,18 +276,18 @@ func (board *Board) Move(move Move) MoveState {
 		board.CastlingAvailability.BlackQueenSide = false
 	}
 	if piece == WhiteRook {
-		if move.From == SquareH1 {
+		if from == SquareH1 {
 			board.CastlingAvailability.WhiteKingSide = false
 		}
-		if move.From == SquareA1 {
+		if from == SquareA1 {
 			board.CastlingAvailability.WhiteQueenSide = false
 		}
 	}
 	if piece == BlackRook {
-		if move.From == SquareH8 {
+		if from == SquareH8 {
 			board.CastlingAvailability.BlackKingSide = false
 		}
-		if move.From == SquareA8 {
+		if from == SquareA8 {
 			board.CastlingAvailability.BlackQueenSide = false
 		}
 	}
@@ -257,7 +300,7 @@ func (board *Board) Move(move Move) MoveState {
 		} else {
 			capturedPiece = move.Data[0]
 		}
-
+		board.clearPieceAtSquare(capturedPieceSquare, capturedPiece)
 		if capturedPiece == WhiteRook {
 			if capturedPieceSquare == SquareH1 {
 				board.CastlingAvailability.WhiteKingSide = false
@@ -276,21 +319,90 @@ func (board *Board) Move(move Move) MoveState {
 		}
 	}
 
-	board.UpdatePiecesLocation()
-
 	board.WhiteToMove = !board.WhiteToMove
-
 	return prev
+}
+
+// clearPieceAtSquare removes a piece from a square in the bitboards
+func (board *Board) clearPieceAtSquare(square byte, piece byte) {
+	mask := ^(uint64(1) << square)
+	switch piece {
+	case WhitePawn:
+		board.WhitePawns &= mask
+	case WhiteKnight:
+		board.WhiteKnights &= mask
+	case WhiteBishop:
+		board.WhiteBishops &= mask
+	case WhiteRook:
+		board.WhiteRooks &= mask
+	case WhiteQueen:
+		board.WhiteQueens &= mask
+	case WhiteKing:
+		board.WhiteKing &= mask
+	case BlackPawn:
+		board.BlackPawns &= mask
+	case BlackKnight:
+		board.BlackKnights &= mask
+	case BlackBishop:
+		board.BlackBishops &= mask
+	case BlackRook:
+		board.BlackRooks &= mask
+	case BlackQueen:
+		board.BlackQueens &= mask
+	case BlackKing:
+		board.BlackKing &= mask
+	}
+}
+
+// setPieceAtSquare places a piece on a square in the bitboards
+func (board *Board) setPieceAtSquare(square byte, piece byte) {
+	mask := uint64(1) << square
+	switch piece {
+	case WhitePawn:
+		board.WhitePawns |= mask
+	case WhiteKnight:
+		board.WhiteKnights |= mask
+	case WhiteBishop:
+		board.WhiteBishops |= mask
+	case WhiteRook:
+		board.WhiteRooks |= mask
+	case WhiteQueen:
+		board.WhiteQueens |= mask
+	case WhiteKing:
+		board.WhiteKing |= mask
+	case BlackPawn:
+		board.BlackPawns |= mask
+	case BlackKnight:
+		board.BlackKnights |= mask
+	case BlackBishop:
+		board.BlackBishops |= mask
+	case BlackRook:
+		board.BlackRooks |= mask
+	case BlackQueen:
+		board.BlackQueens |= mask
+	case BlackKing:
+		board.BlackKing |= mask
+	}
 }
 
 // UndoMove restores the board to a previous MoveState
 func (board *Board) UndoMove(state MoveState) {
-	board.Position = state.Position
+	board.WhitePawns = state.WhitePawns
+	board.WhiteKnights = state.WhiteKnights
+	board.WhiteBishops = state.WhiteBishops
+	board.WhiteRooks = state.WhiteRooks
+	board.WhiteQueens = state.WhiteQueens
+	board.WhiteKing = state.WhiteKing
+	board.BlackPawns = state.BlackPawns
+	board.BlackKnights = state.BlackKnights
+	board.BlackBishops = state.BlackBishops
+	board.BlackRooks = state.BlackRooks
+	board.BlackQueens = state.BlackQueens
+	board.BlackKing = state.BlackKing
 	board.CastlingAvailability = state.CastlingAvailability
 	board.OnPassant = state.OnPassant
 	board.HalfMoveClock = state.HalfMoveClock
 	board.FullMoveCounter = state.FullMoveCounter
 	board.WhiteToMove = state.WhiteToMove
 	board.AttackedSquares = state.AttackedSquares
-	board.Pieces = state.Pieces
 }

@@ -1,6 +1,9 @@
 package libra
 
-import "math/rand"
+import (
+	"math/bits"
+	"math/rand"
+)
 
 type ZobristCastlingAvailability struct {
 	BlackKingSide  uint64
@@ -54,17 +57,79 @@ func GenerateZobristOnPassantTable() [64]uint64 {
 func (board *Board) ZobristHash() uint64 {
 	var hash uint64 = 0
 
-	// hash pieces
-	for index, piece := range board.Position {
-		if piece != 0 {
-			code, ok := zobristPieceTable[index][piece]
-			if ok {
-				hash ^= code
-			}
-		}
+	b := board.WhitePawns
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][WhitePawn]
+		b &= b - 1
+	}
+	b = board.WhiteKnights
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][WhiteKnight]
+		b &= b - 1
+	}
+	b = board.WhiteBishops
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][WhiteBishop]
+		b &= b - 1
+	}
+	b = board.WhiteRooks
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][WhiteRook]
+		b &= b - 1
+	}
+	b = board.WhiteQueens
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][WhiteQueen]
+		b &= b - 1
+	}
+	b = board.WhiteKing
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][WhiteKing]
+		b &= b - 1
+	}
+	b = board.BlackPawns
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][BlackPawn]
+		b &= b - 1
+	}
+	b = board.BlackKnights
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][BlackKnight]
+		b &= b - 1
+	}
+	b = board.BlackBishops
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][BlackBishop]
+		b &= b - 1
+	}
+	b = board.BlackRooks
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][BlackRook]
+		b &= b - 1
+	}
+	b = board.BlackQueens
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][BlackQueen]
+		b &= b - 1
+	}
+	b = board.BlackKing
+	for b != 0 {
+		sq := bits.TrailingZeros64(b)
+		hash ^= zobristPieceTable[sq][BlackKing]
+		b &= b - 1
 	}
 
-	// hash castling availability
 	if board.CastlingAvailability.BlackKingSide {
 		hash ^= zobristCastlingAvailability.BlackKingSide
 	}
@@ -77,18 +142,13 @@ func (board *Board) ZobristHash() uint64 {
 	if board.CastlingAvailability.WhiteQueenSide {
 		hash ^= zobristCastlingAvailability.WhiteQueenSide
 	}
-
-	// hash en passant (should only hash file if a pawn can capture)
 	if board.OnPassant != 0 {
 		hash ^= zobristOnPassantTable[board.OnPassant]
 	}
-
-	// hash color to move
 	if board.WhiteToMove {
 		hash ^= zobristWhiteToMove
 	} else {
 		hash ^= zobristBlackToMove
 	}
-
 	return hash
 }

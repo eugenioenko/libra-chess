@@ -312,13 +312,10 @@ func TestPromotionCaptureRemovesCastlingRights(t *testing.T) {
 
 func TestMoveKingIntoCheck(t *testing.T) {
 	board := NewBoard()
-	// Place white king on e1 (SquareE1), black rook on e8 (SquareE8), white to move
-	board.Position[SquareE1] = WhiteKing
-	board.Position[SquareE8] = BlackRook
+	board.SetPiece(SquareE1, WhiteKing)
+	board.SetPiece(SquareE8, BlackRook)
 	board.WhiteToMove = true
-	board.UpdatePiecesLocation()
 	moves := board.GenerateLegalMoves()
-	// Check that moves where the king would move into the rook's attack line are not generated
 	for _, move := range moves {
 		if move.From == SquareE1 && (move.To == SquareE2 || move.To == SquareE3 || move.To == SquareE4 || move.To == SquareE5 || move.To == SquareE6 || move.To == SquareE7 || move.To == SquareE8) {
 			t.Errorf("King should not be able to move to %d which is in the rook's attack line", move.To)
@@ -328,11 +325,9 @@ func TestMoveKingIntoCheck(t *testing.T) {
 
 func TestMoveKingAdjacentToEnemyKing(t *testing.T) {
 	board := NewBoard()
-	// Place white king on e1 (SquareE1), black king on e2 (SquareE2), white to move
-	board.Position[SquareE1] = WhiteKing
-	board.Position[SquareE2] = BlackKing
+	board.SetPiece(SquareE1, WhiteKing)
+	board.SetPiece(SquareE2, BlackKing)
 	board.WhiteToMove = true
-	board.UpdatePiecesLocation()
 	moves := board.GenerateLegalMoves()
 	for _, move := range moves {
 		if move.From == SquareE1 && move.To == SquareE2 {
@@ -368,11 +363,8 @@ func TestBoardToFEN(t *testing.T) {
 
 func TestPawnBlockedAndNoDoublePush(t *testing.T) {
 	board := NewBoard()
-	// Blocked pawn at e2 by e3
-	board.Position = [64]byte{}
-	board.Position[SquareE2] = WhitePawn
-	board.Position[SquareE3] = BlackPawn
-	board.UpdatePiecesLocation()
+	board.SetPiece(SquareE2, WhitePawn)
+	board.SetPiece(SquareE3, BlackPawn)
 	board.WhiteToMove = true
 	moves := board.GeneratePawnMoves(true)
 	if len(moves) != 0 {
@@ -382,11 +374,8 @@ func TestPawnBlockedAndNoDoublePush(t *testing.T) {
 
 func TestPawnPromotionWithCaptureAndNoCapture(t *testing.T) {
 	board := NewBoard()
-	// White pawn on g7, black rook on h8
-	board.Position = [64]byte{}
-	board.Position[SquareG7] = WhitePawn
-	board.Position[SquareH8] = BlackRook
-	board.UpdatePiecesLocation()
+	board.SetPiece(SquareG7, WhitePawn)
+	board.SetPiece(SquareH8, BlackRook)
 	board.WhiteToMove = true
 	moves := board.GeneratePawnMoves(true)
 	promotion, capture := false, false
@@ -405,11 +394,8 @@ func TestPawnPromotionWithCaptureAndNoCapture(t *testing.T) {
 
 func TestKnightEdgeCases(t *testing.T) {
 	board := NewBoard()
-	// Knight on a1 and h8
-	board.Position = [64]byte{}
-	board.Position[SquareA1] = WhiteKnight
-	board.Position[SquareH8] = WhiteKnight
-	board.UpdatePiecesLocation()
+	board.SetPiece(SquareA1, WhiteKnight)
+	board.SetPiece(SquareH8, WhiteKnight)
 	board.WhiteToMove = true
 	moves := board.GenerateKnightMoves(true)
 	if len(moves) != 4 {
@@ -419,11 +405,8 @@ func TestKnightEdgeCases(t *testing.T) {
 
 func TestRookBlockedAndEdge(t *testing.T) {
 	board := NewBoard()
-	// Rook on a1, blocked by pawn on a2
-	board.Position = [64]byte{}
-	board.Position[SquareA1] = WhiteRook
-	board.Position[SquareA2] = WhitePawn
-	board.UpdatePiecesLocation()
+	board.SetPiece(SquareA1, WhiteRook)
+	board.SetPiece(SquareA2, WhitePawn)
 	board.WhiteToMove = true
 	moves := board.GenerateRookMoves(true)
 	if len(moves) != 7 {
@@ -433,12 +416,9 @@ func TestRookBlockedAndEdge(t *testing.T) {
 
 func TestQueenBlockedAndEdge(t *testing.T) {
 	board := NewBoard()
-	// Queen on a1, blocked by pawn on a2 and b2
-	board.Position = [64]byte{}
-	board.Position[SquareA1] = WhiteQueen
-	board.Position[SquareA2] = WhitePawn
-	board.Position[SquareB2] = WhitePawn
-	board.UpdatePiecesLocation()
+	board.SetPiece(SquareA1, WhiteQueen)
+	board.SetPiece(SquareA2, WhitePawn)
+	board.SetPiece(SquareB2, WhitePawn)
 	board.WhiteToMove = true
 	moves := board.GenerateQueenMoves(true)
 	if len(moves) != 7 {
@@ -448,10 +428,8 @@ func TestQueenBlockedAndEdge(t *testing.T) {
 
 func TestKingCannotMoveIntoCheck(t *testing.T) {
 	board := NewBoard()
-	// King on e1, enemy rook on e2
-	board.Position[SquareE1] = WhiteKing
-	board.Position[SquareE3] = BlackRook
-	board.UpdatePiecesLocation()
+	board.SetPiece(SquareE1, WhiteKing)
+	board.SetPiece(SquareE3, BlackRook)
 	board.WhiteToMove = true
 	moves := board.GenerateLegalMoves()
 	for _, move := range moves {

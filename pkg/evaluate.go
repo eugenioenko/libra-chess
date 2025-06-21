@@ -1,5 +1,9 @@
 package libra
 
+import (
+	"math/bits"
+)
+
 // mirrorIndex mirrors a square index for black's perspective
 func mirrorIndex(idx byte) byte {
 	return 56 ^ (idx & 56) | (idx & 7)
@@ -16,73 +20,100 @@ func abs(x int) int {
 func (board *Board) EvaluateMaterialAndPST() (int, int) {
 	whiteScore := 0
 	blackScore := 0
-	for _, sq := range board.Pieces.White.Pawns {
+	// Pawns
+	for bb := board.WhitePawns; bb != 0; {
+		sq := bits.TrailingZeros64(bb)
 		whiteScore += PieceCodeToValue[WhitePawn]
 		whiteScore += pawnPST[sq]
+		bb &= bb - 1
 	}
-	for _, sq := range board.Pieces.Black.Pawns {
+	for bb := board.BlackPawns; bb != 0; {
+		sq := bits.TrailingZeros64(bb)
 		blackScore += PieceCodeToValue[BlackPawn]
-		blackScore += pawnPST[mirrorIndex(sq)]
+		blackScore += pawnPST[mirrorIndex(byte(sq))]
+		bb &= bb - 1
 	}
-	for _, sq := range board.Pieces.White.Knights {
+	// Knights
+	for bb := board.WhiteKnights; bb != 0; {
+		sq := bits.TrailingZeros64(bb)
 		whiteScore += PieceCodeToValue[WhiteKnight]
 		whiteScore += knightPST[sq]
+		bb &= bb - 1
 	}
-	for _, sq := range board.Pieces.Black.Knights {
+	for bb := board.BlackKnights; bb != 0; {
+		sq := bits.TrailingZeros64(bb)
 		blackScore += PieceCodeToValue[BlackKnight]
-		blackScore += knightPST[mirrorIndex(sq)]
+		blackScore += knightPST[mirrorIndex(byte(sq))]
+		bb &= bb - 1
 	}
-	for _, sq := range board.Pieces.White.Bishops {
+	// Bishops
+	for bb := board.WhiteBishops; bb != 0; {
+		sq := bits.TrailingZeros64(bb)
 		whiteScore += PieceCodeToValue[WhiteBishop]
 		whiteScore += bishopPST[sq]
+		bb &= bb - 1
 	}
-	for _, sq := range board.Pieces.Black.Bishops {
+	for bb := board.BlackBishops; bb != 0; {
+		sq := bits.TrailingZeros64(bb)
 		blackScore += PieceCodeToValue[BlackBishop]
-		blackScore += bishopPST[mirrorIndex(sq)]
+		blackScore += bishopPST[mirrorIndex(byte(sq))]
+		bb &= bb - 1
 	}
-	for _, sq := range board.Pieces.White.Rooks {
+	// Rooks
+	for bb := board.WhiteRooks; bb != 0; {
+		sq := bits.TrailingZeros64(bb)
 		whiteScore += PieceCodeToValue[WhiteRook]
 		whiteScore += rookPST[sq]
+		bb &= bb - 1
 	}
-	for _, sq := range board.Pieces.Black.Rooks {
+	for bb := board.BlackRooks; bb != 0; {
+		sq := bits.TrailingZeros64(bb)
 		blackScore += PieceCodeToValue[BlackRook]
-		blackScore += rookPST[mirrorIndex(sq)]
+		blackScore += rookPST[mirrorIndex(byte(sq))]
+		bb &= bb - 1
 	}
-	for _, sq := range board.Pieces.White.Queens {
+	// Queens
+	for bb := board.WhiteQueens; bb != 0; {
+		sq := bits.TrailingZeros64(bb)
 		whiteScore += PieceCodeToValue[WhiteQueen]
 		whiteScore += queenPST[sq]
+		bb &= bb - 1
 	}
-	for _, sq := range board.Pieces.Black.Queens {
+	for bb := board.BlackQueens; bb != 0; {
+		sq := bits.TrailingZeros64(bb)
 		blackScore += PieceCodeToValue[BlackQueen]
-		blackScore += queenPST[mirrorIndex(sq)]
+		blackScore += queenPST[mirrorIndex(byte(sq))]
+		bb &= bb - 1
 	}
-	if board.Pieces.White.King != 0 {
+	// King
+	if board.WhiteKing != 0 {
+		sq := bits.TrailingZeros64(board.WhiteKing)
 		whiteScore += PieceCodeToValue[WhiteKing]
-		whiteScore += kingPST[board.Pieces.White.King]
+		whiteScore += kingPST[sq]
 	}
-	if board.Pieces.Black.King != 0 {
+	if board.BlackKing != 0 {
+		sq := bits.TrailingZeros64(board.BlackKing)
 		blackScore += PieceCodeToValue[BlackKing]
-		blackScore += kingPST[mirrorIndex(board.Pieces.Black.King)]
+		blackScore += kingPST[mirrorIndex(byte(sq))]
 	}
 
 	// Encourage mating the king in the endgame
 	material := 0
-	material += len(board.Pieces.White.Pawns) + len(board.Pieces.Black.Pawns)
-	material += len(board.Pieces.White.Knights)*3 + len(board.Pieces.Black.Knights)*3
-	material += len(board.Pieces.White.Bishops)*3 + len(board.Pieces.Black.Bishops)*3
-	material += len(board.Pieces.White.Rooks)*5 + len(board.Pieces.Black.Rooks)*5
-	material += len(board.Pieces.White.Queens)*9 + len(board.Pieces.Black.Queens)*9
-	if material <= 14 && board.Pieces.White.King != 0 && board.Pieces.Black.King != 0 {
-		wKing := board.Pieces.White.King
-		bKing := board.Pieces.Black.King
+	material += bits.OnesCount64(board.WhitePawns) + bits.OnesCount64(board.BlackPawns)
+	material += bits.OnesCount64(board.WhiteKnights)*3 + bits.OnesCount64(board.BlackKnights)*3
+	material += bits.OnesCount64(board.WhiteBishops)*3 + bits.OnesCount64(board.BlackBishops)*3
+	material += bits.OnesCount64(board.WhiteRooks)*5 + bits.OnesCount64(board.BlackRooks)*5
+	material += bits.OnesCount64(board.WhiteQueens)*9 + bits.OnesCount64(board.BlackQueens)*9
+	if material <= 14 && board.WhiteKing != 0 && board.BlackKing != 0 {
+		wKing := byte(bits.TrailingZeros64(board.WhiteKing))
+		bKing := byte(bits.TrailingZeros64(board.BlackKing))
 		wRank := int(wKing / 8)
 		wFile := int(wKing % 8)
 		bRank := int(bKing / 8)
 		bFile := int(bKing % 8)
 		dist := abs(wRank-bRank) + abs(wFile-bFile)
-		// If one side has more material, encourage reducing the distance between kings
-		wMat := len(board.Pieces.White.Queens)*9 + len(board.Pieces.White.Rooks)*5 + len(board.Pieces.White.Bishops)*3 + len(board.Pieces.White.Knights)*3 + len(board.Pieces.White.Pawns)
-		bMat := len(board.Pieces.Black.Queens)*9 + len(board.Pieces.Black.Rooks)*5 + len(board.Pieces.Black.Bishops)*3 + len(board.Pieces.Black.Knights)*3 + len(board.Pieces.Black.Pawns)
+		wMat := bits.OnesCount64(board.WhiteQueens)*9 + bits.OnesCount64(board.WhiteRooks)*5 + bits.OnesCount64(board.WhiteBishops)*3 + bits.OnesCount64(board.WhiteKnights)*3 + bits.OnesCount64(board.WhitePawns)
+		bMat := bits.OnesCount64(board.BlackQueens)*9 + bits.OnesCount64(board.BlackRooks)*5 + bits.OnesCount64(board.BlackBishops)*3 + bits.OnesCount64(board.BlackKnights)*3 + bits.OnesCount64(board.BlackPawns)
 		if wMat > bMat {
 			whiteScore += (14 - dist) * 10 // Encourage white to approach black king
 			blackScore -= (14 - dist) * 10
