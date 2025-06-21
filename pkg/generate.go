@@ -142,29 +142,6 @@ func (board *Board) GeneratePawnMoves(whiteToMove bool) []Move {
 	return moves
 }
 
-// MarkSlidingAttacks marks all squares attacked by sliding pieces (rooks, bishops, queens) in the given directions.
-// Used for attack maps and move generation.
-func (board *Board) MarkSlidingAttacks(bitboard uint64, startDir byte, endDir byte) {
-	for bb := bitboard; bb != 0; {
-		square := byte(bits.TrailingZeros64(bb))
-		for dirOffset := startDir; dirOffset < endDir; dirOffset++ {
-			offset := BoardDirOffsets[dirOffset]
-			amountToMove := int8(SquaresToEdge[square][dirOffset])
-			for moveIndex := int8(1); moveIndex <= amountToMove; moveIndex++ {
-				squareTo := int8(square) + offset*moveIndex
-				if squareTo < 0 || squareTo >= 64 {
-					break
-				}
-				board.AttackedSquares |= (uint64(1) << byte(squareTo))
-				if board.IsSquareOccupied(byte(squareTo)) {
-					break
-				}
-			}
-		}
-		bb &= bb - 1
-	}
-}
-
 // GenerateSlidingMoves generates all moves for sliding pieces (rooks, bishops, queens) in the given directions.
 func (board *Board) GenerateSlidingMoves(bitboard uint64, startDir byte, endDir byte, whiteToMove bool) []Move {
 	moves := []Move{}
@@ -195,14 +172,8 @@ func (board *Board) GenerateKingMoves(whiteToMove bool) []Move {
 	moves := []Move{}
 	var kingSq byte
 	if whiteToMove {
-		if board.WhiteKing == 0 {
-			return moves
-		}
 		kingSq = byte(bits.TrailingZeros64(board.WhiteKing))
 	} else {
-		if board.BlackKing == 0 {
-			return moves
-		}
 		kingSq = byte(bits.TrailingZeros64(board.BlackKing))
 	}
 	for dirOffset := 0; dirOffset < 8; dirOffset++ {
@@ -216,8 +187,9 @@ func (board *Board) GenerateKingMoves(whiteToMove bool) []Move {
 	return moves
 }
 
-// GenerateCastleMoves generates castling moves if the king and rook have not moved and the path is clear and not attacked.
-// Chess rules: King cannot castle out of, through, or into check; squares between must be empty.
+// Generates all castling moves
+// King cannot castle out of, through, or into check;
+// squares between must be empty.
 func (board *Board) GenerateCastleMoves(whiteToMove bool) []Move {
 	moves := []Move{}
 	if whiteToMove {
@@ -225,18 +197,22 @@ func (board *Board) GenerateCastleMoves(whiteToMove bool) []Move {
 			board.IsSquareWhiteKing(SquareE1) &&
 			board.IsSquareWhiteRook(SquareA1) &&
 			board.IsSquareEmpty(SquareB1) &&
-			board.IsSquareEmptyAndNotAttacked(SquareC1) &&
-			board.IsSquareEmptyAndNotAttacked(SquareD1) &&
-			!board.IsSquareAttacked(SquareE1) {
+			board.IsSquareEmpty(SquareC1) &&
+			board.IsSquareEmpty(SquareD1) &&
+			!board.IsSquareAttacked(SquareC1, whiteToMove) &&
+			!board.IsSquareAttacked(SquareD1, whiteToMove) &&
+			!board.IsSquareAttacked(SquareE1, whiteToMove) {
 			moves = board.AddCastleMove(SquareE1, SquareC1, moves)
 		}
 
 		if board.CastlingAvailability.WhiteKingSide &&
 			board.IsSquareWhiteKing(SquareE1) &&
 			board.IsSquareWhiteRook(SquareH1) &&
-			board.IsSquareEmptyAndNotAttacked(SquareF1) &&
-			board.IsSquareEmptyAndNotAttacked(SquareG1) &&
-			!board.IsSquareAttacked(SquareE1) {
+			board.IsSquareEmpty(SquareF1) &&
+			board.IsSquareEmpty(SquareG1) &&
+			!board.IsSquareAttacked(SquareF1, whiteToMove) &&
+			!board.IsSquareAttacked(SquareG1, whiteToMove) &&
+			!board.IsSquareAttacked(SquareE1, whiteToMove) {
 			moves = board.AddCastleMove(SquareE1, SquareG1, moves)
 		}
 	} else {
@@ -244,18 +220,22 @@ func (board *Board) GenerateCastleMoves(whiteToMove bool) []Move {
 			board.IsSquareBlackKing(SquareE8) &&
 			board.IsSquareBlackRook(SquareA8) &&
 			board.IsSquareEmpty(SquareB8) &&
-			board.IsSquareEmptyAndNotAttacked(SquareC8) &&
-			board.IsSquareEmptyAndNotAttacked(SquareD8) &&
-			!board.IsSquareAttacked(SquareE8) {
+			board.IsSquareEmpty(SquareC8) &&
+			board.IsSquareEmpty(SquareD8) &&
+			!board.IsSquareAttacked(SquareC8, whiteToMove) &&
+			!board.IsSquareAttacked(SquareD8, whiteToMove) &&
+			!board.IsSquareAttacked(SquareE8, whiteToMove) {
 			moves = board.AddCastleMove(SquareE8, SquareC8, moves)
 		}
 
 		if board.CastlingAvailability.BlackKingSide &&
 			board.IsSquareBlackKing(SquareE8) &&
 			board.IsSquareBlackRook(SquareH8) &&
-			board.IsSquareEmptyAndNotAttacked(SquareF8) &&
-			board.IsSquareEmptyAndNotAttacked(SquareG8) &&
-			!board.IsSquareAttacked(SquareE8) {
+			board.IsSquareEmpty(SquareF8) &&
+			board.IsSquareEmpty(SquareG8) &&
+			!board.IsSquareAttacked(SquareF8, whiteToMove) &&
+			!board.IsSquareAttacked(SquareG8, whiteToMove) &&
+			!board.IsSquareAttacked(SquareE8, whiteToMove) {
 			moves = board.AddCastleMove(SquareE8, SquareG8, moves)
 		}
 	}
@@ -307,7 +287,7 @@ func (board *Board) GenerateKnightMoves(whiteToMove bool) []Move {
 	for bb := knights; bb != 0; {
 		square := byte(bits.TrailingZeros64(bb))
 		for moveIndex := 0; moveIndex < 8; moveIndex++ {
-			squareTo := SquareKnightJumps[square][moveIndex]
+			squareTo := SquareKnightOffsets[square][moveIndex]
 			if squareTo < 255 {
 				moves, _ = board.AddQuietOrCapture(square, squareTo, whiteToMove, moves)
 			}
@@ -319,7 +299,6 @@ func (board *Board) GenerateKnightMoves(whiteToMove bool) []Move {
 
 func (board *Board) GeneratePseudoLegalMoves() []Move {
 	moves := []Move{}
-	board.MarkAttackedSquares(!board.WhiteToMove)
 	moves = append(moves, board.GeneratePawnMoves(board.WhiteToMove)...)
 	moves = append(moves, board.GenerateKnightMoves(board.WhiteToMove)...)
 	moves = append(moves, board.GenerateBishopMoves(board.WhiteToMove)...)
@@ -387,119 +366,134 @@ func (board *Board) GenerateLegalMoves() []Move {
 	return legalMoves
 }
 
+// Checks if the move leaves the king in check and undoes the move.
 func (board *Board) IsMoveLegal(move Move) bool {
 	prev := board.Move(move)
-	// Generate attacked squares for the opponent after the move
-	inCheck := board.IsKingInCheck(!board.WhiteToMove)
+	kingSq := board.PassiveKingSquare()
+
+	inCheck := board.IsSquareAttacked(kingSq, !board.WhiteToMove)
 	board.UndoMove(prev)
 	return !inCheck
 }
 
-func (board *Board) IsKingInCheck(whiteToMove bool) bool {
-	board.MarkAttackedSquares(!whiteToMove)
-	var kingSq byte
-	if whiteToMove {
-		if board.WhiteKing == 0 {
-			return false
-		}
-		kingSq = byte(bits.TrailingZeros64(board.WhiteKing))
-	} else {
-		if board.BlackKing == 0 {
-			return false
-		}
-		kingSq = byte(bits.TrailingZeros64(board.BlackKing))
+func (board *Board) IsSquareAttacked(square byte, whiteToMove bool) bool {
+	if board.IsSquareAttackedByPawns(square, whiteToMove) ||
+		board.IsSquareAttackedByKnights(square, whiteToMove) ||
+		board.IsSquareAttackedByKing(square, whiteToMove) ||
+		board.IsSquareAttackedBySlidingPieces(square, whiteToMove) {
+		return true
 	}
-	return board.IsSquareAttacked(kingSq)
+	return false
 }
 
-func (board *Board) MarkPawnAttacks(whiteToMove bool) {
-	var pawns uint64
-	if whiteToMove {
-		pawns = board.WhitePawns
-	} else {
-		pawns = board.BlackPawns
-	}
-	for bb := pawns; bb != 0; {
-		square := byte(bits.TrailingZeros64(bb))
-		file := board.SquareToFile(square)
-		rank := board.SquareToRank(square)
+// IsSquareAttackedByPawns returns true if the king of the given color is attacked by any enemy pawn.
+func (board *Board) IsSquareAttackedByPawns(square byte, whiteToMove bool) bool {
+	squareBB := uint64(1) << square
+	var pawnAttackersBB uint64
 
-		if whiteToMove {
-			if rank > 0 {
-				if file > 0 {
-					board.AttackedSquares |= (uint64(1) << (square - 9)) // Capture left
-				}
-				if file < 7 {
-					board.AttackedSquares |= (uint64(1) << (square - 7)) // Capture right
-				}
-			}
-		} else {
-			if rank < 7 {
-				if file > 0 {
-					board.AttackedSquares |= (uint64(1) << (square + 7)) // Capture left
-				}
-				if file < 7 {
-					board.AttackedSquares |= (uint64(1) << (square + 9)) // Capture right
-				}
-			}
+	if whiteToMove {
+		// Black pawns attack
+		if square%8 != 0 {
+			pawnAttackersBB |= squareBB >> 9
 		}
-		bb &= bb - 1
+		if square%8 != 7 {
+			pawnAttackersBB |= squareBB >> 7
+		}
+		return (pawnAttackersBB & board.BlackPawns) != 0
+	} else {
+		// White pawns attack
+		if square%8 != 0 {
+			pawnAttackersBB |= squareBB << 7
+		}
+		if square%8 != 7 {
+			pawnAttackersBB |= squareBB << 9
+		}
+		return (pawnAttackersBB & board.WhitePawns) != 0
 	}
 }
 
-func (board *Board) MarkKnightAttacks(whiteToMove bool) {
-	var knights uint64
+// IsSquareAttackedByKing returns true if the square is attacked by the king
+func (board *Board) IsSquareAttackedByKing(square byte, whiteToMove bool) bool {
+	var enemyKingBB uint64
 	if whiteToMove {
-		knights = board.WhiteKnights
+		enemyKingBB = board.BlackKing
 	} else {
-		knights = board.BlackKnights
+		enemyKingBB = board.WhiteKing
 	}
-	for bb := knights; bb != 0; {
-		square := byte(bits.TrailingZeros64(bb))
-		for moveIndex := 0; moveIndex < 8; moveIndex++ {
-			squareTo := SquareKnightJumps[square][moveIndex]
-			if squareTo < 255 {
-				board.AttackedSquares |= (uint64(1) << squareTo)
-			}
+
+	for i := 0; i < 8; i++ {
+		sq := SquareKingOffsets[square][i]
+		if sq >= 0 && sq < 64 && ((enemyKingBB & (uint64(1) << sq)) != 0) {
+			return true
 		}
-		bb &= bb - 1
 	}
+	return false
 }
 
-func (board *Board) MarkKingAttacks(whiteToMove bool) {
-	var kings uint64
+// IsSquareAttackedByKnights returns true if the square is attacked by the knights
+func (board *Board) IsSquareAttackedByKnights(square byte, whiteToMove bool) bool {
+	var enemyKnights uint64
 	if whiteToMove {
-		kings = board.WhiteKing
+		enemyKnights = board.BlackKnights
 	} else {
-		kings = board.BlackKing
+		enemyKnights = board.WhiteKnights
 	}
-	for bb := kings; bb != 0; {
-		square := byte(bits.TrailingZeros64(bb))
-		for moveIndex := 0; moveIndex < 8; moveIndex++ {
-			squareTo := SquareKingJumps[square][moveIndex]
-			if squareTo < 255 {
-				board.AttackedSquares |= (uint64(1) << squareTo)
-			}
+
+	for i := 0; i < 8; i++ {
+		sq := SquareKnightOffsets[square][i]
+		if sq >= 0 && sq < 64 && ((enemyKnights & (uint64(1) << sq)) != 0) {
+			return true
 		}
-		bb &= bb - 1
 	}
+	return false
 }
 
-func (board *Board) MarkAttackedSquares(whiteToMove bool) {
-	board.AttackedSquares = 0
-
-	board.MarkKingAttacks(whiteToMove)
-	board.MarkPawnAttacks(whiteToMove)
-	board.MarkKnightAttacks(whiteToMove)
-
+// IsSquareAttackedBySlidingPieces returns true if the king of the given color is attacked by any enemy sliding piece (rook, bishop, queen).
+func (board *Board) IsSquareAttackedBySlidingPieces(square byte, whiteToMove bool) bool {
+	var rooksAndQueens uint64
+	var bishopsAndQueens uint64
 	if whiteToMove {
-		board.MarkSlidingAttacks(board.WhiteQueens, 0, 8)
-		board.MarkSlidingAttacks(board.WhiteBishops, 4, 8)
-		board.MarkSlidingAttacks(board.WhiteRooks, 0, 4)
+		rooksAndQueens = board.BlackRooks | board.BlackQueens
+		bishopsAndQueens = board.BlackBishops | board.BlackQueens
 	} else {
-		board.MarkSlidingAttacks(board.BlackQueens, 0, 8)
-		board.MarkSlidingAttacks(board.BlackBishops, 4, 8)
-		board.MarkSlidingAttacks(board.BlackRooks, 0, 4)
+		bishopsAndQueens = board.WhiteBishops | board.WhiteQueens
+		rooksAndQueens = board.WhiteRooks | board.WhiteQueens
 	}
+	occupied := board.OccupiedSquares()
+	rookDirs := [4]byte{0, 1, 2, 3}
+	bishopDirs := [4]byte{4, 5, 6, 7}
 
+	// Check rook and queen attacks
+	for _, dir := range rookDirs {
+		for n := int8(1); n <= int8(SquaresToEdge[square][dir]); n++ {
+			sq := int8(square) + BoardDirOffsets[dir]*n
+			if sq < 0 || sq >= 64 {
+				break
+			}
+			mask := uint64(1) << byte(sq)
+			if (rooksAndQueens & mask) != 0 {
+				return true
+			}
+			if (occupied & mask) != 0 {
+				break
+			}
+		}
+	}
+	// Check bishop and queen attacks
+	for _, dir := range bishopDirs {
+		for n := int8(1); n <= int8(SquaresToEdge[square][dir]); n++ {
+			sq := int8(square) + BoardDirOffsets[dir]*n
+			if sq < 0 || sq >= 64 {
+				break
+			}
+			mask := uint64(1) << byte(sq)
+			if (bishopsAndQueens & mask) != 0 {
+				return true
+			}
+			if (occupied & mask) != 0 {
+				break
+			}
+		}
+	}
+	return false
 }

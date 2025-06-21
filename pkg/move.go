@@ -57,7 +57,6 @@ type MoveState struct {
 	BlackRooks           uint64
 	BlackQueens          uint64
 	BlackKing            uint64
-	AttackedSquares      uint64
 	CastlingAvailability CastlingAvailability
 	OnPassant            byte
 	HalfMoveClock        int
@@ -176,8 +175,8 @@ func (move Move) ToMove() string {
 }
 
 var SquaresToEdge [64][8]byte = generateSquaresToEdge()
-var SquareKnightJumps [64][8]byte = generateKnightJumps()
-var SquareKingJumps [64][8]byte = generateKingMoves()
+var SquareKnightOffsets [64][8]byte = generateKnightJumps()
+var SquareKingOffsets [64][8]byte = generateKingMoves()
 var BoardDirOffsets [8]int8 = [8]int8{-8, 1, 8, -1, -7, 9, 7, -9}
 
 // Move returns a MoveState for undoing the move
@@ -201,7 +200,6 @@ func (board *Board) Move(move Move) MoveState {
 		HalfMoveClock:        board.HalfMoveClock,
 		FullMoveCounter:      board.FullMoveCounter,
 		WhiteToMove:          board.WhiteToMove,
-		AttackedSquares:      board.AttackedSquares,
 	}
 
 	if !board.WhiteToMove {
@@ -404,5 +402,4 @@ func (board *Board) UndoMove(state MoveState) {
 	board.HalfMoveClock = state.HalfMoveClock
 	board.FullMoveCounter = state.FullMoveCounter
 	board.WhiteToMove = state.WhiteToMove
-	board.AttackedSquares = state.AttackedSquares
 }
