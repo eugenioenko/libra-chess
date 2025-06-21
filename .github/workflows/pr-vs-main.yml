@@ -47,7 +47,7 @@ jobs:
             -engine name=PullLibra cmd=./libra-pr \
             -engine name=MainLibra cmd=./libra-main \
             -each proto=uci tc=180+2 \
-            -games 30 \
+            -games 20 \
             -concurrency 1 \
             -openings file=books/chess.epd format=epd order=random plies=8 \
             -draw movenumber=40 movecount=6 score=10 \

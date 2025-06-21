@@ -29,8 +29,6 @@ type Board struct {
 	BlackRooks   uint64
 	BlackQueens  uint64
 	BlackKing    uint64
-	// AttackedSquares is a bitboard marking which squares are currently attacked by the opponent
-	AttackedSquares uint64
 	// CastlingAvailability tracks which castling rights are still available
 	CastlingAvailability CastlingAvailability
 	// WhiteToMove is true if it's White's turn, false for Black
@@ -46,19 +44,18 @@ type Board struct {
 // NewBoard creates a new, empty board. You must call LoadInitial or FromFEN to set up a position.
 func NewBoard() *Board {
 	board := &Board{
-		WhitePawns:      0,
-		WhiteKnights:    0,
-		WhiteBishops:    0,
-		WhiteRooks:      0,
-		WhiteQueens:     0,
-		WhiteKing:       0,
-		BlackPawns:      0,
-		BlackKnights:    0,
-		BlackBishops:    0,
-		BlackRooks:      0,
-		BlackQueens:     0,
-		BlackKing:       0,
-		AttackedSquares: 0,
+		WhitePawns:   0,
+		WhiteKnights: 0,
+		WhiteBishops: 0,
+		WhiteRooks:   0,
+		WhiteQueens:  0,
+		WhiteKing:    0,
+		BlackPawns:   0,
+		BlackKnights: 0,
+		BlackBishops: 0,
+		BlackRooks:   0,
+		BlackQueens:  0,
+		BlackKing:    0,
 		CastlingAvailability: CastlingAvailability{
 			BlackKingSide:  true,
 			BlackQueenSide: true,
@@ -86,7 +83,6 @@ func (board *Board) Reset() {
 	board.BlackRooks = 0
 	board.BlackQueens = 0
 	board.BlackKing = 0
-	board.AttackedSquares = 0
 	board.CastlingAvailability = CastlingAvailability{
 		BlackKingSide:  false,
 		BlackQueenSide: false,
@@ -337,16 +333,6 @@ func (board *Board) IsSquareEmpty(square byte) bool {
 	return (occupied & mask) == 0
 }
 
-// IsSquareEmptyAndNotAttacked returns true if the square is empty and not attacked by the opponent.
-func (board *Board) IsSquareEmptyAndNotAttacked(square byte) bool {
-	return board.IsSquareEmpty(square) && !board.IsSquareAttacked(square)
-}
-
-// IsSquareAttacked returns true if the square is under attack
-func (board *Board) IsSquareAttacked(square byte) bool {
-	return (board.AttackedSquares & (uint64(1) << square)) != 0
-}
-
 // IsSquareOccupied returns true if the square is valid and contains a piece.
 func (board *Board) IsSquareOccupied(square byte) bool {
 	if !board.IsSquareValid(square) {
@@ -390,6 +376,11 @@ func (board *Board) IsSquareWhiteRook(square byte) bool {
 	return (board.WhiteRooks & mask) != 0
 }
 
+func (board *Board) OccupiedSquares() uint64 {
+	return board.WhitePawns | board.WhiteKnights | board.WhiteBishops | board.WhiteRooks | board.WhiteQueens | board.WhiteKing |
+		board.BlackPawns | board.BlackKnights | board.BlackBishops | board.BlackRooks | board.BlackQueens | board.BlackKing
+}
+
 // IsSquareOnPassant returns true if the square is the current en passant target square.
 func (board *Board) IsSquareOnPassant(square byte) bool {
 	return board.OnPassant == square
@@ -415,6 +406,24 @@ func (board *Board) SquareToRank(square byte) byte {
 // SquareToFile returns the file (0-7) of a square index (0 = file 0, 7 = file 7)
 func (board *Board) SquareToFile(square byte) byte {
 	return square % 8
+}
+
+// ActiveKingSquare returns the square index of the active king (the king of the side to move).
+func (board *Board) ActiveKingSquare() byte {
+	if board.WhiteToMove {
+		return byte(bits.TrailingZeros64(board.WhiteKing))
+	} else {
+		return byte(bits.TrailingZeros64(board.BlackKing))
+	}
+}
+
+// PassiveKingSquare returns the square index of the passive king (the king of the side not to move).
+func (board *Board) PassiveKingSquare() byte {
+	if board.WhiteToMove {
+		return byte(bits.TrailingZeros64(board.BlackKing))
+	} else {
+		return byte(bits.TrailingZeros64(board.WhiteKing))
+	}
 }
 
 // OnlyKingLeft returns true if the given color has only the king left on the board.
@@ -530,7 +539,6 @@ func (board *Board) Clone() *Board {
 	clone.BlackRooks = board.BlackRooks
 	clone.BlackQueens = board.BlackQueens
 	clone.BlackKing = board.BlackKing
-	clone.AttackedSquares = board.AttackedSquares
 	clone.CastlingAvailability = board.CastlingAvailability
 	clone.WhiteToMove = board.WhiteToMove
 	clone.OnPassant = board.OnPassant

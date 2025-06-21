@@ -128,7 +128,8 @@ func (board *Board) EvaluateMaterialAndPST() (int, int) {
 
 // Mobility: count the number of legal moves for each side
 func (board *Board) MateOrStalemateScore(maximizing bool) int {
-	if board.IsKingInCheck(board.WhiteToMove) {
+	kingSq := board.ActiveKingSquare()
+	if board.IsSquareAttacked(kingSq, board.WhiteToMove) {
 		if maximizing {
 			return -MaxEvaluationScore
 		} else {

@@ -9,6 +9,10 @@ import (
 	. "github.com/eugenioenko/libra-chess/pkg"
 )
 
+const (
+	BaseSearchDepth = 5
+)
+
 func main() {
 	fmt.Println("Welcome to LibraChess v1.0.1!")
 	fmt.Println("Ready to play? Type 'uci' to begin your chess adventure!")
@@ -38,17 +42,16 @@ func main() {
 			board.ParseAndApplyPosition(fields[1:])
 		case "go":
 			tt := NewTranspositionTable()
-			baseDepth := 5
-			depth := baseDepth
+			depth := BaseSearchDepth
 			material := board.CountPieces()
-			if material < 20 {
-				depth = baseDepth + 1
+			if material < 30 {
+				depth = BaseSearchDepth + 1
 			}
-			if material < 15 {
-				depth = baseDepth + 2
+			if material < 20 {
+				depth = BaseSearchDepth + 2
 			}
 			if material < 10 {
-				depth = baseDepth + 3
+				depth = BaseSearchDepth + 3
 			}
 			score, move := board.Search(depth, tt)
 			fmt.Printf("info score cp %d\n", score)
