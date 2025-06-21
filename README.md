@@ -162,9 +162,18 @@ A robust testing strategy is paramount for engine development.
 
 ### 5.1. Board Representation (`board.go`)
 
-- **Board:** Currently the board is represented by a slice of [64] characters. This has been chosen for initial implementation to get the engine of the ground.
-- **Piece Lists:** Alongside board, maintaining lists of piece locations can speed up iteration over pieces, which is useful for evaluation and some move generation tasks.
-  - _Trade-off:_ Maintaining both board and piece lists introduces some redundancy and overhead on updates (making/unmaking moves) but can offer performance benefits in different parts of the engine. Libra currently iterates over piece lists for evaluation. Representing the board with a slice of 64 bytes is not the fastest method, it has been used as initial implementation. The direction is to move towards bitboards for faster perfromance
+- **Bitboards:** The board state is represented using 64-bit integers (bitboards) for each piece type and color (e.g., `WhitePawns`, `BlackKnights`). Each bit corresponds to a square, enabling fast piece lookup and efficient move generation.
+- **Castling Rights:** Castling availability is managed with a dedicated struct, storing four booleans for each possible castling right (white/black, king/queen side).
+- **Turn, En Passant, and Move Counters:**
+  - `WhiteToMove` (bool): Indicates which side is to move.
+  - `OnPassant` (byte): Stores the en passant target square index (0 if not available).
+  - `HalfMoveClock` and `FullMoveCounter`: Track the 50-move rule and move number.
+- **FEN Support:**
+  The board can be initialized from and exported to FEN, supporting all standard fields (piece placement, turn, castling, en passant, clocks).
+- **Utility Methods:**
+  Includes methods for piece lookup, move application, cloning, and board printing.
+- **Design Rationale:**
+  This design leverages bitboards for performance and clarity, and is extensible for future features.
 
 ### 5.2. Move Generation (`generate.go`)
 
@@ -178,12 +187,15 @@ A robust testing strategy is paramount for engine development.
 - **Stored Information:** Each entry stores the hash key (for collision detection), depth of the search, score, score type (exact, lower bound, upper bound), and best move.
   - _Trade-off:_ The amount of information stored per entry affects TT size and the utility of hits. More info is better but costs memory.
 
-### 5.4. Concurrency Strategy (Current & Future)
+### 5.4. Concurrency Strategy
 
-- **Current:** Go's concurrency is not yet heavily exploited in the core search algorithm itself, which is a common starting point for many engines.
-- **Future:**
-  - **Parallel Search (e.g., Young Brothers Wait Concept, Lazy SMP):** This is a significant avenue for performance improvement on multi-core processors. Go's goroutines are well-suited for implementing such algorithms.
-  - **UCI Communication:** Handling UCI commands in a separate goroutine ensures the engine remains responsive.
+- **Parallel Move Evaluation:** The core search algorithm leverages Go's concurrency by evaluating top-level moves in parallel. The `Search` function distributes each legal move at the root to a worker goroutine, allowing multiple positions to be searched simultaneously and efficiently utilizing all available CPU cores.
+- **Worker Pool:** The number of worker goroutines is determined by the number of logical CPUs (`runtime.GOMAXPROCS(0)`), ensuring optimal parallelism on the host system.
+- **Result Aggregation:** Results from all workers are collected and the best move is selected according to the search score, preserving move ordering for tie-breaking.
+- **Thread Safety:** Each worker operates on a cloned board state, ensuring thread safety and correctness.
+- **UCI Communication:** UCI command handling can still be performed in a separate goroutine to keep the engine responsive during search.
+
+This approach provides significant speedup for the root search and is a foundation for further parallelism in deeper search layers in the future.
 
 ---
 
