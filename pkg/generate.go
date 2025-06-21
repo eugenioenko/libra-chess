@@ -287,7 +287,7 @@ func (board *Board) GenerateKnightMoves(whiteToMove bool) []Move {
 	for bb := knights; bb != 0; {
 		square := byte(bits.TrailingZeros64(bb))
 		for moveIndex := 0; moveIndex < 8; moveIndex++ {
-			squareTo := SquareKnightOffsets[square][moveIndex]
+			squareTo := KnightOffsets[square][moveIndex]
 			if squareTo < 255 {
 				moves, _ = board.AddQuietOrCapture(square, squareTo, whiteToMove, moves)
 			}
@@ -422,7 +422,7 @@ func (board *Board) IsSquareAttackedByKing(square byte, whiteToMove bool) bool {
 	}
 
 	for i := 0; i < 8; i++ {
-		sq := SquareKingOffsets[square][i]
+		sq := KingOffsets[square][i]
 		if sq < 64 && ((enemyKingBB & (uint64(1) << sq)) != 0) {
 			return true
 		}
@@ -440,7 +440,7 @@ func (board *Board) IsSquareAttackedByKnights(square byte, whiteToMove bool) boo
 	}
 
 	for i := 0; i < 8; i++ {
-		sq := SquareKnightOffsets[square][i]
+		sq := KnightOffsets[square][i]
 		if sq < 64 && ((enemyKnights & (uint64(1) << sq)) != 0) {
 			return true
 		}
@@ -448,49 +448,71 @@ func (board *Board) IsSquareAttackedByKnights(square byte, whiteToMove bool) boo
 	return false
 }
 
-// IsSquareAttackedBySlidingPieces returns true if the king of the given color is attacked by any enemy sliding piece (rook, bishop, queen).
+// Optimized sliding piece attack detection using precomputed rays (corrected)
 func (board *Board) IsSquareAttackedBySlidingPieces(square byte, whiteToMove bool) bool {
-	var rooksAndQueens uint64
-	var bishopsAndQueens uint64
+	var rooksAndQueens, bishopsAndQueens uint64
 	if whiteToMove {
 		rooksAndQueens = board.BlackRooks | board.BlackQueens
 		bishopsAndQueens = board.BlackBishops | board.BlackQueens
 	} else {
-		bishopsAndQueens = board.WhiteBishops | board.WhiteQueens
 		rooksAndQueens = board.WhiteRooks | board.WhiteQueens
+		bishopsAndQueens = board.WhiteBishops | board.WhiteQueens
 	}
 	occupied := board.OccupiedSquares()
-	rookDirs := [4]byte{0, 1, 2, 3}
-	bishopDirs := [4]byte{4, 5, 6, 7}
-
-	// Check rook and queen attacks
-	for _, dir := range rookDirs {
-		for n := int8(1); n <= int8(SquaresToEdge[square][dir]); n++ {
-			sq := int8(square) + BoardDirOffsets[dir]*n
-			if sq < 0 || sq >= 64 {
-				break
-			}
-			mask := uint64(1) << byte(sq)
-			if (rooksAndQueens & mask) != 0 {
-				return true
-			}
+	// Rook/Queen directions
+	for dir := 0; dir < 4; dir++ {
+		ray := RookRays[square][dir]
+		attackers := ray & rooksAndQueens
+		if attackers == 0 {
+			continue
+		}
+		// Find the closest attacker in this direction
+		var sqStep int
+		switch dir {
+		case 0:
+			sqStep = -8 // North
+		case 1:
+			sqStep = 1 // East
+		case 2:
+			sqStep = 8 // South
+		case 3:
+			sqStep = -1 // West
+		}
+		for s := int(square) + sqStep; s >= 0 && s < 64 && (ray&(1<<s)) != 0; s += sqStep {
+			mask := uint64(1) << s
 			if (occupied & mask) != 0 {
+				if (rooksAndQueens & mask) != 0 {
+					return true
+				}
 				break
 			}
 		}
 	}
-	// Check bishop and queen attacks
-	for _, dir := range bishopDirs {
-		for n := int8(1); n <= int8(SquaresToEdge[square][dir]); n++ {
-			sq := int8(square) + BoardDirOffsets[dir]*n
-			if sq < 0 || sq >= 64 {
-				break
-			}
-			mask := uint64(1) << byte(sq)
-			if (bishopsAndQueens & mask) != 0 {
-				return true
-			}
+	// Bishop/Queen directions
+	for dir := 0; dir < 4; dir++ {
+		ray := BishopRays[square][dir]
+		attackers := ray & bishopsAndQueens
+		if attackers == 0 {
+			continue
+		}
+		// Find the closest attacker in this direction
+		var sqStep int
+		switch dir {
+		case 0:
+			sqStep = -7 // NE
+		case 1:
+			sqStep = 9 // SE
+		case 2:
+			sqStep = 7 // SW
+		case 3:
+			sqStep = -9 // NW
+		}
+		for s := int(square) + sqStep; s >= 0 && s < 64 && (ray&(1<<s)) != 0; s += sqStep {
+			mask := uint64(1) << s
 			if (occupied & mask) != 0 {
+				if (bishopsAndQueens & mask) != 0 {
+					return true
+				}
 				break
 			}
 		}
