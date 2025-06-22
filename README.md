@@ -197,6 +197,28 @@ A robust testing strategy is paramount for engine development.
 
 This approach provides significant speedup for the root search and is a foundation for further parallelism in deeper search layers in the future.
 
+### 5.5. Move Generation Benchmarks
+
+The following table shows the results of running the `PerftParallel(N)` benchmark at increasing depths. The "Time per op" column shows the average time (in microseconds) to compute all legal moves at each depth, and the "Legal moves calculated" column shows the total number of legal moves (nodes) at that depth.
+
+| perft(N) | Time per op (microseconds) | Legal moves calculated |
+| -------- | -------------------------- | ---------------------- |
+| 1        | 2.81                       | 20                     |
+| 2        | 37.85                      | 400                    |
+| 3        | 274.88                     | 8,902                  |
+| 4        | 6512.77                    | 197,281                |
+| 5        | 142827.80                  | 4,865,609              |
+| 6        | 3865875.06                 | 119,060,324            |
+
+> cpu: AMD Ryzen 7 6800H
+
+This benchmark demonstrates that the engine can process approximately **30 million moves per second**.
+This is calculated by dividing the number of legal moves at depth 5 by the time taken per operation (in seconds):
+
+```
+Moves per second ≈ 4,865,609 moves / 0.1428278 seconds ≈ 34,070,000 moves/second
+```
+
 ---
 
 ## 6. 🛣️ Roadmap & Future Enhancements
