@@ -142,23 +142,25 @@ func (board *Board) GeneratePawnMoves(whiteToMove bool) []Move {
 	return moves
 }
 
-// GenerateSlidingMoves generates all moves for sliding pieces (rooks, bishops, queens) in the given directions.
+// GenerateSlidingMoves generates all moves for sliding pieces (rooks, bishops, queens) using precomputed rays.
 func (board *Board) GenerateSlidingMoves(bitboard uint64, startDir byte, endDir byte, whiteToMove bool) []Move {
 	moves := []Move{}
 	for bb := bitboard; bb != 0; {
 		square := byte(bits.TrailingZeros64(bb))
 		for dirOffset := startDir; dirOffset < endDir; dirOffset++ {
 			offset := BoardDirOffsets[dirOffset]
-			amountToMove := int8(SquaresToEdge[square][dirOffset])
-			for moveIndex := int8(1); moveIndex <= amountToMove; moveIndex++ {
-				squareTo := int8(square) + offset*moveIndex
-				if squareTo < 0 || squareTo >= 64 {
-					break
-				}
+			var ray uint64
+			if dirOffset < 4 { // Rook directions
+				ray = RookRays[square][dirOffset]
+			} else { // Bishop directions
+				ray = BishopRays[square][dirOffset-4]
+			}
+
+			for s := int(square) + int(offset); s >= 0 && s < 64 && (ray&(uint64(1)<<s)) != 0; s += int(offset) {
 				var isQuietMove bool
-				moves, isQuietMove = board.AddQuietOrCapture(square, byte(squareTo), whiteToMove, moves)
+				moves, isQuietMove = board.AddQuietOrCapture(square, byte(s), whiteToMove, moves)
 				if !isQuietMove {
-					break
+					break // Stop after a capture or own piece
 				}
 			}
 		}
@@ -318,7 +320,7 @@ func (board *Board) GenerateLegalMoves() []Move {
 		}
 	}
 	// Sort moves by MoveType preferring captures, then by From, To, and promotion piece for full determinism
-	sort.SliceStable(legalMoves, func(i, j int) bool {
+	sort.Slice(legalMoves, func(i, j int) bool {
 		moveA := legalMoves[i]
 		moveB := legalMoves[j]
 
