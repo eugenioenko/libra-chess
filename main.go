@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	BaseSearchDepth = 6
+	BaseSearchDepth = 5
 )
 
 func main() {
@@ -51,6 +51,7 @@ func main() {
 				fmt.Println("bestmove 0000")
 			}
 		case "quit":
+			fmt.Println("Exiting LibraChess. Goodbye!")
 			return
 		}
 	}

@@ -60,10 +60,10 @@ func NewBoard() *Board {
 		BlackQueens:  0,
 		BlackKing:    0,
 		CastlingAvailability: CastlingAvailability{
-			BlackKingSide:  true,
-			BlackQueenSide: true,
-			WhiteKingSide:  true,
-			WhiteQueenSide: true,
+			BlackKingSide:  false,
+			BlackQueenSide: false,
+			WhiteKingSide:  false,
+			WhiteQueenSide: false,
 		},
 		WhiteToMove:     true,
 		OnPassant:       0,
@@ -106,9 +106,7 @@ func (board *Board) LoadInitial() {
 
 // FromFEN loads a position from a FEN string. Returns false and error if the FEN is invalid.
 func (board *Board) FromFEN(fen string) (bool, error) {
-	// Reset all bitboards
-	board.WhitePawns, board.WhiteKnights, board.WhiteBishops, board.WhiteRooks, board.WhiteQueens, board.WhiteKing = 0, 0, 0, 0, 0, 0
-	board.BlackPawns, board.BlackKnights, board.BlackBishops, board.BlackRooks, board.BlackQueens, board.BlackKing = 0, 0, 0, 0, 0, 0
+	board.Reset()
 
 	parts := strings.Split(fen, " ")
 	if len(parts) == 0 {

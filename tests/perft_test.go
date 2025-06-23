@@ -71,7 +71,7 @@ func TestPerft4(t *testing.T) {
 
 func TestPerft5(t *testing.T) {
 	board := NewBoard()
-	board.FromFEN("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8") // Corrected FEN
+	board.FromFEN("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8")
 	n1 := board.PerftParallel(1)
 	n2 := board.PerftParallel(2)
 	n3 := board.PerftParallel(3)
@@ -85,7 +85,7 @@ func TestPerft5(t *testing.T) {
 
 func TestPerft6(t *testing.T) {
 	board := NewBoard()
-	board.FromFEN("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10 ") // Corrected FEN
+	board.FromFEN("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10 ")
 	n1 := board.PerftParallel(1)
 	n2 := board.PerftParallel(2)
 	n3 := board.PerftParallel(3)

@@ -201,6 +201,61 @@ func (board *Board) Move(move Move) MoveState {
 			board.CastlingAvailability.BlackQueenSide = false
 		}
 	}
+	// Update castling rights for moving king or rook
+	if move.MoveType != MoveCastle {
+		if piece == WhiteKing && board.CastlingAvailability.WhiteKingSide {
+			board.CastlingAvailability.WhiteKingSide = false
+			board.CastlingAvailability.WhiteQueenSide = false
+		} else if piece == BlackKing && board.CastlingAvailability.BlackKingSide {
+			board.CastlingAvailability.BlackKingSide = false
+			board.CastlingAvailability.BlackQueenSide = false
+		}
+
+		if piece == WhiteRook {
+			if from == SquareA1 && board.CastlingAvailability.WhiteQueenSide {
+				board.CastlingAvailability.WhiteQueenSide = false
+			} else if from == SquareH1 && board.CastlingAvailability.WhiteKingSide {
+				board.CastlingAvailability.WhiteKingSide = false
+			}
+		} else if piece == BlackRook {
+			if from == SquareA8 && board.CastlingAvailability.BlackQueenSide {
+				board.CastlingAvailability.BlackQueenSide = false
+			} else if from == SquareH8 && board.CastlingAvailability.BlackKingSide {
+				board.CastlingAvailability.BlackKingSide = false
+			}
+		}
+	}
+
+	// Update castling rights if a rook is captured
+	if move.MoveType == MoveCapture || move.MoveType == MovePromotionCapture {
+		if move.Captured == WhiteRook {
+			if to == SquareA1 && board.CastlingAvailability.WhiteQueenSide {
+				board.CastlingAvailability.WhiteQueenSide = false
+			} else if to == SquareH1 && board.CastlingAvailability.WhiteKingSide {
+				board.CastlingAvailability.WhiteKingSide = false
+			}
+		} else if move.Captured == BlackRook {
+			if to == SquareA8 && board.CastlingAvailability.BlackQueenSide {
+				board.CastlingAvailability.BlackQueenSide = false
+			} else if to == SquareH8 && board.CastlingAvailability.BlackKingSide {
+				board.CastlingAvailability.BlackKingSide = false
+			}
+		}
+	}
+
+	// Update castling rights hash
+	if board.CastlingAvailability.WhiteKingSide != prev.CastlingAvailability.WhiteKingSide {
+		board.Hash ^= zobristCastlingAvailability.WhiteKingSide
+	}
+	if board.CastlingAvailability.WhiteQueenSide != prev.CastlingAvailability.WhiteQueenSide {
+		board.Hash ^= zobristCastlingAvailability.WhiteQueenSide
+	}
+	if board.CastlingAvailability.BlackKingSide != prev.CastlingAvailability.BlackKingSide {
+		board.Hash ^= zobristCastlingAvailability.BlackKingSide
+	}
+	if board.CastlingAvailability.BlackQueenSide != prev.CastlingAvailability.BlackQueenSide {
+		board.Hash ^= zobristCastlingAvailability.BlackQueenSide
+	}
 
 	// Remove captured piece
 	if move.MoveType == MoveCapture || move.MoveType == MovePromotionCapture {
@@ -223,10 +278,6 @@ func (board *Board) Move(move Move) MoveState {
 			}
 		}
 	}
-
-	// Update castling rights in hash (XOR out old rights, XOR in new rights)
-	// (You must XOR out the old rights before changing, and XOR in the new rights after)
-	// ...implement as needed for your engine...
 
 	// Update en passant in hash
 	if board.OnPassant != 0 {
