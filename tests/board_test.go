@@ -438,3 +438,36 @@ func TestKingCannotMoveIntoCheck(t *testing.T) {
 		}
 	}
 }
+
+func TestKingInCheckPawns(t *testing.T) {
+	board := NewBoard()
+	board.FromFEN("3k4/8/8/2p1p3/3K4/8/8/8 w - - 0 1")
+	board.WhiteToMove = true
+	kingSq := board.ActiveKingSquare()
+	inCheck := board.IsSquareAttackedByPawns(kingSq, board.WhiteToMove)
+	if !inCheck {
+		t.Errorf("King should be in check from pawns")
+	}
+}
+
+func TestKingInCheckKnights(t *testing.T) {
+	board := NewBoard()
+	board.FromFEN("3k4/8/2n1n3/1n3n2/3K4/1n3n2/2n1n3/8 w - - 0 1")
+	board.WhiteToMove = true
+	kingSq := board.ActiveKingSquare()
+	inCheck := board.IsSquareAttackedByKnights(kingSq, board.WhiteToMove)
+	if !inCheck {
+		t.Errorf("King should be in check from knights")
+	}
+}
+
+func TestKingInCheckRooksAndQueens(t *testing.T) {
+	board := NewBoard()
+	board.FromFEN("k7/8/8/8/3K1qr1/8/8/8 w - - 0 1")
+	board.WhiteToMove = true
+	kingSq := board.ActiveKingSquare()
+	inCheck := board.IsSquareAttackedBySlidingPieces(kingSq, board.WhiteToMove)
+	if !inCheck {
+		t.Errorf("King should be in check from rooks and queens")
+	}
+}

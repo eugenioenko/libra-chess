@@ -77,6 +77,7 @@ test-debug:
 		-concurrency 1 \
 		-ratinginterval 1 \
 		-draw movenumber=40 movecount=6 score=10 \
+		-debug \
 		-rounds 1
 
 profiler-start:
