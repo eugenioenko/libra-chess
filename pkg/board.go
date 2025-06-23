@@ -16,6 +16,8 @@ type CastlingAvailability struct {
 
 // Board represents the state of a chess game, including piece positions, castling rights, en passant, move clocks, and move history.
 type Board struct {
+	// Hash is the Zobrist hash of the current board position
+	Hash uint64
 	// Bitboards for each piece type and color
 	WhitePawns   uint64
 	WhiteKnights uint64
@@ -44,6 +46,7 @@ type Board struct {
 // NewBoard creates a new, empty board. You must call LoadInitial or FromFEN to set up a position.
 func NewBoard() *Board {
 	board := &Board{
+		Hash:         0,
 		WhitePawns:   0,
 		WhiteKnights: 0,
 		WhiteBishops: 0,
@@ -203,6 +206,8 @@ func (board *Board) FromFEN(fen string) (bool, error) {
 			board.FullMoveCounter = fullMoveVal
 		}
 	}
+
+	board.Hash = board.ZobristHash()
 
 	return true, nil
 }

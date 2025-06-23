@@ -2,7 +2,6 @@ package libra
 
 import (
 	"math/bits"
-	"sort"
 )
 
 // AddQuietOrCapture adds a quiet move if the destination is empty, or a capture if occupied by an opponent's piece.
@@ -319,52 +318,6 @@ func (board *Board) GenerateLegalMoves() []Move {
 			legalMoves = append(legalMoves, move)
 		}
 	}
-	// Sort moves by MoveType preferring captures, then by From, To, and promotion piece for full determinism
-	sort.Slice(legalMoves, func(i, j int) bool {
-		moveA := legalMoves[i]
-		moveB := legalMoves[j]
-
-		isCaptureA := moveA.MoveType == MoveCapture || moveA.MoveType == MovePromotionCapture
-		isCaptureB := moveB.MoveType == MoveCapture || moveB.MoveType == MovePromotionCapture
-		if isCaptureA != isCaptureB {
-			return isCaptureA
-		}
-
-		isPromoA := moveA.MoveType == MovePromotion
-		isPromoB := moveB.MoveType == MovePromotion
-		if isPromoA != isPromoB {
-			return isPromoA
-		}
-
-		// Sort by capture value if both moves are captures
-		// This ensures that if two captures are available, the one with the higher value piece captured is preferred.
-		if isCaptureA && isCaptureB {
-			victimA := moveA.Data[0]
-			attackerA := board.PieceAtSquare(moveA.From)
-			victimB := moveB.Data[0]
-			attackerB := board.PieceAtSquare(moveB.From)
-			scoreA := PieceCodeToValue[victimA] - PieceCodeToValue[attackerA]
-			scoreB := PieceCodeToValue[victimB] - PieceCodeToValue[attackerB]
-			if scoreA != scoreB {
-				return scoreA > scoreB
-			}
-		}
-
-		// For promotions, ensure consistent order by promotion piece
-		if moveA.MoveType == MovePromotion || moveA.MoveType == MovePromotionCapture {
-			if moveA.Data[0] != moveB.Data[0] {
-				// For promotions, sort by piece value in ascending order: Knight < Bishop < Rook < Queen.
-				// This ensures deterministic move ordering, so that when multiple promotions have equal evaluation,
-				// the queen promotion (highest value) is preferred if all else is equal.
-				return moveA.Data[0] < moveB.Data[0]
-			}
-		}
-
-		if moveA.From != moveB.From {
-			return moveA.From < moveB.From
-		}
-		return moveA.To < moveB.To
-	})
 	return legalMoves
 }
 
