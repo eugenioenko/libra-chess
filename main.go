@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	BaseSearchDepth = 5
+	BaseSearchDepth = 6
 )
 
 func main() {
@@ -43,16 +43,6 @@ func main() {
 		case "go":
 			tt := NewTranspositionTable()
 			depth := BaseSearchDepth
-			material := board.CountPieces()
-			if material < 30 {
-				depth = BaseSearchDepth + 1
-			}
-			if material < 20 {
-				depth = BaseSearchDepth + 2
-			}
-			if material < 10 {
-				depth = BaseSearchDepth + 3
-			}
 			move, stats := board.Search(depth, tt)
 			stats.PrintUCI()
 			if move != nil {
