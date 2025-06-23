@@ -53,3 +53,12 @@ func BenchmarkPerftParallel6(b *testing.B) {
 		board.PerftParallel(6)
 	}
 }
+
+func BenchmarkSearchDepth(b *testing.B) {
+	var tt = NewTranspositionTable()
+	for i := 0; i < b.N; i++ {
+		board := NewBoard()
+		board.FromFEN("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8")
+		board.Search(7, tt)
+	}
+}

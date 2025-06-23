@@ -1,9 +1,5 @@
 package libra
 
-import (
-	"fmt"
-)
-
 const (
 	MoveQuiet = iota
 	MoveCapture
@@ -14,10 +10,12 @@ const (
 )
 
 type Move struct {
+	Piece    byte
 	From     byte
 	To       byte
 	MoveType byte
-	Data     [2]byte
+	Promoted byte
+	Captured byte
 }
 
 type MovesCount struct {
@@ -35,12 +33,14 @@ func NewMovesCount() *MovesCount {
 	}
 }
 
-func NewMove(from byte, to byte, moveType byte, data [2]byte) Move {
+func NewMove(piece, from, to, moveType, promotion, capture byte) Move {
 	return Move{
+		Piece:    piece,
 		From:     from,
 		To:       to,
 		MoveType: moveType,
-		Data:     data,
+		Promoted: promotion,
+		Captured: capture,
 	}
 }
 
@@ -87,7 +87,7 @@ func (move Move) ToUCI() string {
 	uci := from + to
 	if move.MoveType == MovePromotion || move.MoveType == MovePromotionCapture {
 		promo := ""
-		switch move.Data[0] {
+		switch move.Promoted {
 		case WhiteQueen, BlackQueen:
 			promo = "q"
 		case WhiteRook, BlackRook:
@@ -100,17 +100,6 @@ func (move Move) ToUCI() string {
 		uci += promo
 	}
 	return uci
-}
-
-func (move Move) ToMove() string {
-	from := BoardSquareNames[move.From]
-	to := BoardSquareNames[move.To]
-	piece := pieceCodeToFont[move.Data[0]]
-	capture := " "
-	if move.MoveType == MoveCapture || move.MoveType == MovePromotionCapture || move.MoveType == MoveEnPassant {
-		capture = "x"
-	}
-	return fmt.Sprintf("%s%s%s%s\n", piece, from, capture, to)
 }
 
 // Move returns a MoveState for undoing the move
@@ -142,7 +131,7 @@ func (board *Board) Move(move Move) MoveState {
 	}
 	from := move.From
 	to := move.To
-	piece := board.PieceAtSquare(from)
+	piece := move.Piece
 
 	if move.MoveType == MoveCapture || board.IsSquarePawn(from) {
 		board.HalfMoveClock = 0
@@ -154,7 +143,7 @@ func (board *Board) Move(move Move) MoveState {
 	board.clearPieceAtSquare(from, piece)
 	// Place piece at 'to' square
 	if move.MoveType == MovePromotion || move.MoveType == MovePromotionCapture {
-		board.setPieceAtSquare(to, move.Data[0])
+		board.setPieceAtSquare(to, move.Promoted)
 	} else {
 		board.setPieceAtSquare(to, piece)
 	}
@@ -164,7 +153,7 @@ func (board *Board) Move(move Move) MoveState {
 	board.Hash ^= zobristPieceTable[from][piece]
 	// Place piece at 'to' square
 	if move.MoveType == MovePromotion || move.MoveType == MovePromotionCapture {
-		board.Hash ^= zobristPieceTable[to][move.Data[0]]
+		board.Hash ^= zobristPieceTable[to][move.Promoted]
 	} else {
 		board.Hash ^= zobristPieceTable[to][piece]
 	}
@@ -216,12 +205,7 @@ func (board *Board) Move(move Move) MoveState {
 	// Remove captured piece
 	if move.MoveType == MoveCapture || move.MoveType == MovePromotionCapture {
 		capturedPieceSquare := move.To
-		var capturedPiece byte
-		if move.MoveType == MovePromotionCapture {
-			capturedPiece = move.Data[1]
-		} else {
-			capturedPiece = move.Data[0]
-		}
+		capturedPiece := move.Captured
 		board.clearPieceAtSquare(capturedPieceSquare, capturedPiece)
 		board.Hash ^= zobristPieceTable[capturedPieceSquare][capturedPiece]
 		// Update castling rights if a rook is captured

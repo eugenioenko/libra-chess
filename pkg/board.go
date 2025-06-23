@@ -298,30 +298,6 @@ func (board *Board) PieceAtSquare(square byte) byte {
 	}
 }
 
-// PrintMove prints a move using bitboards.
-func (board *Board) PrintMove(move Move) {
-	piece := board.PieceAtSquare(move.From)
-	pieceStr := pieceCodeToFont[piece]
-	fromName, _ := SquareIndexToName(move.From)
-	toName, _ := SquareIndexToName(move.To)
-	moveType := ""
-	switch move.MoveType {
-	case MoveQuiet:
-		moveType = "quiet"
-	case MoveCapture:
-		moveType = "capture"
-	case MoveEnPassant:
-		moveType = "en passant"
-	case MovePromotion:
-		moveType = "promotion"
-	case MovePromotionCapture:
-		moveType = "promotion-capture"
-	case MoveCastle:
-		moveType = "castle"
-	}
-	fmt.Printf("%s %s -> %s [%s] data: %v\n", pieceStr, fromName, toName, moveType, move.Data)
-}
-
 // IsSquareValid returns true if the square index is within 0-63.
 func (board *Board) IsSquareValid(square byte) bool {
 	return square <= 63
@@ -575,7 +551,7 @@ func (board *Board) ParseUCIMove(moveStr string) *Move {
 				} else {
 					promoPiece = BlackPromotionMap[promo]
 				}
-				if move.Data[0] == promoPiece {
+				if move.Promoted == promoPiece {
 					return &move
 				}
 			} else if move.MoveType != MovePromotion && move.MoveType != MovePromotionCapture {

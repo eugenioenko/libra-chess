@@ -2,6 +2,8 @@ package libra
 
 import "sort"
 
+// SortMoves orders the given moves slice in a deterministic way based on the move's properties and the board state.
+// The sorting is done in-place and the function returns the sorted moves slice.
 func (board *Board) SortMoves(moves []Move, depth int, tt *TranspositionTable) []Move {
 	if len(moves) == 0 {
 		return moves
@@ -27,10 +29,10 @@ func (board *Board) SortMoves(moves []Move, depth int, tt *TranspositionTable) [
 		// Sort by capture value if both moves are captures
 		// This ensures that if two captures are available, the one with the higher value piece captured is preferred.
 		if isCaptureA && isCaptureB {
-			victimA := moveA.Data[0]
-			attackerA := board.PieceAtSquare(moveA.From)
-			victimB := moveB.Data[0]
-			attackerB := board.PieceAtSquare(moveB.From)
+			victimA := moveA.Captured
+			attackerA := moveA.Piece
+			victimB := moveB.Captured
+			attackerB := moveB.Piece
 			scoreA := PieceCodeToValue[victimA] - PieceCodeToValue[attackerA]
 			scoreB := PieceCodeToValue[victimB] - PieceCodeToValue[attackerB]
 			if scoreA != scoreB {
@@ -40,11 +42,11 @@ func (board *Board) SortMoves(moves []Move, depth int, tt *TranspositionTable) [
 
 		// For promotions, ensure consistent order by promotion piece
 		if moveA.MoveType == MovePromotion || moveA.MoveType == MovePromotionCapture {
-			if moveA.Data[0] != moveB.Data[0] {
+			if moveA.Promoted != moveB.Promoted {
 				// For promotions, sort by piece value in ascending order: Knight < Bishop < Rook < Queen.
 				// This ensures deterministic move ordering, so that when multiple promotions have equal evaluation,
 				// the queen promotion (highest value) is preferred if all else is equal.
-				return moveA.Data[0] < moveB.Data[0]
+				return moveA.Promoted < moveB.Promoted
 			}
 		}
 
@@ -64,27 +66,48 @@ func (board *Board) SortMovesAlphaBeta(
 	depth int,
 	tt *TranspositionTable,
 	hash uint64,
+	ctx *SearchContext,
+	ply int,
 ) []Move {
 	type moveScore struct {
 		move  Move
 		score int
 	}
 	scored := make([]moveScore, len(moves))
+	ttBestMove := tt.BestMoveDeepest(hash)
 
 	for i, m := range moves {
 		score := 0
 
 		// 1. Transposition Table move gets highest priority
-		ttBestMove := tt.BestMoveDeepest(hash)
 		if ttBestMove != nil && m == *ttBestMove {
 			score += 1000000
 		}
 
 		// 2. MVV-LVA for captures
-		if m.MoveType == MoveCapture || m.MoveType == MovePromotionCapture {
-			victim := m.Data[0]
-			attacker := board.PieceAtSquare(m.From)
-			score += 10000 + 100*PieceCodeToValue[victim] - PieceCodeToValue[attacker]
+		switch m.MoveType {
+		case MovePromotionCapture:
+			victim := m.Captured
+			attacker := m.Piece
+			promoPiece := m.Promoted
+			score += 20000 + 100*PieceCodeToValue[victim] + 100*PieceCodeToValue[promoPiece] - 100*PieceCodeToValue[attacker]
+		case MoveCapture:
+			victim := m.Captured
+			attacker := m.Piece
+			score += 30000 + 100*PieceCodeToValue[victim] - 100*PieceCodeToValue[attacker]
+		case MovePromotion:
+			promoPiece := m.Promoted
+			score += 10000 + 100*PieceCodeToValue[promoPiece]
+		}
+
+		// 3. Killer moves
+		if ctx != nil && ctx.IsKillerMove(m, ply) {
+			score += 8000
+		}
+
+		// 4. History heuristic for quiet moves
+		if ctx != nil && m.MoveType == MoveQuiet {
+			score += ctx.HistoryHeuristic[PieceToHistoryIndex[m.Piece]][m.To]
 		}
 
 		scored[i] = moveScore{move: m, score: score}
@@ -128,10 +151,19 @@ func (board *Board) SortMovesRoot(
 		}
 
 		// 3. MVV-LVA for captures
-		if m.MoveType == MoveCapture || m.MoveType == MovePromotionCapture {
-			victim := m.Data[0]
-			attacker := board.PieceAtSquare(m.From)
-			score += 10000 + 100*PieceCodeToValue[victim] - PieceCodeToValue[attacker]
+		switch m.MoveType {
+		case MovePromotionCapture:
+			victim := m.Captured
+			attacker := m.Piece
+			promoPiece := m.Promoted
+			score += 20000 + 100*PieceCodeToValue[victim] + 1000*PieceCodeToValue[promoPiece] - 100*PieceCodeToValue[attacker]
+		case MoveCapture:
+			victim := m.Captured
+			attacker := m.Piece
+			score += 10000 + 100*PieceCodeToValue[victim] - 100*PieceCodeToValue[attacker]
+		case MovePromotion:
+			promoPiece := m.Promoted
+			score += 9000 + 100*PieceCodeToValue[promoPiece]
 		}
 
 		scored[i] = moveScore{move: m, score: score}
