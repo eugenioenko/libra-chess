@@ -15,13 +15,35 @@ type searchResult struct {
 	originalIndex int
 }
 
-func (board *Board) Search(depth int, tt *TranspositionTable) (int, *Move) {
+func (board *Board) Search(maxDepth int, tt *TranspositionTable) (int, *Move) {
+	maximizing := board.WhiteToMove
+	var bestMove *Move
+	bestScore := -MaxEvaluationScore
+	if !maximizing {
+		bestScore = MaxEvaluationScore
+	}
+
+	var pvMove *Move
+	for depth := 1; depth <= maxDepth; depth++ {
+		moves := board.GenerateLegalMoves()
+		// Use SortMovesRoot at root
+		ttMove := tt.BestMoveDeepest(board.Hash)
+		moves = board.SortMovesRoot(moves, pvMove, ttMove)
+		score, move := board.ParallelRootSearch(depth, tt, moves)
+		bestScore = score
+		bestMove = move
+		pvMove = move // update PV move for next iteration
+	}
+	return bestScore, bestMove
+}
+
+// ParallelRootSearch allows passing in a pre-sorted move list
+func (board *Board) ParallelRootSearch(depth int, tt *TranspositionTable, moves []Move) (int, *Move) {
 	maximizing := board.WhiteToMove
 	bestScore := -MaxEvaluationScore
 	if !maximizing {
 		bestScore = MaxEvaluationScore
 	}
-	moves := board.GenerateLegalMoves()
 	if len(moves) == 0 {
 		return board.MateOrStalemateScore(maximizing), nil
 	}
@@ -42,7 +64,7 @@ func (board *Board) Search(depth int, tt *TranspositionTable) (int, *Move) {
 			for job := range moveChan {
 				clone := board.Clone()
 				clone.Move(job.move)
-				score := clone.AlphaBeta(
+				score := clone.AlphaBetaSearch(
 					depth-1, !maximizing,
 					-MaxEvaluationScore, MaxEvaluationScore, tt,
 				)
@@ -88,30 +110,33 @@ func (board *Board) Search(depth int, tt *TranspositionTable) (int, *Move) {
 	return bestScore, bestMove
 }
 
-func (board *Board) AlphaBeta(depth int, maximizing bool, alpha int, beta int, tt *TranspositionTable) int {
+func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta int, tt *TranspositionTable) int {
 	if depth == 0 {
 		return board.Evaluate()
 	}
 
-	hash := board.ZobristHash()
-	if entry, ok := tt.Get(hash, depth); ok {
+	if entry, ok := tt.Get(board.Hash, depth); ok {
 		return entry
 	}
 
 	moves := board.GenerateLegalMoves()
+	// Move ordering for alpha-beta
+	moves = board.SortMovesAlphaBeta(moves, depth, tt, board.Hash)
 	if len(moves) == 0 {
 		return board.MateOrStalemateScore(maximizing)
 	}
 
 	var result int
+	var bestMove Move
 	if maximizing {
 		maxEval := -MaxEvaluationScore
 		for _, move := range moves {
 			prev := board.Move(move)
-			eval := board.AlphaBeta(depth-1, false, alpha, beta, tt)
+			eval := board.AlphaBetaSearch(depth-1, false, alpha, beta, tt)
 			board.UndoMove(prev)
 			if eval > maxEval {
 				maxEval = eval
+				bestMove = move
 			}
 			if maxEval > alpha {
 				alpha = maxEval
@@ -125,10 +150,11 @@ func (board *Board) AlphaBeta(depth int, maximizing bool, alpha int, beta int, t
 		minEval := MaxEvaluationScore
 		for _, move := range moves {
 			prev := board.Move(move)
-			eval := board.AlphaBeta(depth-1, true, alpha, beta, tt)
+			eval := board.AlphaBetaSearch(depth-1, true, alpha, beta, tt)
 			board.UndoMove(prev)
 			if eval < minEval {
 				minEval = eval
+				bestMove = move
 			}
 			if minEval < beta {
 				beta = minEval
@@ -140,6 +166,6 @@ func (board *Board) AlphaBeta(depth int, maximizing bool, alpha int, beta int, t
 		result = minEval
 	}
 
-	tt.Set(hash, depth, result)
+	tt.Set(board.Hash, depth, result, bestMove)
 	return result
 }
