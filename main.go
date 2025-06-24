@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	BaseSearchDepth = 5
+	BaseSearchDepth = 6
 )
 
 func main() {
@@ -22,6 +22,8 @@ func main() {
 
 	scanner := bufio.NewScanner(os.Stdin)
 	board := NewBoard()
+	tt := NewTranspositionTable()
+
 	for scanner.Scan() {
 		line := scanner.Text()
 		fields := strings.Fields(line)
@@ -36,12 +38,12 @@ func main() {
 		case "isready":
 			fmt.Println("readyok")
 		case "ucinewgame":
+			tt = NewTranspositionTable()
 			board = NewBoard()
 			board.LoadInitial()
 		case "position":
 			board.ParseAndApplyPosition(fields[1:])
 		case "go":
-			tt := NewTranspositionTable()
 			depth := BaseSearchDepth
 			move, stats := board.Search(depth, tt)
 			stats.PrintUCI()
