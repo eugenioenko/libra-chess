@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	BaseSearchDepth = 5
+	BaseSearchDepth = 6
 )
 
 func main() {
@@ -22,6 +22,8 @@ func main() {
 
 	scanner := bufio.NewScanner(os.Stdin)
 	board := NewBoard()
+	tt := NewTranspositionTable()
+
 	for scanner.Scan() {
 		line := scanner.Text()
 		fields := strings.Fields(line)
@@ -36,31 +38,22 @@ func main() {
 		case "isready":
 			fmt.Println("readyok")
 		case "ucinewgame":
+			tt = NewTranspositionTable()
 			board = NewBoard()
 			board.LoadInitial()
 		case "position":
 			board.ParseAndApplyPosition(fields[1:])
 		case "go":
-			tt := NewTranspositionTable()
 			depth := BaseSearchDepth
-			material := board.CountPieces()
-			if material < 30 {
-				depth = BaseSearchDepth + 1
-			}
-			if material < 20 {
-				depth = BaseSearchDepth + 2
-			}
-			if material < 10 {
-				depth = BaseSearchDepth + 3
-			}
-			score, move := board.Search(depth, tt)
-			fmt.Printf("info score cp %d\n", score)
+			move, stats := board.Search(depth, tt)
+			stats.PrintUCI()
 			if move != nil {
 				fmt.Printf("bestmove %s\n", move.ToUCI())
 			} else {
 				fmt.Println("bestmove 0000")
 			}
 		case "quit":
+			fmt.Println("Exiting LibraChess. Goodbye!")
 			return
 		}
 	}

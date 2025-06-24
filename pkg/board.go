@@ -16,6 +16,8 @@ type CastlingAvailability struct {
 
 // Board represents the state of a chess game, including piece positions, castling rights, en passant, move clocks, and move history.
 type Board struct {
+	// Hash is the Zobrist hash of the current board position
+	Hash uint64
 	// Bitboards for each piece type and color
 	WhitePawns   uint64
 	WhiteKnights uint64
@@ -44,6 +46,7 @@ type Board struct {
 // NewBoard creates a new, empty board. You must call LoadInitial or FromFEN to set up a position.
 func NewBoard() *Board {
 	board := &Board{
+		Hash:         0,
 		WhitePawns:   0,
 		WhiteKnights: 0,
 		WhiteBishops: 0,
@@ -57,10 +60,10 @@ func NewBoard() *Board {
 		BlackQueens:  0,
 		BlackKing:    0,
 		CastlingAvailability: CastlingAvailability{
-			BlackKingSide:  true,
-			BlackQueenSide: true,
-			WhiteKingSide:  true,
-			WhiteQueenSide: true,
+			BlackKingSide:  false,
+			BlackQueenSide: false,
+			WhiteKingSide:  false,
+			WhiteQueenSide: false,
 		},
 		WhiteToMove:     true,
 		OnPassant:       0,
@@ -103,9 +106,7 @@ func (board *Board) LoadInitial() {
 
 // FromFEN loads a position from a FEN string. Returns false and error if the FEN is invalid.
 func (board *Board) FromFEN(fen string) (bool, error) {
-	// Reset all bitboards
-	board.WhitePawns, board.WhiteKnights, board.WhiteBishops, board.WhiteRooks, board.WhiteQueens, board.WhiteKing = 0, 0, 0, 0, 0, 0
-	board.BlackPawns, board.BlackKnights, board.BlackBishops, board.BlackRooks, board.BlackQueens, board.BlackKing = 0, 0, 0, 0, 0, 0
+	board.Reset()
 
 	parts := strings.Split(fen, " ")
 	if len(parts) == 0 {
@@ -204,6 +205,8 @@ func (board *Board) FromFEN(fen string) (bool, error) {
 		}
 	}
 
+	board.Hash = board.ZobristHash()
+
 	return true, nil
 }
 
@@ -291,30 +294,6 @@ func (board *Board) PieceAtSquare(square byte) byte {
 	default:
 		return 0
 	}
-}
-
-// PrintMove prints a move using bitboards.
-func (board *Board) PrintMove(move Move) {
-	piece := board.PieceAtSquare(move.From)
-	pieceStr := pieceCodeToFont[piece]
-	fromName, _ := SquareIndexToName(move.From)
-	toName, _ := SquareIndexToName(move.To)
-	moveType := ""
-	switch move.MoveType {
-	case MoveQuiet:
-		moveType = "quiet"
-	case MoveCapture:
-		moveType = "capture"
-	case MoveEnPassant:
-		moveType = "en passant"
-	case MovePromotion:
-		moveType = "promotion"
-	case MovePromotionCapture:
-		moveType = "promotion-capture"
-	case MoveCastle:
-		moveType = "castle"
-	}
-	fmt.Printf("%s %s -> %s [%s] data: %v\n", pieceStr, fromName, toName, moveType, move.Data)
 }
 
 // IsSquareValid returns true if the square index is within 0-63.
@@ -570,7 +549,7 @@ func (board *Board) ParseUCIMove(moveStr string) *Move {
 				} else {
 					promoPiece = BlackPromotionMap[promo]
 				}
-				if move.Data[0] == promoPiece {
+				if move.Promoted == promoPiece {
 					return &move
 				}
 			} else if move.MoveType != MovePromotion && move.MoveType != MovePromotionCapture {

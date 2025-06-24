@@ -1,9 +1,5 @@
 package libra
 
-import (
-	"fmt"
-)
-
 const (
 	MoveQuiet = iota
 	MoveCapture
@@ -14,10 +10,12 @@ const (
 )
 
 type Move struct {
+	Piece    byte
 	From     byte
 	To       byte
 	MoveType byte
-	Data     [2]byte
+	Promoted byte
+	Captured byte
 }
 
 type MovesCount struct {
@@ -35,16 +33,19 @@ func NewMovesCount() *MovesCount {
 	}
 }
 
-func NewMove(from byte, to byte, moveType byte, data [2]byte) Move {
+func NewMove(piece, from, to, moveType, promotion, capture byte) Move {
 	return Move{
+		Piece:    piece,
 		From:     from,
 		To:       to,
 		MoveType: moveType,
-		Data:     data,
+		Promoted: promotion,
+		Captured: capture,
 	}
 }
 
 type MoveState struct {
+	Hash                 uint64
 	WhitePawns           uint64
 	WhiteKnights         uint64
 	WhiteBishops         uint64
@@ -86,7 +87,7 @@ func (move Move) ToUCI() string {
 	uci := from + to
 	if move.MoveType == MovePromotion || move.MoveType == MovePromotionCapture {
 		promo := ""
-		switch move.Data[0] {
+		switch move.Promoted {
 		case WhiteQueen, BlackQueen:
 			promo = "q"
 		case WhiteRook, BlackRook:
@@ -99,17 +100,6 @@ func (move Move) ToUCI() string {
 		uci += promo
 	}
 	return uci
-}
-
-func (move Move) ToMove() string {
-	from := BoardSquareNames[move.From]
-	to := BoardSquareNames[move.To]
-	piece := pieceCodeToFont[move.Data[0]]
-	capture := " "
-	if move.MoveType == MoveCapture || move.MoveType == MovePromotionCapture || move.MoveType == MoveEnPassant {
-		capture = "x"
-	}
-	return fmt.Sprintf("%s%s%s%s\n", piece, from, capture, to)
 }
 
 // Move returns a MoveState for undoing the move
@@ -133,6 +123,7 @@ func (board *Board) Move(move Move) MoveState {
 		HalfMoveClock:        board.HalfMoveClock,
 		FullMoveCounter:      board.FullMoveCounter,
 		WhiteToMove:          board.WhiteToMove,
+		Hash:                 board.Hash,
 	}
 
 	if !board.WhiteToMove {
@@ -140,7 +131,7 @@ func (board *Board) Move(move Move) MoveState {
 	}
 	from := move.From
 	to := move.To
-	piece := board.PieceAtSquare(from)
+	piece := move.Piece
 
 	if move.MoveType == MoveCapture || board.IsSquarePawn(from) {
 		board.HalfMoveClock = 0
@@ -152,17 +143,29 @@ func (board *Board) Move(move Move) MoveState {
 	board.clearPieceAtSquare(from, piece)
 	// Place piece at 'to' square
 	if move.MoveType == MovePromotion || move.MoveType == MovePromotionCapture {
-		board.setPieceAtSquare(to, move.Data[0])
+		board.setPieceAtSquare(to, move.Promoted)
 	} else {
 		board.setPieceAtSquare(to, piece)
+	}
+
+	// Incremental Zobrist hash update
+	// Remove piece from 'from' square
+	board.Hash ^= zobristPieceTable[from][piece]
+	// Place piece at 'to' square
+	if move.MoveType == MovePromotion || move.MoveType == MovePromotionCapture {
+		board.Hash ^= zobristPieceTable[to][move.Promoted]
+	} else {
+		board.Hash ^= zobristPieceTable[to][piece]
 	}
 
 	// Handle en passant
 	if move.MoveType == MoveEnPassant {
 		if board.WhiteToMove {
 			board.clearPieceAtSquare(to+8, BlackPawn)
+			board.Hash ^= zobristPieceTable[to+8][BlackPawn]
 		} else {
 			board.clearPieceAtSquare(to-8, WhitePawn)
+			board.Hash ^= zobristPieceTable[to-8][WhitePawn]
 		}
 	}
 
@@ -172,9 +175,13 @@ func (board *Board) Move(move Move) MoveState {
 			if to == SquareG1 {
 				board.clearPieceAtSquare(SquareH1, WhiteRook)
 				board.setPieceAtSquare(SquareF1, WhiteRook)
+				board.Hash ^= zobristPieceTable[SquareH1][WhiteRook]
+				board.Hash ^= zobristPieceTable[SquareF1][WhiteRook]
 			} else if to == SquareC1 {
 				board.clearPieceAtSquare(SquareA1, WhiteRook)
 				board.setPieceAtSquare(SquareD1, WhiteRook)
+				board.Hash ^= zobristPieceTable[SquareA1][WhiteRook]
+				board.Hash ^= zobristPieceTable[SquareD1][WhiteRook]
 			}
 			board.CastlingAvailability.WhiteKingSide = false
 			board.CastlingAvailability.WhiteQueenSide = false
@@ -182,75 +189,124 @@ func (board *Board) Move(move Move) MoveState {
 			if to == SquareG8 {
 				board.clearPieceAtSquare(SquareH8, BlackRook)
 				board.setPieceAtSquare(SquareF8, BlackRook)
+				board.Hash ^= zobristPieceTable[SquareH8][BlackRook]
+				board.Hash ^= zobristPieceTable[SquareF8][BlackRook]
 			} else if to == SquareC8 {
 				board.clearPieceAtSquare(SquareA8, BlackRook)
 				board.setPieceAtSquare(SquareD8, BlackRook)
+				board.Hash ^= zobristPieceTable[SquareA8][BlackRook]
+				board.Hash ^= zobristPieceTable[SquareD8][BlackRook]
 			}
 			board.CastlingAvailability.BlackKingSide = false
 			board.CastlingAvailability.BlackQueenSide = false
 		}
 	}
+	// Update castling rights for moving king or rook
+	if move.MoveType != MoveCastle {
+		if piece == WhiteKing && board.CastlingAvailability.WhiteKingSide {
+			board.CastlingAvailability.WhiteKingSide = false
+			board.CastlingAvailability.WhiteQueenSide = false
+		} else if piece == BlackKing && board.CastlingAvailability.BlackKingSide {
+			board.CastlingAvailability.BlackKingSide = false
+			board.CastlingAvailability.BlackQueenSide = false
+		}
 
+		if piece == WhiteRook {
+			if from == SquareA1 && board.CastlingAvailability.WhiteQueenSide {
+				board.CastlingAvailability.WhiteQueenSide = false
+			} else if from == SquareH1 && board.CastlingAvailability.WhiteKingSide {
+				board.CastlingAvailability.WhiteKingSide = false
+			}
+		} else if piece == BlackRook {
+			if from == SquareA8 && board.CastlingAvailability.BlackQueenSide {
+				board.CastlingAvailability.BlackQueenSide = false
+			} else if from == SquareH8 && board.CastlingAvailability.BlackKingSide {
+				board.CastlingAvailability.BlackKingSide = false
+			}
+		}
+	}
+
+	// Update castling rights if a rook is captured
+	if move.MoveType == MoveCapture || move.MoveType == MovePromotionCapture {
+		if move.Captured == WhiteRook {
+			if to == SquareA1 && board.CastlingAvailability.WhiteQueenSide {
+				board.CastlingAvailability.WhiteQueenSide = false
+			} else if to == SquareH1 && board.CastlingAvailability.WhiteKingSide {
+				board.CastlingAvailability.WhiteKingSide = false
+			}
+		} else if move.Captured == BlackRook {
+			if to == SquareA8 && board.CastlingAvailability.BlackQueenSide {
+				board.CastlingAvailability.BlackQueenSide = false
+			} else if to == SquareH8 && board.CastlingAvailability.BlackKingSide {
+				board.CastlingAvailability.BlackKingSide = false
+			}
+		}
+	}
+
+	// Update castling rights hash
+	if board.CastlingAvailability.WhiteKingSide != prev.CastlingAvailability.WhiteKingSide {
+		board.Hash ^= zobristCastlingAvailability.WhiteKingSide
+	}
+	if board.CastlingAvailability.WhiteQueenSide != prev.CastlingAvailability.WhiteQueenSide {
+		board.Hash ^= zobristCastlingAvailability.WhiteQueenSide
+	}
+	if board.CastlingAvailability.BlackKingSide != prev.CastlingAvailability.BlackKingSide {
+		board.Hash ^= zobristCastlingAvailability.BlackKingSide
+	}
+	if board.CastlingAvailability.BlackQueenSide != prev.CastlingAvailability.BlackQueenSide {
+		board.Hash ^= zobristCastlingAvailability.BlackQueenSide
+	}
+
+	// Remove captured piece
+	if move.MoveType == MoveCapture || move.MoveType == MovePromotionCapture {
+		capturedPieceSquare := move.To
+		capturedPiece := move.Captured
+		board.clearPieceAtSquare(capturedPieceSquare, capturedPiece)
+		board.Hash ^= zobristPieceTable[capturedPieceSquare][capturedPiece]
+		// Update castling rights if a rook is captured
+		if capturedPiece == WhiteRook {
+			if capturedPieceSquare == SquareA1 {
+				board.CastlingAvailability.WhiteQueenSide = false
+			} else if capturedPieceSquare == SquareH1 {
+				board.CastlingAvailability.WhiteKingSide = false
+			}
+		} else if capturedPiece == BlackRook {
+			if capturedPieceSquare == SquareA8 {
+				board.CastlingAvailability.BlackQueenSide = false
+			} else if capturedPieceSquare == SquareH8 {
+				board.CastlingAvailability.BlackKingSide = false
+			}
+		}
+	}
+
+	// Update en passant in hash
+	if board.OnPassant != 0 {
+		board.Hash ^= zobristOnPassantTable[board.OnPassant]
+	}
+	// Set new en passant
 	board.OnPassant = 0
 	if piece == WhitePawn && from/8 == 6 && to/8 == 4 {
 		board.OnPassant = from - 8
 	} else if piece == BlackPawn && from/8 == 1 && to/8 == 3 {
 		board.OnPassant = from + 8
 	}
-
-	if piece == WhiteKing {
-		board.CastlingAvailability.WhiteKingSide = false
-		board.CastlingAvailability.WhiteQueenSide = false
-	}
-	if piece == BlackKing {
-		board.CastlingAvailability.BlackKingSide = false
-		board.CastlingAvailability.BlackQueenSide = false
-	}
-	if piece == WhiteRook {
-		if from == SquareH1 {
-			board.CastlingAvailability.WhiteKingSide = false
-		}
-		if from == SquareA1 {
-			board.CastlingAvailability.WhiteQueenSide = false
-		}
-	}
-	if piece == BlackRook {
-		if from == SquareH8 {
-			board.CastlingAvailability.BlackKingSide = false
-		}
-		if from == SquareA8 {
-			board.CastlingAvailability.BlackQueenSide = false
-		}
+	if board.OnPassant != 0 {
+		board.Hash ^= zobristOnPassantTable[board.OnPassant]
 	}
 
-	if move.MoveType == MoveCapture || move.MoveType == MovePromotionCapture {
-		capturedPieceSquare := move.To
-		var capturedPiece byte
-		if move.MoveType == MovePromotionCapture {
-			capturedPiece = move.Data[1]
-		} else {
-			capturedPiece = move.Data[0]
-		}
-		board.clearPieceAtSquare(capturedPieceSquare, capturedPiece)
-		if capturedPiece == WhiteRook {
-			if capturedPieceSquare == SquareH1 {
-				board.CastlingAvailability.WhiteKingSide = false
-			}
-			if capturedPieceSquare == SquareA1 {
-				board.CastlingAvailability.WhiteQueenSide = false
-			}
-		}
-		if capturedPiece == BlackRook {
-			if capturedPieceSquare == SquareH8 {
-				board.CastlingAvailability.BlackKingSide = false
-			}
-			if capturedPieceSquare == SquareA8 {
-				board.CastlingAvailability.BlackQueenSide = false
-			}
-		}
+	// Update side to move
+	if board.WhiteToMove {
+		board.Hash ^= zobristWhiteToMove
+	} else {
+		board.Hash ^= zobristBlackToMove
 	}
-
 	board.WhiteToMove = !board.WhiteToMove
+	if board.WhiteToMove {
+		board.Hash ^= zobristWhiteToMove
+	} else {
+		board.Hash ^= zobristBlackToMove
+	}
+
 	return prev
 }
 
@@ -335,4 +391,5 @@ func (board *Board) UndoMove(state MoveState) {
 	board.HalfMoveClock = state.HalfMoveClock
 	board.FullMoveCounter = state.FullMoveCounter
 	board.WhiteToMove = state.WhiteToMove
+	board.Hash = state.Hash
 }
