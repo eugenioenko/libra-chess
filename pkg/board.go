@@ -546,7 +546,7 @@ func (board *Board) ParseUCIMove(moveStr string) *Move {
 				} else {
 					promoPiece = BlackPromotionMap[promo]
 				}
-				if move.Promotion == promoPiece {
+				if move.Promoted == promoPiece {
 					return &move
 				}
 			} else if move.MoveType != MovePromotion && move.MoveType != MovePromotionCapture {

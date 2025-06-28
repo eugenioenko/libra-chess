@@ -14,12 +14,12 @@ const (
 )
 
 type Move struct {
-	Piece     byte
-	From      byte
-	To        byte
-	MoveType  byte
-	Promotion byte
-	Captured  byte
+	Piece    byte
+	From     byte
+	To       byte
+	MoveType byte
+	Promoted byte
+	Captured byte
 }
 
 type MovesCount struct {
@@ -37,14 +37,14 @@ func NewMovesCount() *MovesCount {
 	}
 }
 
-func NewMove(piece, from, to, moveType, promotion, captured byte) Move {
+func NewMove(piece, from, to, moveType, promoted, captured byte) Move {
 	return Move{
-		Piece:     piece,
-		From:      from,
-		To:        to,
-		MoveType:  moveType,
-		Captured:  captured,
-		Promotion: promotion,
+		Piece:    piece,
+		From:     from,
+		To:       to,
+		MoveType: moveType,
+		Captured: captured,
+		Promoted: promoted,
 	}
 }
 
@@ -90,7 +90,7 @@ func (move Move) ToUCI() string {
 	uci := from + to
 	if move.MoveType == MovePromotion || move.MoveType == MovePromotionCapture {
 		promo := ""
-		switch move.Promotion {
+		switch move.Promoted {
 		case WhiteQueen, BlackQueen:
 			promo = "q"
 		case WhiteRook, BlackRook:
@@ -156,7 +156,7 @@ func (board *Board) Move(move Move) MoveState {
 	board.clearPieceAtSquare(from, piece)
 	// Place piece at 'to' square
 	if move.MoveType == MovePromotion || move.MoveType == MovePromotionCapture {
-		board.setPieceAtSquare(to, move.Promotion)
+		board.setPieceAtSquare(to, move.Promoted)
 	} else {
 		board.setPieceAtSquare(to, piece)
 	}

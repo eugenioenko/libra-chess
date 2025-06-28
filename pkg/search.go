@@ -7,6 +7,7 @@ import (
 
 const (
 	MaxEvaluationScore = 1000000
+	MaxSearchDepth     = 64 // or whatever your engine's max depth is
 )
 
 type searchResult struct {
@@ -15,13 +16,43 @@ type searchResult struct {
 	originalIndex int
 }
 
-func (board *Board) Search(depth int, tt *TranspositionTable) (int, *Move) {
+func (board *Board) Search(maxDepth int, tt *TranspositionTable) (*Move, *SearchStats) {
+	stats := &SearchStats{}
+	stats.StartTimer()
+	defer stats.StopTimer()
+
+	maximizing := board.WhiteToMove
+	var bestMove *Move
+	bestScore := -MaxEvaluationScore
+	if !maximizing {
+		bestScore = MaxEvaluationScore
+	}
+
+	var pvMove *Move
+	for depth := 1; depth <= maxDepth; depth++ {
+		stats.SetMaxSearchDepth(int32(depth))
+		moves := board.GenerateLegalMoves()
+		stats.IncMoveGeneration()
+		// Use SortMovesRoot at root
+		ttMove := tt.BestMoveDeepest(board.ZobristHash())
+		moves = board.SortMovesRoot(moves, pvMove, ttMove)
+		ctx := &SearchContext{} // new context for each root search
+		score, move := board.ParallelRootSearch(depth, tt, moves, stats, ctx)
+		bestScore = score
+		bestMove = move
+		pvMove = move // update PV move for next iteration
+	}
+	stats.BestScore = bestScore
+	return bestMove, stats
+}
+
+// ParallelRootSearch allows passing in a pre-sorted move list
+func (board *Board) ParallelRootSearch(depth int, tt *TranspositionTable, moves []Move, stats *SearchStats, ctx *SearchContext) (int, *Move) {
 	maximizing := board.WhiteToMove
 	bestScore := -MaxEvaluationScore
 	if !maximizing {
 		bestScore = MaxEvaluationScore
 	}
-	moves := board.GenerateLegalMoves()
 	if len(moves) == 0 {
 		return board.MateOrStalemateScore(maximizing), nil
 	}
@@ -42,9 +73,9 @@ func (board *Board) Search(depth int, tt *TranspositionTable) (int, *Move) {
 			for job := range moveChan {
 				clone := board.Clone()
 				clone.Move(job.move)
-				score := clone.AlphaBeta(
+				score := clone.AlphaBetaSearch(
 					depth-1, !maximizing,
-					-MaxEvaluationScore, MaxEvaluationScore, tt,
+					-MaxEvaluationScore, MaxEvaluationScore, tt, stats, ctx, 1,
 				)
 				resultChan <- searchResult{score: score, move: job.move, originalIndex: job.index}
 			}
@@ -88,58 +119,86 @@ func (board *Board) Search(depth int, tt *TranspositionTable) (int, *Move) {
 	return bestScore, bestMove
 }
 
-func (board *Board) AlphaBeta(depth int, maximizing bool, alpha int, beta int, tt *TranspositionTable) int {
+func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta int, tt *TranspositionTable, stats *SearchStats, ctx *SearchContext, ply int) int {
+	stats.IncNodesSearched()
 	if depth == 0 {
 		return board.Evaluate()
 	}
 
 	hash := board.ZobristHash()
 	if entry, ok := tt.Get(hash, depth); ok {
+		stats.IncTTHit()
 		return entry
 	}
 
 	moves := board.GenerateLegalMoves()
+	stats.IncMoveGeneration()
+	moves = board.SortMovesAlphaBeta(moves, depth, tt, hash, ctx, ply)
 	if len(moves) == 0 {
 		return board.MateOrStalemateScore(maximizing)
 	}
 
 	var result int
+	var bestMove Move
 	if maximizing {
 		maxEval := -MaxEvaluationScore
-		for _, move := range moves {
+		for i, move := range moves {
 			prev := board.Move(move)
-			eval := board.AlphaBeta(depth-1, false, alpha, beta, tt)
+			eval := board.AlphaBetaSearch(depth-1, false, alpha, beta, tt, stats, ctx, ply+1)
 			board.UndoMove(prev)
 			if eval > maxEval {
 				maxEval = eval
+				bestMove = move
 			}
 			if maxEval > alpha {
 				alpha = maxEval
 			}
 			if beta <= alpha {
+				stats.IncBetaCutoff()
+				if move.MoveType != MoveCapture && move.MoveType != MovePromotionCapture {
+					ctx.AddKillerMove(move, ply)
+					// Update history heuristic for quiet moves
+					ctx.HistoryHeuristic[PieceToHistoryIndex[move.Piece]][move.To] += depth * depth
+				}
+				nodesPruned := len(moves) - (i + 1)
+				for j := 0; j < nodesPruned; j++ {
+					stats.IncNodesPruned()
+				}
 				break
 			}
 		}
 		result = maxEval
 	} else {
 		minEval := MaxEvaluationScore
-		for _, move := range moves {
+		for i, move := range moves {
 			prev := board.Move(move)
-			eval := board.AlphaBeta(depth-1, true, alpha, beta, tt)
+			eval := board.AlphaBetaSearch(depth-1, true, alpha, beta, tt, stats, ctx, ply+1)
 			board.UndoMove(prev)
 			if eval < minEval {
 				minEval = eval
+				bestMove = move
 			}
 			if minEval < beta {
 				beta = minEval
 			}
 			if beta <= alpha {
+				stats.IncBetaCutoff()
+				if move.MoveType != MoveCapture && move.MoveType != MovePromotionCapture {
+					ctx.AddKillerMove(move, ply)
+					// Update history heuristic for quiet moves
+					ctx.HistoryHeuristic[PieceToHistoryIndex[move.Piece]][move.To] += depth * depth
+				}
+				nodesPruned := len(moves) - (i + 1)
+				for j := 0; j < nodesPruned; j++ {
+					stats.IncNodesPruned()
+				}
 				break
 			}
 		}
 		result = minEval
 	}
 
-	tt.Set(hash, depth, result)
+	stats.IncTTStore()
+	tt.Set(hash, depth, result, bestMove)
 	return result
 }
