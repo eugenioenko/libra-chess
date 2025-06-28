@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-type CastlingAvailability struct {
+type CastlingState struct {
 	BlackKingSide  bool
 	BlackQueenSide bool
 	WhiteKingSide  bool
@@ -29,8 +29,8 @@ type Board struct {
 	BlackRooks   uint64
 	BlackQueens  uint64
 	BlackKing    uint64
-	// CastlingAvailability tracks which castling rights are still available
-	CastlingAvailability CastlingAvailability
+	// Castling tracks which castling rights are still available
+	Castling CastlingState
 	// WhiteToMove is true if it's White's turn, false for Black
 	WhiteToMove bool
 	// OnPassant is the square index for en passant capture, or 0 if not available
@@ -56,11 +56,11 @@ func NewBoard() *Board {
 		BlackRooks:   0,
 		BlackQueens:  0,
 		BlackKing:    0,
-		CastlingAvailability: CastlingAvailability{
-			BlackKingSide:  true,
-			BlackQueenSide: true,
-			WhiteKingSide:  true,
-			WhiteQueenSide: true,
+		Castling: CastlingState{
+			BlackKingSide:  false,
+			BlackQueenSide: false,
+			WhiteKingSide:  false,
+			WhiteQueenSide: false,
 		},
 		WhiteToMove:     true,
 		OnPassant:       0,
@@ -83,7 +83,7 @@ func (board *Board) Reset() {
 	board.BlackRooks = 0
 	board.BlackQueens = 0
 	board.BlackKing = 0
-	board.CastlingAvailability = CastlingAvailability{
+	board.Castling = CastlingState{
 		BlackKingSide:  false,
 		BlackQueenSide: false,
 		WhiteKingSide:  false,
@@ -166,7 +166,7 @@ func (board *Board) FromFEN(fen string) (bool, error) {
 
 	if len(parts) > 2 {
 		if parts[2] == "-" {
-			board.CastlingAvailability = CastlingAvailability{
+			board.Castling = CastlingState{
 				BlackKingSide:  false,
 				BlackQueenSide: false,
 				WhiteKingSide:  false,
@@ -174,7 +174,7 @@ func (board *Board) FromFEN(fen string) (bool, error) {
 			}
 		} else {
 			castleStr := parts[2]
-			board.CastlingAvailability = CastlingAvailability{
+			board.Castling = CastlingState{
 				WhiteKingSide:  strings.Contains(castleStr, "K"),
 				WhiteQueenSide: strings.Contains(castleStr, "Q"),
 				BlackKingSide:  strings.Contains(castleStr, "k"),
@@ -291,30 +291,6 @@ func (board *Board) PieceAtSquare(square byte) byte {
 	default:
 		return 0
 	}
-}
-
-// PrintMove prints a move using bitboards.
-func (board *Board) PrintMove(move Move) {
-	piece := board.PieceAtSquare(move.From)
-	pieceStr := pieceCodeToFont[piece]
-	fromName, _ := SquareIndexToName(move.From)
-	toName, _ := SquareIndexToName(move.To)
-	moveType := ""
-	switch move.MoveType {
-	case MoveQuiet:
-		moveType = "quiet"
-	case MoveCapture:
-		moveType = "capture"
-	case MoveEnPassant:
-		moveType = "en passant"
-	case MovePromotion:
-		moveType = "promotion"
-	case MovePromotionCapture:
-		moveType = "promotion-capture"
-	case MoveCastle:
-		moveType = "castle"
-	}
-	fmt.Printf("%s %s -> %s [%s] data: %v\n", pieceStr, fromName, toName, moveType, move.Data)
 }
 
 // IsSquareValid returns true if the square index is within 0-63.
@@ -482,16 +458,16 @@ func (board *Board) ToFEN() string {
 
 	// Castling rights
 	castle := ""
-	if board.CastlingAvailability.WhiteKingSide {
+	if board.Castling.WhiteKingSide {
 		castle += "K"
 	}
-	if board.CastlingAvailability.WhiteQueenSide {
+	if board.Castling.WhiteQueenSide {
 		castle += "Q"
 	}
-	if board.CastlingAvailability.BlackKingSide {
+	if board.Castling.BlackKingSide {
 		castle += "k"
 	}
-	if board.CastlingAvailability.BlackQueenSide {
+	if board.Castling.BlackQueenSide {
 		castle += "q"
 	}
 	if castle == "" {
@@ -539,7 +515,7 @@ func (board *Board) Clone() *Board {
 	clone.BlackRooks = board.BlackRooks
 	clone.BlackQueens = board.BlackQueens
 	clone.BlackKing = board.BlackKing
-	clone.CastlingAvailability = board.CastlingAvailability
+	clone.Castling = board.Castling
 	clone.WhiteToMove = board.WhiteToMove
 	clone.OnPassant = board.OnPassant
 	clone.HalfMoveClock = board.HalfMoveClock
@@ -570,7 +546,7 @@ func (board *Board) ParseUCIMove(moveStr string) *Move {
 				} else {
 					promoPiece = BlackPromotionMap[promo]
 				}
-				if move.Data[0] == promoPiece {
+				if move.Promotion == promoPiece {
 					return &move
 				}
 			} else if move.MoveType != MovePromotion && move.MoveType != MovePromotionCapture {

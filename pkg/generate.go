@@ -2,14 +2,13 @@ package libra
 
 import (
 	"math/bits"
-	"sort"
 )
 
 // AddQuietOrCapture adds a quiet move if the destination is empty, or a capture if occupied by an opponent's piece.
 // Returns the new slice and true if a quiet move was added, false if a capture or blocked.
-func (board *Board) AddQuietOrCapture(from, to byte, whiteToMove bool, moves []Move) ([]Move, bool) {
+func (board *Board) AddQuietOrCapture(piece, from, to byte, whiteToMove bool, moves []Move) ([]Move, bool) {
 	if board.IsSquareEmpty(to) {
-		moves = board.AddQuietMove(from, to, moves)
+		moves = board.AddQuietMove(piece, from, to, moves)
 		return moves, true
 	}
 
@@ -18,7 +17,7 @@ func (board *Board) AddQuietOrCapture(from, to byte, whiteToMove bool, moves []M
 	}
 
 	if (whiteToMove && board.IsPieceAtSquareBlack(to)) || (!whiteToMove && board.IsPieceAtSquareWhite(to)) {
-		moves = board.AddCapture(from, to, MoveCapture, whiteToMove, moves)
+		moves = board.AddCapture(piece, from, to, MoveCapture, whiteToMove, moves)
 		return moves, false
 	}
 
@@ -31,14 +30,14 @@ func (board *Board) AddMove(move Move, moves []Move) []Move {
 }
 
 // AddQuietMove adds a non-capturing move to the move list and returns the new slice.
-func (board *Board) AddQuietMove(from, to byte, moves []Move) []Move {
-	move := NewMove(from, to, MoveQuiet, [2]byte{0, 0})
+func (board *Board) AddQuietMove(piece, from, to byte, moves []Move) []Move {
+	move := NewMove(piece, from, to, MoveQuiet, 0, 0)
 	return append(moves, move)
 }
 
 // AddCastleMove adds a castling move to the move list and returns the new slice.
-func (board *Board) AddCastleMove(from, to byte, moves []Move) []Move {
-	move := NewMove(from, to, MoveCastle, [2]byte{0, 0})
+func (board *Board) AddCastleMove(piece, from, to byte, moves []Move) []Move {
+	move := NewMove(piece, from, to, MoveCastle, 0, 0)
 	return append(moves, move)
 }
 
@@ -55,15 +54,15 @@ func (board *Board) getCapturedPiece(moveType byte, to byte, whiteToMove bool) b
 }
 
 // AddCapture adds a capturing move to the move list. Handles en passant as a special case. Returns the new slice.
-func (board *Board) AddCapture(from, to, moveType byte, whiteToMove bool, moves []Move) []Move {
+func (board *Board) AddCapture(piece, from, to, moveType byte, whiteToMove bool, moves []Move) []Move {
 	captured := board.getCapturedPiece(moveType, to, whiteToMove)
-	move := NewMove(from, to, moveType, [2]byte{captured, 0})
+	move := NewMove(piece, from, to, moveType, 0, captured)
 	return append(moves, move)
 }
 
 // AddPromotion adds all possible promotion moves (to queen, rook, bishop, knight) for a pawn reaching the last rank.
 // If captured != 0, adds promotion-capture moves. Returns the new slice.
-func (board *Board) AddPromotion(from, to, captured byte, whiteToMove bool, moves []Move) []Move {
+func (board *Board) AddPromotion(piece, from, to, captured byte, whiteToMove bool, moves []Move) []Move {
 
 	promotionPieces := []byte{WhiteQueen, WhiteRook, WhiteBishop, WhiteKnight}
 	if !whiteToMove {
@@ -74,7 +73,7 @@ func (board *Board) AddPromotion(from, to, captured byte, whiteToMove bool, move
 		if captured != 0 {
 			moveType = MovePromotionCapture
 		}
-		move := NewMove(from, to, byte(moveType), [2]byte{promo, captured})
+		move := NewMove(piece, from, to, byte(moveType), promo, captured)
 		moves = append(moves, move)
 	}
 	return moves
@@ -86,16 +85,19 @@ func (board *Board) GeneratePawnMoves(whiteToMove bool) []Move {
 	var pawns uint64
 	var dir int8
 	var startRank, promotionRank byte
+	var piece byte
 	if whiteToMove {
 		pawns = board.WhitePawns
 		dir = -8
 		startRank = 6
 		promotionRank = 0
+		piece = WhitePawn
 	} else {
 		pawns = board.BlackPawns
 		dir = 8
 		startRank = 1
 		promotionRank = 7
+		piece = BlackPawn
 	}
 	for bb := pawns; bb != 0; {
 		square := byte(bits.TrailingZeros64(bb))
@@ -104,13 +106,13 @@ func (board *Board) GeneratePawnMoves(whiteToMove bool) []Move {
 		to := int8(square) + dir
 		if to >= 0 && to < 64 && !board.IsSquareOccupied(byte(to)) {
 			if byte(to/8) == promotionRank {
-				moves = board.AddPromotion(square, byte(to), 0, whiteToMove, moves)
+				moves = board.AddPromotion(piece, square, byte(to), 0, whiteToMove, moves)
 			} else {
-				moves = board.AddQuietMove(square, byte(to), moves)
+				moves = board.AddQuietMove(piece, square, byte(to), moves)
 				if rank == startRank {
 					twoForward := int8(square) + 2*dir
 					if twoForward >= 0 && twoForward < 64 && !board.IsSquareOccupied(byte(twoForward)) {
-						moves = board.AddQuietMove(square, byte(twoForward), moves)
+						moves = board.AddQuietMove(piece, square, byte(twoForward), moves)
 					}
 				}
 			}
@@ -126,14 +128,15 @@ func (board *Board) GeneratePawnMoves(whiteToMove bool) []Move {
 			}
 			if board.IsSquareOccupied(byte(captureTo)) && board.IsPieceAtSquareWhite(byte(captureTo)) != whiteToMove {
 				if byte(captureTo/8) == promotionRank {
-					moves = board.AddPromotion(square, byte(captureTo), board.PieceAtSquare(byte(captureTo)), whiteToMove, moves)
+					capture := board.PieceAtSquare(byte(captureTo))
+					moves = board.AddPromotion(piece, square, byte(captureTo), capture, whiteToMove, moves)
 				} else {
-					moves = board.AddCapture(square, byte(captureTo), MoveCapture, whiteToMove, moves)
+					moves = board.AddCapture(piece, square, byte(captureTo), MoveCapture, whiteToMove, moves)
 				}
 			}
 			if board.IsSquareOnPassant(byte(captureTo)) {
 				if (whiteToMove && rank == 3) || (!whiteToMove && rank == 4) {
-					moves = board.AddCapture(square, byte(captureTo), MoveEnPassant, whiteToMove, moves)
+					moves = board.AddCapture(piece, square, byte(captureTo), MoveEnPassant, whiteToMove, moves)
 				}
 			}
 		}
@@ -143,7 +146,7 @@ func (board *Board) GeneratePawnMoves(whiteToMove bool) []Move {
 }
 
 // GenerateSlidingMoves generates all moves for sliding pieces (rooks, bishops, queens) using precomputed rays.
-func (board *Board) GenerateSlidingMoves(bitboard uint64, startDir byte, endDir byte, whiteToMove bool) []Move {
+func (board *Board) GenerateSlidingMoves(piece byte, bitboard uint64, startDir byte, endDir byte, whiteToMove bool) []Move {
 	moves := []Move{}
 	for bb := bitboard; bb != 0; {
 		square := byte(bits.TrailingZeros64(bb))
@@ -158,7 +161,7 @@ func (board *Board) GenerateSlidingMoves(bitboard uint64, startDir byte, endDir 
 
 			for s := int(square) + int(offset); s >= 0 && s < 64 && (ray&(uint64(1)<<s)) != 0; s += int(offset) {
 				var isQuietMove bool
-				moves, isQuietMove = board.AddQuietOrCapture(square, byte(s), whiteToMove, moves)
+				moves, isQuietMove = board.AddQuietOrCapture(piece, square, byte(s), whiteToMove, moves)
 				if !isQuietMove {
 					break // Stop after a capture or own piece
 				}
@@ -173,17 +176,20 @@ func (board *Board) GenerateSlidingMoves(bitboard uint64, startDir byte, endDir 
 func (board *Board) GenerateKingMoves(whiteToMove bool) []Move {
 	moves := []Move{}
 	var kingSq byte
+	var piece byte
 	if whiteToMove {
 		kingSq = byte(bits.TrailingZeros64(board.WhiteKing))
+		piece = WhiteKing
 	} else {
 		kingSq = byte(bits.TrailingZeros64(board.BlackKing))
+		piece = BlackKing
 	}
 	for dirOffset := 0; dirOffset < 8; dirOffset++ {
 		offset := BoardDirOffsets[dirOffset]
 		amountToMove := int8(SquaresToEdge[kingSq][dirOffset])
 		if amountToMove > 0 {
 			squareTo := int8(kingSq) + offset
-			moves, _ = board.AddQuietOrCapture(kingSq, byte(squareTo), whiteToMove, moves)
+			moves, _ = board.AddQuietOrCapture(piece, kingSq, byte(squareTo), whiteToMove, moves)
 		}
 	}
 	return moves
@@ -194,8 +200,10 @@ func (board *Board) GenerateKingMoves(whiteToMove bool) []Move {
 // squares between must be empty.
 func (board *Board) GenerateCastleMoves(whiteToMove bool) []Move {
 	moves := []Move{}
+	var piece byte
 	if whiteToMove {
-		if board.CastlingAvailability.WhiteQueenSide &&
+		piece = WhiteKing
+		if board.Castling.WhiteQueenSide &&
 			board.IsSquareWhiteKing(SquareE1) &&
 			board.IsSquareWhiteRook(SquareA1) &&
 			board.IsSquareEmpty(SquareB1) &&
@@ -204,10 +212,10 @@ func (board *Board) GenerateCastleMoves(whiteToMove bool) []Move {
 			!board.IsSquareAttacked(SquareC1, whiteToMove) &&
 			!board.IsSquareAttacked(SquareD1, whiteToMove) &&
 			!board.IsSquareAttacked(SquareE1, whiteToMove) {
-			moves = board.AddCastleMove(SquareE1, SquareC1, moves)
+			moves = board.AddCastleMove(piece, SquareE1, SquareC1, moves)
 		}
 
-		if board.CastlingAvailability.WhiteKingSide &&
+		if board.Castling.WhiteKingSide &&
 			board.IsSquareWhiteKing(SquareE1) &&
 			board.IsSquareWhiteRook(SquareH1) &&
 			board.IsSquareEmpty(SquareF1) &&
@@ -215,10 +223,11 @@ func (board *Board) GenerateCastleMoves(whiteToMove bool) []Move {
 			!board.IsSquareAttacked(SquareF1, whiteToMove) &&
 			!board.IsSquareAttacked(SquareG1, whiteToMove) &&
 			!board.IsSquareAttacked(SquareE1, whiteToMove) {
-			moves = board.AddCastleMove(SquareE1, SquareG1, moves)
+			moves = board.AddCastleMove(piece, SquareE1, SquareG1, moves)
 		}
 	} else {
-		if board.CastlingAvailability.BlackQueenSide &&
+		piece = BlackKing
+		if board.Castling.BlackQueenSide &&
 			board.IsSquareBlackKing(SquareE8) &&
 			board.IsSquareBlackRook(SquareA8) &&
 			board.IsSquareEmpty(SquareB8) &&
@@ -227,10 +236,10 @@ func (board *Board) GenerateCastleMoves(whiteToMove bool) []Move {
 			!board.IsSquareAttacked(SquareC8, whiteToMove) &&
 			!board.IsSquareAttacked(SquareD8, whiteToMove) &&
 			!board.IsSquareAttacked(SquareE8, whiteToMove) {
-			moves = board.AddCastleMove(SquareE8, SquareC8, moves)
+			moves = board.AddCastleMove(piece, SquareE8, SquareC8, moves)
 		}
 
-		if board.CastlingAvailability.BlackKingSide &&
+		if board.Castling.BlackKingSide &&
 			board.IsSquareBlackKing(SquareE8) &&
 			board.IsSquareBlackRook(SquareH8) &&
 			board.IsSquareEmpty(SquareF8) &&
@@ -238,7 +247,7 @@ func (board *Board) GenerateCastleMoves(whiteToMove bool) []Move {
 			!board.IsSquareAttacked(SquareF8, whiteToMove) &&
 			!board.IsSquareAttacked(SquareG8, whiteToMove) &&
 			!board.IsSquareAttacked(SquareE8, whiteToMove) {
-			moves = board.AddCastleMove(SquareE8, SquareG8, moves)
+			moves = board.AddCastleMove(piece, SquareE8, SquareG8, moves)
 		}
 	}
 	return moves
@@ -247,51 +256,63 @@ func (board *Board) GenerateCastleMoves(whiteToMove bool) []Move {
 // GenerateRookMoves generates all rook moves for the current side.
 func (board *Board) GenerateRookMoves(whiteToMove bool) []Move {
 	var rooks uint64
+	var piece byte
 	if whiteToMove {
+		piece = WhiteRook
 		rooks = board.WhiteRooks
 	} else {
+		piece = BlackRook
 		rooks = board.BlackRooks
 	}
-	return board.GenerateSlidingMoves(rooks, 0, 4, whiteToMove)
+	return board.GenerateSlidingMoves(piece, rooks, 0, 4, whiteToMove)
 }
 
 // GenerateBishopMoves generates all bishop moves for the current side.
 func (board *Board) GenerateBishopMoves(whiteToMove bool) []Move {
 	var bishops uint64
+	var piece byte
 	if whiteToMove {
+		piece = WhiteBishop
 		bishops = board.WhiteBishops
 	} else {
+		piece = BlackBishop
 		bishops = board.BlackBishops
 	}
-	return board.GenerateSlidingMoves(bishops, 4, 8, whiteToMove)
+	return board.GenerateSlidingMoves(piece, bishops, 4, 8, whiteToMove)
 }
 
 // GenerateQueenMoves generates all queen moves for the current side.
 func (board *Board) GenerateQueenMoves(whiteToMove bool) []Move {
 	var queens uint64
+	var piece byte
 	if whiteToMove {
+		piece = WhiteQueen
 		queens = board.WhiteQueens
 	} else {
+		piece = BlackQueen
 		queens = board.BlackQueens
 	}
-	return board.GenerateSlidingMoves(queens, 0, 8, whiteToMove)
+	return board.GenerateSlidingMoves(piece, queens, 0, 8, whiteToMove)
 }
 
 // GenerateKnightMoves generates all knight moves for the current side.
 func (board *Board) GenerateKnightMoves(whiteToMove bool) []Move {
 	moves := []Move{}
 	var knights uint64
+	var piece byte
 	if whiteToMove {
 		knights = board.WhiteKnights
+		piece = WhiteKnight
 	} else {
 		knights = board.BlackKnights
+		piece = BlackKnight
 	}
 	for bb := knights; bb != 0; {
 		square := byte(bits.TrailingZeros64(bb))
 		for moveIndex := 0; moveIndex < 8; moveIndex++ {
 			squareTo := KnightOffsets[square][moveIndex]
 			if squareTo < 255 {
-				moves, _ = board.AddQuietOrCapture(square, squareTo, whiteToMove, moves)
+				moves, _ = board.AddQuietOrCapture(piece, square, squareTo, whiteToMove, moves)
 			}
 		}
 		bb &= bb - 1
@@ -319,52 +340,6 @@ func (board *Board) GenerateLegalMoves() []Move {
 			legalMoves = append(legalMoves, move)
 		}
 	}
-	// Sort moves by MoveType preferring captures, then by From, To, and promotion piece for full determinism
-	sort.Slice(legalMoves, func(i, j int) bool {
-		moveA := legalMoves[i]
-		moveB := legalMoves[j]
-
-		isCaptureA := moveA.MoveType == MoveCapture || moveA.MoveType == MovePromotionCapture
-		isCaptureB := moveB.MoveType == MoveCapture || moveB.MoveType == MovePromotionCapture
-		if isCaptureA != isCaptureB {
-			return isCaptureA
-		}
-
-		isPromoA := moveA.MoveType == MovePromotion
-		isPromoB := moveB.MoveType == MovePromotion
-		if isPromoA != isPromoB {
-			return isPromoA
-		}
-
-		// Sort by capture value if both moves are captures
-		// This ensures that if two captures are available, the one with the higher value piece captured is preferred.
-		if isCaptureA && isCaptureB {
-			victimA := moveA.Data[0]
-			attackerA := board.PieceAtSquare(moveA.From)
-			victimB := moveB.Data[0]
-			attackerB := board.PieceAtSquare(moveB.From)
-			scoreA := PieceCodeToValue[victimA] - PieceCodeToValue[attackerA]
-			scoreB := PieceCodeToValue[victimB] - PieceCodeToValue[attackerB]
-			if scoreA != scoreB {
-				return scoreA > scoreB
-			}
-		}
-
-		// For promotions, ensure consistent order by promotion piece
-		if moveA.MoveType == MovePromotion || moveA.MoveType == MovePromotionCapture {
-			if moveA.Data[0] != moveB.Data[0] {
-				// For promotions, sort by piece value in ascending order: Knight < Bishop < Rook < Queen.
-				// This ensures deterministic move ordering, so that when multiple promotions have equal evaluation,
-				// the queen promotion (highest value) is preferred if all else is equal.
-				return moveA.Data[0] < moveB.Data[0]
-			}
-		}
-
-		if moveA.From != moveB.From {
-			return moveA.From < moveB.From
-		}
-		return moveA.To < moveB.To
-	})
 	return legalMoves
 }
 
