@@ -16,7 +16,7 @@ var zobristPieceTable = GenerateZobristPieceTable()
 var zobristOnPassantTable = GenerateZobristOnPassantTable()
 var zobristWhiteToMove uint64 = rand.Uint64()
 
-var zobristCastlingState ZobristCastlingState = ZobristCastlingState{
+var zobristCastling ZobristCastlingState = ZobristCastlingState{
 	BlackKingSide:  rand.Uint64(),
 	BlackQueenSide: rand.Uint64(),
 	WhiteKingSide:  rand.Uint64(),
@@ -130,16 +130,16 @@ func (board *Board) ZobristHash() uint64 {
 	}
 
 	if board.Castling.BlackKingSide {
-		hash ^= zobristCastlingState.BlackKingSide
+		hash ^= zobristCastling.BlackKingSide
 	}
 	if board.Castling.BlackQueenSide {
-		hash ^= zobristCastlingState.BlackQueenSide
+		hash ^= zobristCastling.BlackQueenSide
 	}
 	if board.Castling.WhiteKingSide {
-		hash ^= zobristCastlingState.WhiteKingSide
+		hash ^= zobristCastling.WhiteKingSide
 	}
 	if board.Castling.WhiteQueenSide {
-		hash ^= zobristCastlingState.WhiteQueenSide
+		hash ^= zobristCastling.WhiteQueenSide
 	}
 	if board.OnPassant != 0 {
 		hash ^= zobristOnPassantTable[board.OnPassant]
