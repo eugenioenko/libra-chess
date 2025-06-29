@@ -1,10 +1,13 @@
 package libra
 
+const MaxSearchDepth = 32
+
 // SearchContext holds per-search context (killer moves, history heuristic, etc.)
 type SearchContext struct {
 	KillerMoves [MaxSearchDepth][2]Move
 	// HistoryHeuristic[piece][toSquare] (simple version)
-	HistoryHeuristic [16][64]int // 16 piece types, 64 squares
+	HistoryHeuristic [16][64]int   // 16 piece types, 64 squares
+	Done             chan struct{} // Channel to signal cancellation
 }
 
 // IsKillerMove returns true if the move is a killer move at the given ply

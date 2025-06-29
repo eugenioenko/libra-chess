@@ -6,10 +6,10 @@ import (
 
 const (
 	MoveQuiet = iota
-	MoveCapture
 	MoveEnPassant
 	MoveCastle
 	MovePromotion
+	MoveCapture
 	MovePromotionCapture
 )
 
@@ -73,22 +73,36 @@ func CountMoves(moves []Move) *MovesCount {
 	count := NewMovesCount()
 	count.All = len(moves)
 	for _, move := range moves {
-		if move.MoveType == MoveQuiet {
+		if move.IsQuiet() {
 			count.Quiet += 1
-		} else if move.MoveType == MovePromotion || move.MoveType == MovePromotionCapture {
+		} else if move.IsPromotion() {
 			count.Promotion += 1
-		} else if move.MoveType == MoveCapture || move.MoveType == MovePromotionCapture || move.MoveType == MoveEnPassant {
+		} else if move.IsCapture() {
 			count.Capture += 1
 		}
 	}
 	return count
 }
 
+func (move Move) IsQuiet() bool {
+	return move.MoveType == MoveQuiet || move.MoveType == MoveCastle
+}
+
+func (move Move) IsPromotion() bool {
+	return move.MoveType == MovePromotion || move.MoveType == MovePromotionCapture
+}
+
+func (move Move) IsCapture() bool {
+	return move.MoveType == MoveCapture ||
+		move.MoveType == MovePromotionCapture ||
+		move.MoveType == MoveEnPassant
+}
+
 func (move Move) ToUCI() string {
 	from, _ := SquareIndexToName(move.From)
 	to, _ := SquareIndexToName(move.To)
 	uci := from + to
-	if move.MoveType == MovePromotion || move.MoveType == MovePromotionCapture {
+	if move.IsPromotion() {
 		promo := ""
 		switch move.Promoted {
 		case WhiteQueen, BlackQueen:
@@ -110,7 +124,7 @@ func (move Move) ToMove() string {
 	to := BoardSquareNames[move.To]
 	piece := pieceCodeToFont[move.Piece]
 	capture := " "
-	if move.MoveType == MoveCapture || move.MoveType == MovePromotionCapture || move.MoveType == MoveEnPassant {
+	if move.IsCapture() {
 		capture = "x"
 	}
 	return fmt.Sprintf("%s%s%s%s\n", piece, from, capture, to)
@@ -155,7 +169,7 @@ func (board *Board) Move(move Move) MoveState {
 	// Remove piece from 'from' square
 	board.clearPieceAtSquare(from, piece)
 	// Place piece at 'to' square
-	if move.MoveType == MovePromotion || move.MoveType == MovePromotionCapture {
+	if move.IsPromotion() {
 		board.setPieceAtSquare(to, move.Promoted)
 	} else {
 		board.setPieceAtSquare(to, piece)

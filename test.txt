@@ -1,0 +1,980 @@
+make build
+make[1]: Entering directory '/home/enko/Documents/libra-chess'
+go build -o libra-chess main.go
+make[1]: Leaving directory '/home/enko/Documents/libra-chess'
+./dist/cutechess-cli/cutechess-cli \
+	-engine name=Libra1 cmd=./libra-chess \
+	-engine name=Libra2 cmd=./libra-chess \
+	-openings file=./books/chess.epd format=epd order=random plies=8 \
+	-each proto=uci tc=30+1 \
+	-games 1 \
+	-concurrency 1 \
+	-ratinginterval 10 \
+	-draw movenumber=40 movecount=6 score=10 \
+	-debug \
+	-rounds 1
+Indexing opening suite...
+13 >Libra1(0): uci
+14 >Libra2(1): uci
+14 <Libra1(0): Welcome to LibraChess v1.0.1!
+14 <Libra1(0): Ready to play? Type 'uci' to begin your chess adventure!
+15 <Libra1(0): Type 'quit' to exit the CLI at any time.
+15 <Libra1(0): LibraChess is a UCI chess engine, designed to be used with a chess GUI (like CuteChess, CoreChess, PyChess, etc.)
+15 <Libra1(0): For more information, visit: https://github.com/eugenioenko/libra-chess
+15 <Libra1(0): id name LibraChess
+15 <Libra1(0): id author eugenioenko
+15 <Libra1(0): uciok
+15 >Libra1(0): isready
+15 <Libra1(0): readyok
+15 <Libra2(1): Welcome to LibraChess v1.0.1!
+15 <Libra2(1): Ready to play? Type 'uci' to begin your chess adventure!
+15 <Libra2(1): Type 'quit' to exit the CLI at any time.
+15 <Libra2(1): LibraChess is a UCI chess engine, designed to be used with a chess GUI (like CuteChess, CoreChess, PyChess, etc.)
+15 <Libra2(1): For more information, visit: https://github.com/eugenioenko/libra-chess
+15 <Libra2(1): id name LibraChess
+15 <Libra2(1): id author eugenioenko
+15 <Libra2(1): uciok
+15 >Libra2(1): isready
+15 <Libra2(1): readyok
+Started game 1 of 1 (Libra1 vs Libra2)
+15 >Libra1(0): ucinewgame
+15 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1
+15 >Libra2(1): ucinewgame
+15 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1
+15 >Libra2(1): isready
+16 <Libra2(1): readyok
+16 >Libra2(1): go wtime 31000 btime 31000 winc 1000 binc 1000
+16 <Libra2(1): info depth 1 score cp -85 nodes 21 nps 61364 prun 0% pv b8c6 time 0
+16 <Libra2(1): info depth 2 score cp 35 nodes 252 nps 1133781 prun 0% pv e7e5 time 0
+18 <Libra2(1): info depth 3 score cp -65 nodes 811 nps 586713 prun 83% pv g5g4 time 1
+32 <Libra2(1): info depth 4 score cp 105 nodes 12495 nps 897507 prun 69% pv h7h6 time 13
+144 <Libra2(1): info depth 5 score cp -75 nodes 55840 nps 498618 prun 87% pv g5g4 time 111
+977 <Libra2(1): info depth 6 score cp 155 nodes 598664 nps 718335 prun 75% pv f8h6 time 833
+977 <Libra2(1): bestmove f8h6
+977 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6
+977 >Libra1(0): isready
+977 <Libra1(0): readyok
+977 >Libra1(0): go wtime 31000 btime 31039 winc 1000 binc 1000
+978 <Libra1(0): info depth 1 score cp 75 nodes 40 nps 273966 prun 0% pv c1g5 time 0
+978 <Libra1(0): info depth 2 score cp -35 nodes 475 nps 767395 prun 0% pv g1f3 time 0
+982 <Libra1(0): info depth 3 score cp 105 nodes 2428 nps 714309 prun 80% pv g1f3 time 3
+1004 <Libra1(0): info depth 4 score cp -55 nodes 20585 nps 917208 prun 70% pv g1f3 time 22
+1165 <Libra1(0): info depth 5 score cp 155 nodes 92778 nps 578572 prun 86% pv h2h4 time 160
+1952 <Libra1(0): info depth 6 score cp -75 nodes 493389 nps 626422 prun 81% pv h2h4 time 787
+2953 <Libra1(0): info depth 7 score cp 5 nodes 605980 nps 605861 prun 83% pv c1g5 time 1000
+2953 <Libra1(0): bestmove c1g5
+2953 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5
+2953 >Libra2(1): isready
+2953 <Libra2(1): readyok
+2953 >Libra2(1): go wtime 30025 btime 31039 winc 1000 binc 1000
+2953 <Libra2(1): info depth 1 score cp -240 nodes 22 nps 250529 prun 0% pv h6g5 time 0
+2954 <Libra2(1): info depth 2 score cp -145 nodes 264 nps 430094 prun 0% pv h6g5 time 0
+2956 <Libra2(1): info depth 3 score cp -240 nodes 893 nps 512149 prun 83% pv h6g5 time 1
+2970 <Libra2(1): info depth 4 score cp 70 nodes 13237 nps 907199 prun 70% pv h6g5 time 14
+3063 <Libra2(1): info depth 5 score cp -240 nodes 42688 nps 460529 prun 88% pv h6g5 time 92
+3649 <Libra2(1): info depth 6 score cp 5 nodes 390069 nps 665570 prun 77% pv h6g5 time 586
+4649 <Libra2(1): info depth 7 score cp 0 nodes 396504 nps 396443 prun 90% pv h6g5 time 1000
+4649 <Libra2(1): bestmove h6g5
+4649 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5
+4649 >Libra1(0): isready
+4649 <Libra1(0): readyok
+4649 >Libra1(0): go wtime 30025 btime 30343 winc 1000 binc 1000
+4650 <Libra1(0): info depth 1 score cp -145 nodes 35 nps 81609 prun 0% pv a4a7 time 0
+4650 <Libra1(0): info depth 2 score cp -240 nodes 415 nps 1139574 prun 0% pv g1f3 time 0
+4653 <Libra1(0): info depth 3 score cp 70 nodes 1707 nps 710526 prun 84% pv g1f3 time 2
+4674 <Libra1(0): info depth 4 score cp -240 nodes 19613 nps 915857 prun 69% pv g1f3 time 21
+4811 <Libra1(0): info depth 5 score cp -25 nodes 72186 nps 529475 prun 87% pv a4d4 time 136
+5448 <Libra1(0): info depth 6 score cp -255 nodes 389056 nps 610074 prun 81% pv g1f3 time 637
+6449 <Libra1(0): info depth 7 score cp 0 nodes 541083 nps 541003 prun 85% pv g1f3 time 1000
+6449 <Libra1(0): bestmove g1f3
+6449 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3
+6449 >Libra2(1): isready
+6449 <Libra2(1): readyok
+6449 >Libra2(1): go wtime 29226 btime 30343 winc 1000 binc 1000
+6449 <Libra2(1): info depth 1 score cp -240 nodes 27 nps 396429 prun 0% pv b8c6 time 0
+6449 <Libra2(1): info depth 2 score cp -80 nodes 317 nps 997341 prun 0% pv g5h6 time 0
+6451 <Libra2(1): info depth 3 score cp -235 nodes 955 nps 485444 prun 87% pv g5c1 time 1
+6467 <Libra2(1): info depth 4 score cp -30 nodes 13653 nps 885471 prun 73% pv g5c1 time 15
+6613 <Libra2(1): info depth 5 score cp -250 nodes 64960 nps 445585 prun 89% pv h8g8 time 145
+7189 <Libra2(1): info depth 6 score cp -15 nodes 394995 nps 685246 prun 77% pv g5c1 time 576
+8189 <Libra2(1): info depth 7 score cp 0 nodes 465610 nps 465469 prun 88% pv g5c1 time 1000
+8189 <Libra2(1): bestmove g5c1
+8190 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1
+8190 >Libra1(0): isready
+8190 <Libra1(0): readyok
+8190 >Libra1(0): go wtime 29226 btime 29603 winc 1000 binc 1000
+8190 <Libra1(0): info depth 1 score cp -80 nodes 38 nps 320943 prun 0% pv a4a7 time 0
+8190 <Libra1(0): info depth 2 score cp -235 nodes 451 nps 1070806 prun 0% pv b2b4 time 0
+8193 <Libra1(0): info depth 3 score cp 5 nodes 1493 nps 558793 prun 89% pv a4c2 time 2
+8213 <Libra1(0): info depth 4 score cp -230 nodes 20783 nps 1062621 prun 68% pv a4c2 time 19
+8323 <Libra1(0): info depth 5 score cp -15 nodes 50795 nps 460918 prun 90% pv a4b5 time 110
+9016 <Libra1(0): info depth 6 score cp -235 nodes 467564 nps 674719 prun 78% pv a4c2 time 692
+10016 <Libra1(0): info depth 7 score cp 0 nodes 422014 nps 421956 prun 90% pv c3c4 time 1000
+10016 <Libra1(0): bestmove c3c4
+10016 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4
+10016 >Libra2(1): isready
+10016 <Libra2(1): readyok
+10016 >Libra2(1): go wtime 28400 btime 29603 winc 1000 binc 1000
+10017 <Libra2(1): info depth 1 score cp -290 nodes 27 nps 333576 prun 0% pv c1b2 time 0
+10017 <Libra2(1): info depth 2 score cp -195 nodes 317 nps 1096995 prun 0% pv c1b2 time 0
+10019 <Libra2(1): info depth 3 score cp -720 nodes 1359 nps 675729 prun 80% pv c1b2 time 2
+10035 <Libra2(1): info depth 4 score cp -620 nodes 13691 nps 879914 prun 75% pv c1b2 time 15
+10162 <Libra2(1): info depth 5 score cp -750 nodes 68161 nps 533180 prun 85% pv c1b2 time 127
+10744 <Libra2(1): info depth 6 score cp -490 nodes 370444 nps 636639 prun 79% pv c1b2 time 581
+11744 <Libra2(1): info depth 7 score cp 0 nodes 479309 nps 479234 prun 87% pv c1b2 time 1000
+11745 <Libra2(1): bestmove c1b2
+11745 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2
+11745 >Libra1(0): isready
+11745 <Libra1(0): readyok
+11745 >Libra1(0): go wtime 28400 btime 28875 winc 1000 binc 1000
+11745 <Libra1(0): info depth 1 score cp -195 nodes 32 nps 468885 prun 0% pv a4a7 time 0
+11745 <Libra1(0): info depth 2 score cp -715 nodes 379 nps 1456252 prun 0% pv b1c3 time 0
+11748 <Libra1(0): info depth 3 score cp -620 nodes 1050 nps 456132 prun 90% pv b1c3 time 2
+11765 <Libra1(0): info depth 4 score cp -760 nodes 18230 nps 1060517 prun 63% pv c4c5 time 17
+11885 <Libra1(0): info depth 5 score cp -490 nodes 52900 nps 440357 prun 89% pv c4c5 time 120
+12497 <Libra1(0): info depth 6 score cp -795 nodes 425486 nps 694994 prun 77% pv b1d2 time 612
+13497 <Libra1(0): info depth 7 score cp -565 nodes 503606 nps 503539 prun 87% pv c4c5 time 1000
+13497 <Libra1(0): bestmove c4c5
+13498 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5
+13498 >Libra2(1): isready
+13498 <Libra2(1): readyok
+13498 >Libra2(1): go wtime 27648 btime 28875 winc 1000 binc 1000
+13498 <Libra2(1): info depth 1 score cp -755 nodes 26 nps 369150 prun 0% pv b2a1 time 0
+13498 <Libra2(1): info depth 2 score cp -660 nodes 306 nps 1015959 prun 0% pv b2a1 time 0
+13501 <Libra2(1): info depth 3 score cp -805 nodes 1317 nps 501049 prun 79% pv b8c6 time 2
+13518 <Libra2(1): info depth 4 score cp -480 nodes 13148 nps 785675 prun 79% pv b2a1 time 16
+13614 <Libra2(1): info depth 5 score cp -850 nodes 50943 nps 529815 prun 87% pv b2a1 time 96
+14121 <Libra2(1): info depth 6 score cp -565 nodes 339076 nps 668977 prun 79% pv b2a1 time 506
+15121 <Libra2(1): info depth 7 score cp -725 nodes 518368 nps 518253 prun 86% pv b7b5 time 1000
+15121 <Libra2(1): bestmove b7b5
+15121 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5
+15121 >Libra1(0): isready
+15121 <Libra1(0): readyok
+15121 >Libra1(0): go wtime 27648 btime 28252 winc 1000 binc 1000
+15122 <Libra1(0): info depth 1 score cp -170 nodes 37 nps 389563 prun 0% pv a4b5 time 0
+15122 <Libra1(0): info depth 2 score cp -645 nodes 444 nps 1275272 prun 0% pv a4b5 time 0
+15125 <Libra1(0): info depth 3 score cp -395 nodes 1222 nps 424832 prun 91% pv a4b5 time 2
+15142 <Libra1(0): info depth 4 score cp -675 nodes 14102 nps 802091 prun 76% pv a4b5 time 17
+15237 <Libra1(0): info depth 5 score cp -390 nodes 34996 nps 368744 prun 92% pv a4b5 time 94
+15669 <Libra1(0): info depth 6 score cp -725 nodes 323946 nps 750419 prun 78% pv c5b6 time 431
+16669 <Libra1(0): info depth 7 score cp 0 nodes 398275 nps 398156 prun 91% pv a4b4 time 1000
+16670 <Libra1(0): bestmove a4b4
+16670 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4
+16670 >Libra2(1): isready
+16670 <Libra2(1): readyok
+16670 >Libra2(1): go wtime 27100 btime 28252 winc 1000 binc 1000
+16670 <Libra2(1): info depth 1 score cp -745 nodes 28 nps 240947 prun 0% pv b2a1 time 0
+16670 <Libra2(1): info depth 2 score cp -645 nodes 331 nps 1056003 prun 0% pv b2a1 time 0
+16672 <Libra2(1): info depth 3 score cp -695 nodes 928 nps 475209 prun 89% pv b2a1 time 1
+16686 <Libra2(1): info depth 4 score cp -435 nodes 12426 nps 891354 prun 73% pv b2a1 time 13
+16755 <Libra2(1): info depth 5 score cp -790 nodes 31714 nps 462566 prun 90% pv b2a1 time 68
+17114 <Libra2(1): info depth 6 score cp -470 nodes 262822 nps 732122 prun 75% pv b2a1 time 358
+18114 <Libra2(1): info depth 7 score cp -130 nodes 427305 nps 427237 prun 89% pv b8a6 time 1000
+18114 <Libra2(1): bestmove b8a6
+18114 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6
+18114 >Libra1(0): isready
+18115 <Libra1(0): readyok
+18115 >Libra1(0): go wtime 27100 btime 27808 winc 1000 binc 1000
+18115 <Libra1(0): info depth 1 score cp 25 nodes 36 nps 429251 prun 0% pv b4b2 time 0
+18115 <Libra1(0): info depth 2 score cp -130 nodes 432 nps 1354333 prun 0% pv b4b2 time 0
+18118 <Libra1(0): info depth 3 score cp 115 nodes 1191 nps 464582 prun 91% pv b4b2 time 2
+18130 <Libra1(0): info depth 4 score cp -130 nodes 12484 nps 975246 prun 77% pv b4b2 time 12
+18203 <Libra1(0): info depth 5 score cp 110 nodes 30011 nps 412929 prun 92% pv b4b2 time 72
+18575 <Libra1(0): info depth 6 score cp -140 nodes 260163 nps 699009 prun 79% pv b4b2 time 372
+19576 <Libra1(0): info depth 7 score cp 0 nodes 394559 nps 394456 prun 91% pv b4b2 time 1000
+19576 <Libra1(0): bestmove b4b2
+19576 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2
+19576 >Libra2(1): isready
+19576 <Libra2(1): readyok
+19576 >Libra2(1): go wtime 26639 btime 27808 winc 1000 binc 1000
+19576 <Libra2(1): info depth 1 score cp -130 nodes 22 nps 237778 prun 0% pv a6c5 time 0
+19577 <Libra2(1): info depth 2 score cp 115 nodes 265 nps 1032494 prun 0% pv e7e5 time 0
+19578 <Libra2(1): info depth 3 score cp -130 nodes 802 nps 648015 prun 83% pv a6c5 time 1
+19587 <Libra2(1): info depth 4 score cp 155 nodes 8752 nps 934686 prun 71% pv a6c5 time 9
+19661 <Libra2(1): info depth 5 score cp -130 nodes 37267 nps 505008 prun 88% pv c8b7 time 73
+19988 <Libra2(1): info depth 6 score cp 185 nodes 222122 nps 680089 prun 78% pv b5b4 time 326
+20988 <Libra2(1): info depth 7 score cp 0 nodes 473587 nps 473501 prun 88% pv a6c5 time 1000
+20988 <Libra2(1): bestmove a6c5
+20988 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5
+20988 >Libra1(0): isready
+20988 <Libra1(0): readyok
+20988 >Libra1(0): go wtime 26639 btime 27397 winc 1000 binc 1000
+20989 <Libra1(0): info depth 1 score cp 185 nodes 32 nps 297477 prun 0% pv b2f6 time 0
+20989 <Libra1(0): info depth 2 score cp -130 nodes 384 nps 1056570 prun 0% pv b2b5 time 0
+20991 <Libra1(0): info depth 3 score cp 110 nodes 1237 nps 547212 prun 88% pv b2c3 time 2
+21011 <Libra1(0): info depth 4 score cp -40 nodes 16564 nps 861272 prun 77% pv b2b5 time 19
+21114 <Libra1(0): info depth 5 score cp 255 nodes 50287 nps 485778 prun 88% pv b2b5 time 103
+21790 <Libra1(0): info depth 6 score cp -80 nodes 448895 nps 664309 prun 81% pv b2b5 time 675
+22790 <Libra1(0): info depth 7 score cp 0 nodes 524689 nps 524570 prun 87% pv b2b5 time 1000
+22790 <Libra1(0): bestmove b2b5
+22790 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5
+22790 >Libra2(1): isready
+22791 <Libra2(1): readyok
+22791 >Libra2(1): go wtime 25838 btime 27397 winc 1000 binc 1000
+22791 <Libra2(1): info depth 1 score cp -130 nodes 26 nps 376054 prun 0% pv c5d3 time 0
+22791 <Libra2(1): info depth 2 score cp 50 nodes 305 nps 1143615 prun 0% pv c5e6 time 0
+22793 <Libra2(1): info depth 3 score cp -40 nodes 894 nps 514502 prun 87% pv c8b7 time 1
+22806 <Libra2(1): info depth 4 score cp 250 nodes 10551 nps 804762 prun 76% pv c5e6 time 13
+22922 <Libra2(1): info depth 5 score cp -130 nodes 59397 nps 512516 prun 87% pv c8a6 time 115
+23429 <Libra2(1): info depth 6 score cp 235 nodes 353309 nps 696616 prun 77% pv c5e6 time 507
+24429 <Libra2(1): info depth 7 score cp 0 nodes 435032 nps 434903 prun 89% pv c5e6 time 1000
+24429 <Libra2(1): bestmove c5e6
+24430 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6
+24430 >Libra1(0): isready
+24430 <Libra1(0): readyok
+24430 >Libra1(0): go wtime 25838 btime 26759 winc 1000 binc 1000
+24430 <Libra1(0): info depth 1 score cp 50 nodes 39 nps 517509 prun 0% pv b5d7 time 0
+24430 <Libra1(0): info depth 2 score cp 15 nodes 462 nps 1196110 prun 0% pv b1c3 time 0
+24433 <Libra1(0): info depth 3 score cp 250 nodes 1615 nps 631418 prun 89% pv b5e5 time 2
+24450 <Libra1(0): info depth 4 score cp -105 nodes 14500 nps 837563 prun 78% pv b5b4 time 17
+24604 <Libra1(0): info depth 5 score cp 240 nodes 89899 nps 584132 prun 87% pv e2e3 time 153
+25358 <Libra1(0): info depth 6 score cp -75 nodes 488008 nps 647757 prun 82% pv b1c3 time 753
+26358 <Libra1(0): info depth 7 score cp 0 nodes 601569 nps 601442 prun 85% pv b1c3 time 1000
+26358 <Libra1(0): bestmove b1c3
+26358 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3
+26358 >Libra2(1): isready
+26358 <Libra2(1): readyok
+26358 >Libra2(1): go wtime 24910 btime 26759 winc 1000 binc 1000
+26359 <Libra2(1): info depth 1 score cp -10 nodes 24 nps 266998 prun 0% pv e8g8 time 0
+26359 <Libra2(1): info depth 2 score cp 70 nodes 288 nps 962988 prun 0% pv e8g8 time 0
+26361 <Libra2(1): info depth 3 score cp -780 nodes 1067 nps 623443 prun 82% pv c7c6 time 1
+26378 <Libra2(1): info depth 4 score cp 175 nodes 15963 nps 941475 prun 75% pv c7c5 time 16
+26513 <Libra2(1): info depth 5 score cp -85 nodes 68040 nps 501387 prun 87% pv e8g8 time 135
+27514 <Libra2(1): info depth 6 score cp 155 nodes 762907 nps 762777 prun 78% pv c7c5 time 1000
+27514 <Libra2(1): bestmove c7c5
+27514 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5
+27514 >Libra1(0): isready
+27514 <Libra1(0): readyok
+27514 >Libra1(0): go wtime 24910 btime 26604 winc 1000 binc 1000
+27514 <Libra1(0): info depth 1 score cp 135 nodes 41 nps 355455 prun 0% pv b5c5 time 0
+27515 <Libra1(0): info depth 2 score cp 40 nodes 486 nps 928173 prun 0% pv e2e3 time 0
+27518 <Libra1(0): info depth 3 score cp 175 nodes 1567 nps 490573 prun 91% pv e2e4 time 3
+27538 <Libra1(0): info depth 4 score cp -60 nodes 19221 nps 952329 prun 77% pv c3e4 time 20
+27703 <Libra1(0): info depth 5 score cp 155 nodes 83825 nps 509528 prun 89% pv e2e4 time 164
+28703 <Libra1(0): info depth 6 score cp -65 nodes 652284 nps 652233 prun 83% pv a1d1 time 1000
+28703 <Libra1(0): bestmove a1d1
+28703 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1
+28703 >Libra2(1): isready
+28704 <Libra2(1): readyok
+28704 >Libra2(1): go wtime 24721 btime 26604 winc 1000 binc 1000
+28704 <Libra2(1): info depth 1 score cp 5 nodes 26 nps 257685 prun 0% pv e8g8 time 0
+28704 <Libra2(1): info depth 2 score cp 110 nodes 312 nps 838358 prun 0% pv e8g8 time 0
+28706 <Libra2(1): info depth 3 score cp -760 nodes 1180 nps 592612 prun 83% pv a7a6 time 1
+28722 <Libra2(1): info depth 4 score cp 120 nodes 14505 nps 936438 prun 74% pv d8b6 time 15
+28871 <Libra2(1): info depth 5 score cp -75 nodes 69552 nps 466034 prun 88% pv e8f8 time 149
+29554 <Libra2(1): info depth 6 score cp 120 nodes 513162 nps 751607 prun 79% pv d8b6 time 682
+30554 <Libra2(1): info depth 7 score cp 0 nodes 524191 nps 524094 prun 87% pv d8b6 time 1000
+30554 <Libra2(1): bestmove d8b6
+30554 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6
+30554 >Libra1(0): isready
+30554 <Libra1(0): readyok
+30554 >Libra1(0): go wtime 24721 btime 25754 winc 1000 binc 1000
+30555 <Libra1(0): info depth 1 score cp 930 nodes 37 nps 423515 prun 0% pv b5b6 time 0
+30555 <Libra1(0): info depth 2 score cp 40 nodes 437 nps 1295655 prun 0% pv b5b6 time 0
+30557 <Libra1(0): info depth 3 score cp 120 nodes 1224 nps 486770 prun 92% pv b5c4 time 2
+30579 <Libra1(0): info depth 4 score cp -50 nodes 18564 nps 852391 prun 78% pv b5b6 time 21
+30705 <Libra1(0): info depth 5 score cp 135 nodes 55378 nps 441089 prun 91% pv b5b6 time 125
+31364 <Libra1(0): info depth 6 score cp -65 nodes 421459 nps 639811 prun 82% pv b5b6 time 658
+32364 <Libra1(0): info depth 7 score cp 135 nodes 403426 nps 403323 prun 91% pv b5b6 time 1000
+32364 <Libra1(0): bestmove b5b6
+32364 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6
+32364 >Libra2(1): isready
+32364 <Libra2(1): readyok
+32364 >Libra2(1): go wtime 23912 btime 25754 winc 1000 binc 1000
+32365 <Libra2(1): info depth 1 score cp 40 nodes 27 nps 319916 prun 0% pv a7b6 time 0
+32365 <Libra2(1): info depth 2 score cp 80 nodes 324 nps 1222613 prun 0% pv a7b6 time 0
+32367 <Libra2(1): info depth 3 score cp -50 nodes 1043 nps 565434 prun 87% pv a7b6 time 1
+32382 <Libra2(1): info depth 4 score cp 130 nodes 16070 nps 1038918 prun 74% pv a7b6 time 15
+32499 <Libra2(1): info depth 5 score cp -75 nodes 57760 nps 496204 prun 89% pv a7b6 time 116
+33130 <Libra2(1): info depth 6 score cp 135 nodes 452535 nps 717701 prun 79% pv a7b6 time 630
+34129 <Libra2(1): info depth 7 score cp 0 nodes 477799 nps 477733 prun 88% pv a7b6 time 1000
+34129 <Libra2(1): bestmove a7b6
+34130 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6
+34130 >Libra1(0): isready
+34130 <Libra1(0): readyok
+34130 >Libra1(0): go wtime 23912 btime 24989 winc 1000 binc 1000
+34130 <Libra1(0): info depth 1 score cp 80 nodes 26 nps 312064 prun 0% pv e2e4 time 0
+34130 <Libra1(0): info depth 2 score cp -50 nodes 312 nps 924496 prun 0% pv e2e4 time 0
+34132 <Libra1(0): info depth 3 score cp 135 nodes 1476 nps 807210 prun 77% pv f3e5 time 1
+34146 <Libra1(0): info depth 4 score cp -65 nodes 12834 nps 960898 prun 75% pv e2e4 time 13
+34254 <Libra1(0): info depth 5 score cp 135 nodes 58597 nps 540016 prun 87% pv d1b1 time 108
+34811 <Libra1(0): info depth 6 score cp -60 nodes 403474 nps 725170 prun 78% pv e2e4 time 556
+35811 <Libra1(0): info depth 7 score cp 0 nodes 499867 nps 499787 prun 87% pv e2e4 time 1000
+35811 <Libra1(0): bestmove e2e4
+35811 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4
+35811 >Libra2(1): isready
+35811 <Libra2(1): readyok
+35811 >Libra2(1): go wtime 23231 btime 24989 winc 1000 binc 1000
+35811 <Libra2(1): info depth 1 score cp -50 nodes 32 nps 436044 prun 0% pv f6e4 time 0
+35812 <Libra2(1): info depth 2 score cp 70 nodes 384 nps 1394614 prun 0% pv e8g8 time 0
+35814 <Libra2(1): info depth 3 score cp -75 nodes 1193 nps 594311 prun 89% pv e8g8 time 2
+35833 <Libra2(1): info depth 4 score cp 90 nodes 19617 nps 1034690 prun 72% pv a8a3 time 18
+35933 <Libra2(1): info depth 5 score cp -65 nodes 57516 nps 574135 prun 87% pv c8b7 time 100
+36557 <Libra2(1): info depth 6 score cp 125 nodes 416094 nps 667001 prun 80% pv e6d4 time 623
+37557 <Libra2(1): info depth 7 score cp 0 nodes 532110 nps 531998 prun 88% pv e6d4 time 1000
+37557 <Libra2(1): bestmove e6d4
+37557 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4
+37557 >Libra1(0): isready
+37557 <Libra1(0): readyok
+37557 >Libra1(0): go wtime 23231 btime 24244 winc 1000 binc 1000
+37558 <Libra1(0): info depth 1 score cp 405 nodes 25 nps 331912 prun 0% pv f3d4 time 0
+37558 <Libra1(0): info depth 2 score cp 60 nodes 300 nps 1328362 prun 0% pv f3d4 time 0
+37559 <Libra1(0): info depth 3 score cp 170 nodes 738 nps 482201 prun 89% pv f3g5 time 1
+37572 <Libra1(0): info depth 4 score cp -35 nodes 12556 nps 1001160 prun 69% pv f1e2 time 12
+37654 <Libra1(0): info depth 5 score cp 115 nodes 38561 nps 469819 prun 89% pv d1b1 time 82
+38074 <Libra1(0): info depth 6 score cp -30 nodes 349489 nps 832098 prun 73% pv e4e5 time 420
+39074 <Libra1(0): info depth 7 score cp 140 nodes 407481 nps 407403 prun 90% pv f3d4 time 1000
+39074 <Libra1(0): bestmove f3d4
+39074 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4
+39074 >Libra2(1): isready
+39075 <Libra2(1): readyok
+39075 >Libra2(1): go wtime 22714 btime 24244 winc 1000 binc 1000
+39075 <Libra2(1): info depth 1 score cp 60 nodes 28 nps 388813 prun 0% pv c5d4 time 0
+39075 <Libra2(1): info depth 2 score cp 70 nodes 336 nps 1505120 prun 0% pv c5d4 time 0
+39077 <Libra2(1): info depth 3 score cp -75 nodes 1172 nps 627199 prun 86% pv c5d4 time 1
+39090 <Libra2(1): info depth 4 score cp 85 nodes 14056 nps 1094152 prun 71% pv c5d4 time 12
+39168 <Libra2(1): info depth 5 score cp -45 nodes 44806 nps 576343 prun 86% pv c5d4 time 77
+39565 <Libra2(1): info depth 6 score cp 140 nodes 284584 nps 716855 prun 79% pv c5d4 time 396
+40565 <Libra2(1): info depth 7 score cp -60 nodes 546900 nps 546799 prun 86% pv c5d4 time 1000
+40565 <Libra2(1): bestmove c5d4
+40565 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4
+40565 >Libra1(0): isready
+40565 <Libra1(0): readyok
+40565 >Libra1(0): go wtime 22714 btime 23754 winc 1000 binc 1000
+40565 <Libra1(0): info depth 1 score cp 70 nodes 22 nps 273424 prun 0% pv c3d5 time 0
+40566 <Libra1(0): info depth 2 score cp -75 nodes 264 nps 818520 prun 0% pv c3e2 time 0
+40568 <Libra1(0): info depth 3 score cp 85 nodes 751 nps 330195 prun 86% pv c3e2 time 2
+40576 <Libra1(0): info depth 4 score cp -45 nodes 8092 nps 1019753 prun 68% pv c3b5 time 7
+40630 <Libra1(0): info depth 5 score cp 140 nodes 29005 nps 538670 prun 87% pv c3e2 time 53
+40841 <Libra1(0): info depth 6 score cp -50 nodes 180924 nps 859517 prun 70% pv c3b5 time 210
+41841 <Libra1(0): info depth 7 score cp 90 nodes 449904 nps 449810 prun 87% pv c3b5 time 1000
+41841 <Libra1(0): bestmove c3b5
+41841 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5
+41841 >Libra2(1): isready
+41841 <Libra2(1): readyok
+41841 >Libra2(1): go wtime 22439 btime 23754 winc 1000 binc 1000
+41841 <Libra2(1): info depth 1 score cp -75 nodes 25 nps 352544 prun 0% pv f6e4 time 0
+41842 <Libra2(1): info depth 2 score cp 85 nodes 300 nps 1046514 prun 0% pv a8a2 time 0
+41843 <Libra2(1): info depth 3 score cp -45 nodes 871 nps 500167 prun 86% pv a8a2 time 1
+41853 <Libra2(1): info depth 4 score cp 90 nodes 10153 nps 1111338 prun 66% pv a8a2 time 9
+41893 <Libra2(1): info depth 5 score cp -50 nodes 17572 nps 433260 prun 90% pv a8a4 time 40
+42095 <Libra2(1): info depth 6 score cp 145 nodes 161406 nps 799038 prun 74% pv e8g8 time 202
+42973 <Libra2(1): info depth 7 score cp -80 nodes 381461 nps 434525 prun 89% pv a8a2 time 877
+42973 <Libra2(1): bestmove a8a2
+42973 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2
+42973 >Libra1(0): isready
+42974 <Libra1(0): readyok
+42974 >Libra1(0): go wtime 22439 btime 23622 winc 1000 binc 1000
+42974 <Libra1(0): info depth 1 score cp 85 nodes 19 nps 194566 prun 0% pv b5d4 time 0
+42974 <Libra1(0): info depth 2 score cp -45 nodes 211 nps 543623 prun 0% pv b5d4 time 0
+42976 <Libra1(0): info depth 3 score cp 150 nodes 842 nps 678917 prun 77% pv d1c1 time 1
+42983 <Libra1(0): info depth 4 score cp -45 nodes 7353 nps 940555 prun 71% pv e4e5 time 7
+43033 <Libra1(0): info depth 5 score cp 100 nodes 29147 nps 586093 prun 84% pv d1c1 time 49
+43320 <Libra1(0): info depth 6 score cp -80 nodes 197846 nps 690296 prun 76% pv d1c1 time 286
+44320 <Libra1(0): info depth 7 score cp 85 nodes 493878 nps 493811 prun 86% pv d1c1 time 1000
+44320 <Libra1(0): bestmove d1c1
+44320 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1
+44320 >Libra2(1): isready
+44320 <Libra2(1): readyok
+44320 >Libra2(1): go wtime 22093 btime 23622 winc 1000 binc 1000
+44321 <Libra2(1): info depth 1 score cp -190 nodes 30 nps 262572 prun 0% pv f6e4 time 0
+44321 <Libra2(1): info depth 2 score cp 70 nodes 352 nps 1142649 prun 0% pv c8b7 time 0
+44322 <Libra2(1): info depth 3 score cp -80 nodes 492 nps 427286 prun 88% pv e8g8 time 1
+44327 <Libra2(1): info depth 4 score cp 90 nodes 4622 nps 1007952 prun 72% pv c8b7 time 4
+44353 <Libra2(1): info depth 5 score cp -80 nodes 12176 nps 468991 prun 90% pv e8g8 time 25
+44487 <Libra2(1): info depth 6 score cp 95 nodes 96873 nps 722486 prun 77% pv c8b7 time 134
+45136 <Libra2(1): info depth 7 score cp -115 nodes 271585 nps 418299 prun 90% pv e8g8 time 649
+46136 <Libra2(1): info depth 8 score cp 0 nodes 712481 nps 712387 prun 79% pv e8g8 time 1000
+46136 <Libra2(1): bestmove e8g8
+46136 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8
+46136 >Libra1(0): isready
+46137 <Libra1(0): readyok
+46137 >Libra1(0): go wtime 22093 btime 22807 winc 1000 binc 1000
+46137 <Libra1(0): info depth 1 score cp 200 nodes 26 nps 334637 prun 0% pv c1c8 time 0
+46137 <Libra1(0): info depth 2 score cp -80 nodes 312 nps 1480328 prun 0% pv b5d4 time 0
+46139 <Libra1(0): info depth 3 score cp 260 nodes 1027 nps 625632 prun 85% pv b5d4 time 1
+46151 <Libra1(0): info depth 4 score cp -80 nodes 12251 nps 1052449 prun 72% pv e4e5 time 11
+46215 <Libra1(0): info depth 5 score cp 110 nodes 32943 nps 514326 prun 88% pv b5d4 time 64
+46526 <Libra1(0): info depth 6 score cp -130 nodes 234824 nps 753190 prun 77% pv b5d4 time 311
+47527 <Libra1(0): info depth 7 score cp 40 nodes 480962 nps 480854 prun 88% pv e4e5 time 1000
+47527 <Libra1(0): bestmove e4e5
+47527 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5
+47527 >Libra2(1): isready
+47527 <Libra2(1): readyok
+47527 >Libra2(1): go wtime 21703 btime 22807 winc 1000 binc 1000
+47527 <Libra2(1): info depth 1 score cp -200 nodes 28 nps 376096 prun 0% pv a2f2 time 0
+47528 <Libra2(1): info depth 2 score cp 180 nodes 329 nps 908017 prun 0% pv d7d5 time 0
+47530 <Libra2(1): info depth 3 score cp -80 nodes 965 nps 484902 prun 88% pv f6g4 time 1
+47540 <Libra2(1): info depth 4 score cp 120 nodes 9936 nps 978954 prun 73% pv c8a6 time 10
+47606 <Libra2(1): info depth 5 score cp -210 nodes 34017 nps 514179 prun 89% pv f6g4 time 66
+47918 <Libra2(1): info depth 6 score cp 40 nodes 235863 nps 757219 prun 77% pv f6g4 time 311
+48918 <Libra2(1): info depth 7 score cp -180 nodes 468367 nps 468309 prun 89% pv f6g4 time 1000
+48918 <Libra2(1): bestmove f6g4
+48918 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4
+48918 >Libra1(0): isready
+48918 <Libra1(0): readyok
+48918 >Libra1(0): go wtime 21703 btime 22417 winc 1000 binc 1000
+48918 <Libra1(0): info depth 1 score cp 210 nodes 25 nps 414641 prun 0% pv c1c8 time 0
+48919 <Libra1(0): info depth 2 score cp -80 nodes 300 nps 863784 prun 0% pv b5d4 time 0
+48920 <Libra1(0): info depth 3 score cp 210 nodes 913 nps 566277 prun 86% pv b5d4 time 1
+48931 <Libra1(0): info depth 4 score cp -210 nodes 10558 nps 966449 prun 73% pv e5e6 time 10
+48991 <Libra1(0): info depth 5 score cp 40 nodes 30007 nps 500390 prun 89% pv f2f4 time 59
+49308 <Libra1(0): info depth 6 score cp -210 nodes 240515 nps 759059 prun 77% pv b5d4 time 316
+50308 <Libra1(0): info depth 7 score cp 0 nodes 429608 nps 429544 prun 89% pv b5d4 time 1000
+50309 <Libra1(0): bestmove b5d4
+50309 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4
+50309 >Libra2(1): isready
+50309 <Libra2(1): readyok
+50309 >Libra2(1): go wtime 21313 btime 22417 winc 1000 binc 1000
+50309 <Libra2(1): info depth 1 score cp -80 nodes 32 nps 467986 prun 0% pv g4e5 time 0
+50309 <Libra2(1): info depth 2 score cp 55 nodes 379 nps 951773 prun 0% pv c8b7 time 0
+50312 <Libra2(1): info depth 3 score cp -265 nodes 1577 nps 694258 prun 84% pv a2f2 time 2
+50327 <Libra2(1): info depth 4 score cp -50 nodes 15705 nps 1035915 prun 72% pv g4f2 time 15
+50416 <Libra2(1): info depth 5 score cp -210 nodes 49654 nps 555057 prun 88% pv e7e6 time 89
+50871 <Libra2(1): info depth 6 score cp 105 nodes 314641 nps 692860 prun 81% pv e7e6 time 454
+51871 <Libra2(1): info depth 7 score cp -210 nodes 534464 nps 534383 prun 86% pv g4f2 time 1000
+51871 <Libra2(1): bestmove g4f2
+51871 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2
+51871 >Libra1(0): isready
+51871 <Libra1(0): readyok
+51871 >Libra1(0): go wtime 21313 btime 21856 winc 1000 binc 1000
+51871 <Libra1(0): info depth 1 score cp 245 nodes 25 nps 369020 prun 0% pv c1c8 time 0
+51872 <Libra1(0): info depth 2 score cp -160 nodes 300 nps 957958 prun 0% pv h1g1 time 0
+51873 <Libra1(0): info depth 3 score cp -50 nodes 848 nps 523042 prun 86% pv h1g1 time 1
+51883 <Libra1(0): info depth 4 score cp -190 nodes 10331 nps 1041155 prun 69% pv h1g1 time 9
+51942 <Libra1(0): info depth 5 score cp 110 nodes 26785 nps 456891 prun 90% pv h1g1 time 58
+52211 <Libra1(0): info depth 6 score cp -210 nodes 204166 nps 759865 prun 75% pv h1g1 time 268
+53211 <Libra1(0): info depth 7 score cp -55 nodes 411388 nps 411335 prun 90% pv h1g1 time 1000
+53211 <Libra1(0): bestmove h1g1
+53211 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1
+53211 >Libra2(1): isready
+53212 <Libra2(1): readyok
+53212 >Libra2(1): go wtime 20974 btime 21856 winc 1000 binc 1000
+53212 <Libra2(1): info depth 1 score cp -160 nodes 31 nps 318759 prun 0% pv f2d3 time 0
+53212 <Libra2(1): info depth 2 score cp -50 nodes 357 nps 1158274 prun 0% pv c8b7 time 0
+53214 <Libra2(1): info depth 3 score cp -195 nodes 1344 nps 687325 prun 85% pv f2g4 time 1
+53225 <Libra2(1): info depth 4 score cp 110 nodes 10485 nps 940948 prun 75% pv f2g4 time 11
+53295 <Libra2(1): info depth 5 score cp -210 nodes 39212 nps 561287 prun 88% pv f2g4 time 69
+53635 <Libra2(1): info depth 6 score cp -45 nodes 215143 nps 632886 prun 82% pv c8a6 time 339
+54635 <Libra2(1): info depth 7 score cp -175 nodes 544284 nps 544228 prun 87% pv c8a6 time 1000
+54635 <Libra2(1): bestmove c8a6
+54635 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6
+54635 >Libra1(0): isready
+54636 <Libra1(0): readyok
+54636 >Libra1(0): go wtime 20974 btime 21433 winc 1000 binc 1000
+54636 <Libra1(0): info depth 1 score cp -35 nodes 25 nps 349435 prun 0% pv f1e2 time 0
+54636 <Libra1(0): info depth 2 score cp -155 nodes 300 nps 1433472 prun 0% pv c1c7 time 0
+54638 <Libra1(0): info depth 3 score cp 165 nodes 984 nps 524624 prun 83% pv f1e2 time 1
+54651 <Libra1(0): info depth 4 score cp -160 nodes 12400 nps 947868 prun 72% pv f1e2 time 13
+54716 <Libra1(0): info depth 5 score cp -45 nodes 32243 nps 498498 prun 89% pv c1c2 time 64
+55100 <Libra1(0): info depth 6 score cp -185 nodes 297934 nps 777539 prun 73% pv d4f5 time 383
+56099 <Libra1(0): info depth 7 score cp 0 nodes 407246 nps 407185 prun 90% pv c1b1 time 1000
+56099 <Libra1(0): bestmove c1b1
+56100 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1
+56100 >Libra2(1): isready
+56100 <Libra2(1): readyok
+56100 >Libra2(1): go wtime 20511 btime 21433 winc 1000 binc 1000
+56100 <Libra2(1): info depth 1 score cp -165 nodes 34 nps 457302 prun 0% pv a6d3 time 0
+56100 <Libra2(1): info depth 2 score cp 30 nodes 393 nps 1288566 prun 0% pv e7e6 time 0
+56103 <Libra2(1): info depth 3 score cp -170 nodes 1176 nps 487396 prun 90% pv b6b5 time 2
+56114 <Libra2(1): info depth 4 score cp -60 nodes 9015 nps 833782 prun 79% pv f2d3 time 10
+56179 <Libra2(1): info depth 5 score cp -210 nodes 33240 nps 507336 prun 90% pv f2g4 time 65
+56531 <Libra2(1): info depth 6 score cp -60 nodes 183975 nps 522684 prun 84% pv f2d3 time 351
+57531 <Libra2(1): info depth 7 score cp -265 nodes 611247 nps 611145 prun 84% pv f2d3 time 1000
+57532 <Libra2(1): bestmove f2d3
+57532 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3
+57532 >Libra1(0): isready
+57532 <Libra1(0): readyok
+57532 >Libra1(0): go wtime 20511 btime 21002 winc 1000 binc 1000
+57532 <Libra1(0): info depth 1 score cp 175 nodes 2 nps 38619 prun 0% pv f1d3 time 0
+57532 <Libra1(0): info depth 2 score cp -155 nodes 24 nps 265519 prun 0% pv f1d3 time 0
+57533 <Libra1(0): info depth 3 score cp -60 nodes 67 nps 227767 prun 89% pv f1d3 time 0
+57534 <Libra1(0): info depth 4 score cp -175 nodes 869 nps 900533 prun 71% pv f1d3 time 0
+57539 <Libra1(0): info depth 5 score cp -60 nodes 2241 nps 399614 prun 91% pv f1d3 time 5
+57572 <Libra1(0): info depth 6 score cp -265 nodes 22314 nps 674922 prun 79% pv f1d3 time 33
+57732 <Libra1(0): info depth 7 score cp -55 nodes 47092 nps 295083 prun 91% pv f1d3 time 159
+58733 <Libra1(0): info depth 8 score cp -270 nodes 466989 nps 466791 prun 80% pv f1d3 time 1000
+58733 <Libra1(0): bestmove f1d3
+58733 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3
+58733 >Libra2(1): isready
+58734 <Libra2(1): readyok
+58734 >Libra2(1): go wtime 20311 btime 21002 winc 1000 binc 1000
+58734 <Libra2(1): info depth 1 score cp -155 nodes 30 nps 238921 prun 0% pv a6d3 time 0
+58735 <Libra2(1): info depth 2 score cp -60 nodes 356 nps 630360 prun 0% pv a6d3 time 0
+58737 <Libra2(1): info depth 3 score cp -175 nodes 1013 nps 450549 prun 88% pv a6d3 time 2
+58752 <Libra2(1): info depth 4 score cp -60 nodes 15333 nps 1005691 prun 72% pv a6d3 time 15
+58850 <Libra2(1): info depth 5 score cp -265 nodes 43538 nps 444221 prun 90% pv a6d3 time 98
+59261 <Libra2(1): info depth 6 score cp -60 nodes 315986 nps 768426 prun 78% pv a6d3 time 411
+60262 <Libra2(1): info depth 7 score cp 0 nodes 452356 nps 452275 prun 89% pv a6d3 time 1000
+60262 <Libra2(1): bestmove a6d3
+60262 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3
+60262 >Libra1(0): isready
+60262 <Libra1(0): readyok
+60262 >Libra1(0): go wtime 20311 btime 20474 winc 1000 binc 1000
+60262 <Libra1(0): info depth 1 score cp -60 nodes 24 nps 302499 prun 0% pv b1b6 time 0
+60263 <Libra1(0): info depth 2 score cp -175 nodes 288 nps 836251 prun 0% pv b1b6 time 0
+60265 <Libra1(0): info depth 3 score cp -60 nodes 887 nps 442354 prun 85% pv b1b6 time 2
+60277 <Libra1(0): info depth 4 score cp -265 nodes 11348 nps 918767 prun 71% pv b1d1 time 12
+60339 <Libra1(0): info depth 5 score cp -55 nodes 29224 nps 470854 prun 90% pv b1b6 time 62
+60756 <Libra1(0): info depth 6 score cp -270 nodes 328816 nps 788641 prun 73% pv b1d1 time 416
+61756 <Libra1(0): info depth 7 score cp 0 nodes 421868 nps 421804 prun 89% pv b1a1 time 1000
+61756 <Libra1(0): bestmove b1a1
+61757 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1
+61757 >Libra2(1): isready
+61757 <Libra2(1): readyok
+61757 >Libra2(1): go wtime 19817 btime 20474 winc 1000 binc 1000
+61757 <Libra2(1): info depth 1 score cp -650 nodes 38 nps 469878 prun 0% pv a2a1 time 0
+61757 <Libra2(1): info depth 2 score cp -650 nodes 441 nps 1108446 prun 0% pv a2a1 time 0
+61760 <Libra2(1): info depth 3 score cp -1150 nodes 1243 nps 430134 prun 91% pv a2a1 time 2
+61771 <Libra2(1): info depth 4 score cp -620 nodes 8754 nps 803026 prun 81% pv a2a1 time 10
+61828 <Libra2(1): info depth 5 score cp -775 nodes 29153 nps 516631 prun 89% pv a2a1 time 56
+62076 <Libra2(1): info depth 6 score cp -670 nodes 144446 nps 581542 prun 83% pv a2a1 time 248
+63077 <Libra2(1): info depth 7 score cp -790 nodes 562312 nps 561958 prun 85% pv a2a1 time 1000
+63077 <Libra2(1): bestmove a2a1
+63077 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1
+63077 >Libra1(0): isready
+63078 <Libra1(0): readyok
+63078 >Libra1(0): go wtime 19817 btime 20154 winc 1000 binc 1000
+63078 <Libra1(0): info depth 1 score cp -650 nodes 2 nps 23048 prun 0% pv e1f2 time 0
+63078 <Libra1(0): info depth 2 score cp -1150 nodes 24 nps 180004 prun 0% pv e1f2 time 0
+63079 <Libra1(0): info depth 3 score cp -620 nodes 66 nps 147404 prun 87% pv e1f2 time 0
+63080 <Libra1(0): info depth 4 score cp -775 nodes 1184 nps 685049 prun 70% pv e1f2 time 1
+63087 <Libra1(0): info depth 5 score cp -655 nodes 3058 nps 440069 prun 89% pv e1f2 time 6
+63112 <Libra1(0): info depth 6 score cp -790 nodes 21890 nps 874462 prun 71% pv e1f2 time 25
+63268 <Libra1(0): info depth 7 score cp -665 nodes 54869 nps 352718 prun 90% pv e1f2 time 155
+64207 <Libra1(0): info depth 8 score cp -790 nodes 443925 nps 472840 prun 76% pv e1f2 time 938
+64207 <Libra1(0): bestmove e1f2
+64207 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2
+64207 >Libra2(1): isready
+64208 <Libra2(1): readyok
+64208 >Libra2(1): go wtime 19688 btime 20154 winc 1000 binc 1000
+64208 <Libra2(1): info depth 1 score cp -1150 nodes 38 nps 239965 prun 0% pv a1g1 time 0
+64209 <Libra2(1): info depth 2 score cp -655 nodes 445 nps 732189 prun 0% pv a1a2 time 0
+64212 <Libra2(1): info depth 3 score cp -775 nodes 1443 nps 411197 prun 89% pv a1a5 time 3
+64225 <Libra2(1): info depth 4 score cp -655 nodes 11884 nps 973741 prun 77% pv a1a2 time 12
+64297 <Libra2(1): info depth 5 score cp -785 nodes 40376 nps 561864 prun 89% pv a1a2 time 71
+64549 <Libra2(1): info depth 6 score cp -670 nodes 169274 nps 671947 prun 82% pv a1a2 time 251
+65549 <Libra2(1): info depth 7 score cp -775 nodes 561998 nps 561957 prun 86% pv a1a2 time 1000
+65549 <Libra2(1): bestmove a1a2
+65549 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2
+65549 >Libra1(0): isready
+65549 <Libra1(0): readyok
+65549 >Libra1(0): go wtime 19688 btime 19814 winc 1000 binc 1000
+65549 <Libra1(0): info depth 1 score cp -655 nodes 6 nps 101867 prun 0% pv f2e1 time 0
+65549 <Libra1(0): info depth 2 score cp -770 nodes 72 nps 546087 prun 0% pv f2e1 time 0
+65550 <Libra1(0): info depth 3 score cp -655 nodes 238 nps 330957 prun 81% pv f2e1 time 0
+65554 <Libra1(0): info depth 4 score cp -790 nodes 3810 nps 1025586 prun 68% pv f2e3 time 3
+65575 <Libra1(0): info depth 5 score cp -660 nodes 12099 nps 579986 prun 85% pv f2e3 time 20
+65702 <Libra1(0): info depth 6 score cp -775 nodes 106104 nps 837901 prun 68% pv f2e3 time 126
+66590 <Libra1(0): info depth 7 score cp -680 nodes 425456 nps 478990 prun 86% pv f2g3 time 888
+66590 <Libra1(0): bestmove f2g3
+66590 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3
+66590 >Libra2(1): isready
+66591 <Libra2(1): readyok
+66591 >Libra2(1): go wtime 19647 btime 19814 winc 1000 binc 1000
+66592 <Libra2(1): info depth 1 score cp -790 nodes 38 nps 219179 prun 0% pv a2g2 time 0
+66592 <Libra2(1): info depth 2 score cp -675 nodes 451 nps 747023 prun 0% pv f8e8 time 0
+66595 <Libra2(1): info depth 3 score cp -805 nodes 1521 nps 527870 prun 89% pv e7e6 time 2
+66610 <Libra2(1): info depth 4 score cp -705 nodes 15609 nps 1010670 prun 74% pv d7d5 time 15
+66729 <Libra2(1): info depth 5 score cp -810 nodes 67000 nps 564520 prun 87% pv d7d5 time 118
+67261 <Libra2(1): info depth 6 score cp -680 nodes 384393 nps 723338 prun 79% pv d7d6 time 531
+68261 <Libra2(1): info depth 7 score cp -825 nodes 665476 nps 665281 prun 81% pv d7d6 time 1000
+68261 <Libra2(1): bestmove d7d6
+68261 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6
+68261 >Libra1(0): isready
+68262 <Libra1(0): readyok
+68262 >Libra1(0): go wtime 19647 btime 19145 winc 1000 binc 1000
+68262 <Libra1(0): info depth 1 score cp -590 nodes 24 nps 364276 prun 0% pv e5d6 time 0
+68262 <Libra1(0): info depth 2 score cp -740 nodes 288 nps 893904 prun 0% pv e5d6 time 0
+68264 <Libra1(0): info depth 3 score cp -585 nodes 805 nps 528945 prun 86% pv g1d1 time 1
+68275 <Libra1(0): info depth 4 score cp -770 nodes 12393 nps 1106916 prun 70% pv d4c6 time 11
+68361 <Libra1(0): info depth 5 score cp -680 nodes 43214 nps 503586 prun 87% pv d4c6 time 85
+68775 <Libra1(0): info depth 6 score cp -825 nodes 344272 nps 831112 prun 72% pv d4c6 time 414
+69775 <Libra1(0): info depth 7 score cp -650 nodes 472036 nps 471977 prun 87% pv d4c6 time 1000
+69775 <Libra1(0): bestmove d4c6
+69775 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6
+69775 >Libra2(1): isready
+69776 <Libra2(1): readyok
+69776 >Libra2(1): go wtime 19134 btime 19145 winc 1000 binc 1000
+69776 <Libra2(1): info depth 1 score cp -850 nodes 38 nps 315892 prun 0% pv d6e5 time 0
+69776 <Libra2(1): info depth 2 score cp -720 nodes 451 nps 1469179 prun 0% pv d6e5 time 0
+69779 <Libra2(1): info depth 3 score cp -770 nodes 1265 nps 418857 prun 90% pv d6e5 time 3
+69791 <Libra2(1): info depth 4 score cp -680 nodes 12098 nps 991218 prun 74% pv g8h8 time 12
+69855 <Libra2(1): info depth 5 score cp -825 nodes 32027 nps 507683 prun 90% pv g8h8 time 63
+70122 <Libra2(1): info depth 6 score cp -625 nodes 198468 nps 741621 prun 78% pv d6e5 time 267
+71122 <Libra2(1): info depth 7 score cp -820 nodes 513380 nps 513303 prun 88% pv g8h8 time 1000
+71123 <Libra2(1): bestmove g8h8
+71123 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8
+71123 >Libra1(0): isready
+71123 <Libra1(0): readyok
+71123 >Libra1(0): go wtime 19134 btime 18799 winc 1000 binc 1000
+71123 <Libra1(0): info depth 1 score cp -590 nodes 23 nps 331990 prun 0% pv e5d6 time 0
+71123 <Libra1(0): info depth 2 score cp -740 nodes 276 nps 1228195 prun 0% pv e5d6 time 0
+71126 <Libra1(0): info depth 3 score cp -680 nodes 761 nps 368456 prun 85% pv g1d1 time 2
+71139 <Libra1(0): info depth 4 score cp -825 nodes 12684 nps 993366 prun 68% pv g1e1 time 12
+71223 <Libra1(0): info depth 5 score cp -570 nodes 40435 nps 480976 prun 87% pv c6b4 time 84
+71621 <Libra1(0): info depth 6 score cp -820 nodes 343814 nps 863321 prun 70% pv c6b4 time 398
+72621 <Libra1(0): info depth 7 score cp 0 nodes 422672 nps 422601 prun 87% pv g3f3 time 1000
+72621 <Libra1(0): bestmove g3f3
+72621 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3
+72622 >Libra2(1): isready
+72622 <Libra2(1): readyok
+72622 >Libra2(1): go wtime 18636 btime 18799 winc 1000 binc 1000
+72622 <Libra2(1): info depth 1 score cp -840 nodes 39 nps 545347 prun 0% pv d6e5 time 0
+72622 <Libra2(1): info depth 2 score cp -710 nodes 449 nps 1392058 prun 0% pv d6e5 time 0
+72625 <Libra2(1): info depth 3 score cp -825 nodes 1289 nps 550111 prun 91% pv d6e5 time 2
+72640 <Libra2(1): info depth 4 score cp -680 nodes 14437 nps 941023 prun 77% pv d6e5 time 15
+72734 <Libra2(1): info depth 5 score cp -830 nodes 51028 nps 543152 prun 88% pv d3c4 time 93
+73146 <Libra2(1): info depth 6 score cp -700 nodes 255404 nps 619788 prun 81% pv d3b5 time 412
+74147 <Libra2(1): info depth 7 score cp -815 nodes 617694 nps 617539 prun 83% pv d6e5 time 1000
+74147 <Libra2(1): bestmove d6e5
+74147 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5
+74147 >Libra1(0): isready
+74147 <Libra1(0): readyok
+74147 >Libra1(0): go wtime 18636 btime 18275 winc 1000 binc 1000
+74147 <Libra1(0): info depth 1 score cp -710 nodes 22 nps 176844 prun 0% pv c6e5 time 0
+74148 <Libra1(0): info depth 2 score cp -825 nodes 264 nps 965755 prun 0% pv c6e5 time 0
+74149 <Libra1(0): info depth 3 score cp -680 nodes 972 nps 627332 prun 77% pv c6e5 time 1
+74162 <Libra1(0): info depth 4 score cp -815 nodes 11040 nps 883858 prun 69% pv c6e5 time 12
+74226 <Libra1(0): info depth 5 score cp -670 nodes 28431 nps 440439 prun 86% pv c6e5 time 64
+74582 <Libra1(0): info depth 6 score cp -825 nodes 284942 nps 801712 prun 67% pv c6e5 time 355
+75582 <Libra1(0): info depth 7 score cp 0 nodes 393066 nps 393027 prun 87% pv g1a1 time 1000
+75582 <Libra1(0): bestmove g1a1
+75582 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1
+75582 >Libra2(1): isready
+75583 <Libra2(1): readyok
+75583 >Libra2(1): go wtime 18201 btime 18275 winc 1000 binc 1000
+75583 <Libra2(1): info depth 1 score cp -1335 nodes 38 nps 518438 prun 0% pv a2a1 time 0
+75583 <Libra2(1): info depth 2 score cp -1205 nodes 428 nps 1312641 prun 0% pv a2a1 time 0
+75586 <Libra2(1): info depth 3 score cp -1340 nodes 1228 nps 421515 prun 91% pv e5e4 time 2
+75598 <Libra2(1): info depth 4 score cp -1270 nodes 11203 nps 935540 prun 76% pv e5e4 time 11
+75662 <Libra2(1): info depth 5 score cp -1275 nodes 31809 nps 496123 prun 90% pv e5e4 time 64
+75905 <Libra2(1): info depth 6 score cp -1230 nodes 139058 nps 573132 prun 82% pv e5e4 time 242
+76891 <Libra2(1): info depth 7 score cp -1350 nodes 511704 nps 519143 prun 87% pv e5e4 time 985
+76891 <Libra2(1): bestmove e5e4
+76891 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1 e5e4
+76891 >Libra1(0): isready
+76891 <Libra1(0): readyok
+76891 >Libra1(0): go wtime 18201 btime 17967 winc 1000 binc 1000
+76892 <Libra1(0): info depth 1 score cp -845 nodes 4 nps 68027 prun 0% pv f3g3 time 0
+76892 <Libra1(0): info depth 2 score cp -1340 nodes 48 nps 269946 prun 0% pv f3g3 time 0
+76892 <Libra1(0): info depth 3 score cp -1270 nodes 132 nps 237221 prun 86% pv f3g3 time 0
+76894 <Libra1(0): info depth 4 score cp -1275 nodes 1918 nps 925553 prun 72% pv f3e3 time 2
+76904 <Libra1(0): info depth 5 score cp -1230 nodes 4047 nps 420930 prun 90% pv f3e3 time 9
+76942 <Libra1(0): info depth 6 score cp -1350 nodes 33871 nps 896307 prun 74% pv f3e3 time 37
+77119 <Libra1(0): info depth 7 score cp -1240 nodes 67434 nps 380109 prun 89% pv f3e3 time 177
+77810 <Libra1(0): info depth 8 score cp -1365 nodes 593019 nps 859365 prun 70% pv f3e3 time 690
+78810 <Libra1(0): info depth 9 score cp 0 nodes 508683 nps 508593 prun 83% pv f3g3 time 1000
+78810 <Libra1(0): bestmove f3g3
+78810 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1 e5e4 f3g3
+78810 >Libra2(1): isready
+78810 <Libra2(1): readyok
+78810 >Libra2(1): go wtime 17283 btime 17967 winc 1000 binc 1000
+78811 <Libra2(1): info depth 1 score cp -1340 nodes 36 nps 502414 prun 0% pv a2a1 time 0
+78811 <Libra2(1): info depth 2 score cp -1270 nodes 417 nps 1149716 prun 0% pv a2a1 time 0
+78813 <Libra2(1): info depth 3 score cp -1330 nodes 1178 nps 486689 prun 91% pv f8g8 time 2
+78823 <Libra2(1): info depth 4 score cp -1260 nodes 9642 nps 971557 prun 77% pv f8g8 time 9
+78872 <Libra2(1): info depth 5 score cp -1380 nodes 25743 nps 525483 prun 90% pv f8g8 time 48
+79086 <Libra2(1): info depth 6 score cp -1240 nodes 126125 nps 590955 prun 80% pv a2a1 time 213
+79848 <Libra2(1): info depth 7 score cp -1370 nodes 437754 nps 574394 prun 85% pv a2a1 time 762
+80848 <Libra2(1): info depth 8 score cp -1250 nodes 564885 nps 564770 prun 83% pv f8g8 time 1000
+80848 <Libra2(1): bestmove f8g8
+80848 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1 e5e4 f3g3 f8g8
+80848 >Libra1(0): isready
+80849 <Libra1(0): readyok
+80849 >Libra1(0): go wtime 17283 btime 16930 winc 1000 binc 1000
+80849 <Libra1(0): info depth 1 score cp -835 nodes 3 nps 48705 prun 0% pv g3h3 time 0
+80849 <Libra1(0): info depth 2 score cp -1330 nodes 36 nps 482056 prun 0% pv g3h3 time 0
+80849 <Libra1(0): info depth 3 score cp -1260 nodes 99 nps 351542 prun 86% pv g3h3 time 0
+80851 <Libra1(0): info depth 4 score cp -1380 nodes 1607 nps 1087388 prun 70% pv g3h3 time 1
+80858 <Libra1(0): info depth 5 score cp -1220 nodes 3545 nps 499740 prun 89% pv g3h3 time 7
+80896 <Libra1(0): info depth 6 score cp -1335 nodes 33495 nps 891472 prun 72% pv g3h3 time 37
+81058 <Libra1(0): info depth 7 score cp -1250 nodes 59945 nps 369929 prun 89% pv g3h3 time 162
+81651 <Libra1(0): info depth 8 score cp -1440 nodes 500449 nps 844054 prun 67% pv g3h3 time 592
+82651 <Libra1(0): info depth 9 score cp -1310 nodes 401263 nps 401237 prun 87% pv g3h3 time 1000
+82651 <Libra1(0): bestmove g3h3
+82651 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1 e5e4 f3g3 f8g8 g3h3
+82651 >Libra2(1): isready
+82651 <Libra2(1): readyok
+82651 >Libra2(1): go wtime 16482 btime 16930 winc 1000 binc 1000
+82652 <Libra2(1): info depth 1 score cp -1330 nodes 41 nps 457604 prun 0% pv a2a1 time 0
+82652 <Libra2(1): info depth 2 score cp -1260 nodes 484 nps 1574521 prun 0% pv a2a1 time 0
+82655 <Libra2(1): info depth 3 score cp -1380 nodes 1357 nps 503401 prun 92% pv a2a1 time 2
+82666 <Libra2(1): info depth 4 score cp -1220 nodes 10885 nps 942857 prun 78% pv a2a1 time 11
+82740 <Libra2(1): info depth 5 score cp -1335 nodes 34051 nps 462609 prun 89% pv a2a1 time 73
+83004 <Libra2(1): info depth 6 score cp -1250 nodes 149859 nps 568335 prun 82% pv a2a1 time 263
+84004 <Libra2(1): info depth 7 score cp -1375 nodes 593720 nps 593765 prun 84% pv a2a1 time 999
+84004 <Libra2(1): bestmove a2a1
+84004 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1 e5e4 f3g3 f8g8 g3h3 a2a1
+84004 >Libra1(0): isready
+84005 <Libra1(0): readyok
+84005 >Libra1(0): go wtime 16482 btime 16578 winc 1000 binc 1000
+84005 <Libra1(0): info depth 1 score cp -1260 nodes 11 nps 197083 prun 0% pv c6e7 time 0
+84005 <Libra1(0): info depth 2 score cp -1380 nodes 132 nps 607997 prun 0% pv c6e7 time 0
+84006 <Libra1(0): info depth 3 score cp -1220 nodes 427 nps 397642 prun 64% pv c6e5 time 1
+84013 <Libra1(0): info depth 4 score cp -1335 nodes 5560 nps 870901 prun 62% pv c6e5 time 6
+84036 <Libra1(0): info depth 5 score cp -1250 nodes 12326 nps 536571 prun 78% pv c6e7 time 22
+84190 <Libra1(0): info depth 6 score cp -1440 nodes 146813 nps 951025 prun 53% pv g2g3 time 154
+84736 <Libra1(0): info depth 7 score cp -1355 nodes 266656 nps 488917 prun 78% pv g2g4 time 545
+85736 <Libra1(0): info depth 8 score cp -1440 nodes 1029068 nps 1028938 prun 51% pv g2g4 time 1000
+85736 <Libra1(0): bestmove g2g4
+85736 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1 e5e4 f3g3 f8g8 g3h3 a2a1 g2g4
+85736 >Libra2(1): isready
+85736 <Libra2(1): readyok
+85736 >Libra2(1): go wtime 15751 btime 16578 winc 1000 binc 1000
+85737 <Libra2(1): info depth 1 score cp -1440 nodes 40 nps 381108 prun 0% pv g8g4 time 0
+85737 <Libra2(1): info depth 2 score cp -1350 nodes 468 nps 1510851 prun 0% pv e7e6 time 0
+85740 <Libra2(1): info depth 3 score cp -1450 nodes 1321 nps 440492 prun 91% pv e7e6 time 2
+85747 <Libra2(1): info depth 4 score cp -1340 nodes 6041 nps 897902 prun 75% pv e7e6 time 6
+85778 <Libra2(1): info depth 5 score cp -1440 nodes 22502 nps 724325 prun 83% pv e7e6 time 31
+85903 <Libra2(1): info depth 6 score cp -1330 nodes 74509 nps 593735 prun 78% pv d3f1 time 125
+86903 <Libra2(1): info depth 7 score cp -1710 nodes 845451 nps 845392 prun 71% pv e4e3 time 1000
+86904 <Libra2(1): bestmove e4e3
+86904 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1 e5e4 f3g3 f8g8 g3h3 a2a1 g2g4 e4e3
+86904 >Libra1(0): isready
+86904 <Libra1(0): readyok
+86904 >Libra1(0): go wtime 15751 btime 16411 winc 1000 binc 1000
+86904 <Libra1(0): info depth 1 score cp -1275 nodes 12 nps 227449 prun 0% pv c6e7 time 0
+86905 <Libra1(0): info depth 2 score cp -1375 nodes 144 nps 848366 prun 0% pv c6e7 time 0
+86905 <Libra1(0): info depth 3 score cp -1245 nodes 488 nps 738078 prun 66% pv c6e5 time 0
+86911 <Libra1(0): info depth 4 score cp -1425 nodes 6325 nps 1082698 prun 60% pv c6e5 time 5
+86934 <Libra1(0): info depth 5 score cp -1255 nodes 13638 nps 594943 prun 79% pv c6e5 time 22
+87104 <Libra1(0): info depth 6 score cp -1710 nodes 156182 nps 917991 prun 52% pv c6d4 time 170
+87722 <Libra1(0): info depth 7 score cp -1385 nodes 284499 nps 460853 prun 79% pv c6e5 time 617
+88722 <Libra1(0): info depth 8 score cp -1645 nodes 1023243 nps 1023091 prun 51% pv c6d4 time 1000
+88722 <Libra1(0): bestmove c6d4
+88722 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1 e5e4 f3g3 f8g8 g3h3 a2a1 g2g4 e4e3 c6d4
+88722 >Libra2(1): isready
+88722 <Libra2(1): readyok
+88722 >Libra2(1): go wtime 14934 btime 16411 winc 1000 binc 1000
+88723 <Libra2(1): info depth 1 score cp -1435 nodes 43 nps 547164 prun 0% pv g8g4 time 0
+88723 <Libra2(1): info depth 2 score cp -1370 nodes 504 nps 1302749 prun 0% pv e7e5 time 0
+88726 <Libra2(1): info depth 3 score cp -1515 nodes 1486 nps 515093 prun 91% pv e3e2 time 2
+88736 <Libra2(1): info depth 4 score cp -1340 nodes 8276 nps 859603 prun 76% pv e3e2 time 9
+88808 <Libra2(1): info depth 5 score cp -1710 nodes 59856 nps 824820 prun 79% pv e7e5 time 72
+89029 <Libra2(1): info depth 6 score cp -1495 nodes 114825 nps 520710 prun 81% pv e3e2 time 220
+90029 <Libra2(1): info depth 7 score cp -1765 nodes 906409 nps 906256 prun 67% pv e7e5 time 1000
+90029 <Libra2(1): bestmove e7e5
+90029 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1 e5e4 f3g3 f8g8 g3h3 a2a1 g2g4 e4e3 c6d4 e7e5
+90029 >Libra1(0): isready
+90030 <Libra1(0): readyok
+90030 >Libra1(0): go wtime 14934 btime 16105 winc 1000 binc 1000
+90030 <Libra1(0): info depth 1 score cp -1345 nodes 12 nps 227669 prun 0% pv h3g2 time 0
+90030 <Libra1(0): info depth 2 score cp -1485 nodes 144 nps 1219088 prun 0% pv d4f3 time 0
+90030 <Libra1(0): info depth 3 score cp -1010 nodes 405 nps 570408 prun 74% pv d4b3 time 0
+90036 <Libra1(0): info depth 4 score cp -1710 nodes 5793 nps 1068206 prun 63% pv d4b3 time 5
+90057 <Libra1(0): info depth 5 score cp -1370 nodes 11533 nps 545375 prun 80% pv d4f3 time 21
+90230 <Libra1(0): info depth 6 score cp -1765 nodes 144295 nps 832463 prun 53% pv d4b3 time 173
+90721 <Libra1(0): info depth 7 score cp -1600 nodes 229413 nps 467633 prun 81% pv d4f3 time 490
+91721 <Libra1(0): info depth 8 score cp 0 nodes 1058044 nps 1057793 prun 49% pv d4f3 time 1000
+91721 <Libra1(0): bestmove d4f3
+91722 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1 e5e4 f3g3 f8g8 g3h3 a2a1 g2g4 e4e3 c6d4 e7e5 d4f3
+91722 >Libra2(1): isready
+91722 <Libra2(1): readyok
+91722 >Libra2(1): go wtime 14243 btime 16105 winc 1000 binc 1000
+91722 <Libra2(1): info depth 1 score cp -1485 nodes 42 nps 501990 prun 0% pv g8g4 time 0
+91723 <Libra2(1): info depth 2 score cp -1375 nodes 488 nps 1542834 prun 0% pv d3f1 time 0
+91725 <Libra2(1): info depth 3 score cp -1715 nodes 1469 nps 606797 prun 91% pv e3e2 time 2
+91732 <Libra2(1): info depth 4 score cp -1370 nodes 6156 nps 907005 prun 75% pv e5e4 time 6
+91777 <Libra2(1): info depth 5 score cp -1770 nodes 39411 nps 872604 prun 76% pv e3e2 time 45
+91916 <Libra2(1): info depth 6 score cp -1530 nodes 71180 nps 511180 prun 80% pv e3e2 time 139
+92745 <Libra2(1): info depth 7 score cp -1805 nodes 737993 nps 890478 prun 66% pv e3e2 time 828
+92745 <Libra2(1): bestmove e3e2
+92746 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1 e5e4 f3g3 f8g8 g3h3 a2a1 g2g4 e4e3 c6d4 e7e5 d4f3 e3e2
+92746 >Libra1(0): isready
+92747 <Libra1(0): readyok
+92747 >Libra1(0): go wtime 14243 btime 16082 winc 1000 binc 1000
+92747 <Libra1(0): info depth 1 score cp -1275 nodes 11 nps 101623 prun 0% pv f3e5 time 0
+92747 <Libra1(0): info depth 2 score cp -1715 nodes 132 nps 619258 prun 0% pv f3e1 time 0
+92748 <Libra1(0): info depth 3 score cp -1290 nodes 317 nps 302591 prun 73% pv g4g5 time 1
+92754 <Libra1(0): info depth 4 score cp -1770 nodes 7015 nps 1136324 prun 56% pv h3h4 time 6
+92783 <Libra1(0): info depth 5 score cp -1285 nodes 16812 nps 588334 prun 78% pv f3e5 time 28
+92995 <Libra1(0): info depth 6 score cp -1815 nodes 188747 nps 890076 prun 57% pv h3g2 time 212
+93557 <Libra1(0): info depth 7 score cp -1690 nodes 277477 nps 493535 prun 78% pv h3g3 time 562
+94557 <Libra1(0): info depth 8 score cp -1940 nodes 1054840 nps 1054696 prun 47% pv h3g3 time 1000
+94557 <Libra1(0): bestmove h3g3
+94558 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1 e5e4 f3g3 f8g8 g3h3 a2a1 g2g4 e4e3 c6d4 e7e5 d4f3 e3e2 h3g3
+94558 >Libra2(1): isready
+94558 <Libra2(1): readyok
+94558 >Libra2(1): go wtime 13433 btime 16082 winc 1000 binc 1000
+94558 <Libra2(1): info depth 1 score cp -2160 nodes 43 nps 624918 prun 0% pv e2e1q time 0
+94559 <Libra2(1): info depth 2 score cp -1410 nodes 485 nps 1317011 prun 0% pv e5e4 time 0
+94561 <Libra2(1): info depth 3 score cp -1770 nodes 1994 nps 719514 prun 88% pv g8g4 time 2
+94573 <Libra2(1): info depth 4 score cp -1600 nodes 8456 nps 711428 prun 78% pv e5e4 time 11
+94651 <Libra2(1): info depth 5 score cp -1805 nodes 64972 nps 834669 prun 78% pv d3e4 time 77
+94887 <Libra2(1): info depth 6 score cp -1685 nodes 118040 nps 499648 prun 81% pv a1f1 time 236
+95888 <Libra2(1): info depth 7 score cp -2255 nodes 908757 nps 908625 prun 67% pv e5e4 time 1000
+95888 <Libra2(1): bestmove e5e4
+95888 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1 e5e4 f3g3 f8g8 g3h3 a2a1 g2g4 e4e3 c6d4 e7e5 d4f3 e3e2 h3g3 e5e4
+95888 >Libra1(0): isready
+95888 <Libra1(0): readyok
+95888 >Libra1(0): go wtime 13433 btime 15753 winc 1000 binc 1000
+95888 <Libra1(0): info depth 1 score cp -1380 nodes 15 nps 255493 prun 0% pv g3g2 time 0
+95889 <Libra1(0): info depth 2 score cp -1730 nodes 180 nps 1061840 prun 0% pv f3e1 time 0
+95889 <Libra1(0): info depth 3 score cp -1600 nodes 446 nps 567278 prun 77% pv g4g5 time 0
+95895 <Libra1(0): info depth 4 score cp -1790 nodes 6696 nps 1163181 prun 57% pv f3e1 time 5
+95920 <Libra1(0): info depth 5 score cp -1690 nodes 12574 nps 501019 prun 82% pv f3e1 time 25
+96076 <Libra1(0): info depth 6 score cp -2255 nodes 146701 nps 941136 prun 52% pv f3e5 time 155
+96628 <Libra1(0): info depth 7 score cp -2290 nodes 245601 nps 444907 prun 79% pv f3d4 time 552
+97629 <Libra1(0): info depth 8 score cp -2445 nodes 1023501 nps 1023345 prun 46% pv g4g5 time 1000
+97629 <Libra1(0): bestmove g4g5
+97629 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1 e5e4 f3g3 f8g8 g3h3 a2a1 g2g4 e4e3 c6d4 e7e5 d4f3 e3e2 h3g3 e5e4 g4g5
+97629 >Libra2(1): isready
+97630 <Libra2(1): readyok
+97630 >Libra2(1): go wtime 12693 btime 15753 winc 1000 binc 1000
+97630 <Libra2(1): info depth 1 score cp -2160 nodes 40 nps 490364 prun 0% pv e2e1q time 0
+97630 <Libra2(1): info depth 2 score cp -1600 nodes 454 nps 1187316 prun 0% pv e4f3 time 0
+97634 <Libra2(1): info depth 3 score cp -2345 nodes 1918 nps 571020 prun 87% pv e4f3 time 3
+97642 <Libra2(1): info depth 4 score cp -2305 nodes 6681 nps 745556 prun 80% pv e4f3 time 8
+97687 <Libra2(1): info depth 5 score cp -2430 nodes 38862 nps 875930 prun 78% pv e4f3 time 44
+97798 <Libra2(1): info depth 6 score cp -2310 nodes 57673 nps 517936 prun 82% pv e4f3 time 111
+98728 <Libra2(1): info depth 7 score cp -2450 nodes 810570 nps 872479 prun 66% pv e4f3 time 929
+98728 <Libra2(1): bestmove e4f3
+98728 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1 e5e4 f3g3 f8g8 g3h3 a2a1 g2g4 e4e3 c6d4 e7e5 d4f3 e3e2 h3g3 e5e4 g4g5 e4f3
+98728 >Libra1(0): isready
+98729 <Libra1(0): readyok
+98729 >Libra1(0): go wtime 12693 btime 15655 winc 1000 binc 1000
+98729 <Libra1(0): info depth 1 score cp -1600 nodes 9 nps 89580 prun 0% pv g3f3 time 0
+98729 <Libra1(0): info depth 2 score cp -2345 nodes 108 nps 485162 prun 0% pv g3f3 time 0
+98730 <Libra1(0): info depth 3 score cp -2305 nodes 235 nps 315218 prun 68% pv g3f3 time 0
+98734 <Libra1(0): info depth 4 score cp -2430 nodes 4172 nps 1110479 prun 51% pv g3f3 time 3
+98748 <Libra1(0): info depth 5 score cp -2340 nodes 7998 nps 576069 prun 71% pv g3f3 time 13
+98850 <Libra1(0): info depth 6 score cp -2445 nodes 109419 nps 1066073 prun 38% pv g3f3 time 102
+99205 <Libra1(0): info depth 7 score cp -2450 nodes 184825 nps 520854 prun 69% pv g3f3 time 354
+100206 <Libra1(0): info depth 8 score cp -2550 nodes 1084230 nps 1083975 prun 34% pv g3f3 time 1000
+100206 <Libra1(0): bestmove g3f3
+100206 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1 e5e4 f3g3 f8g8 g3h3 a2a1 g2g4 e4e3 c6d4 e7e5 d4f3 e3e2 h3g3 e5e4 g4g5 e4f3 g3f3
+100206 >Libra2(1): isready
+100206 <Libra2(1): readyok
+100206 >Libra2(1): go wtime 12217 btime 15655 winc 1000 binc 1000
+100206 <Libra2(1): info depth 1 score cp -2345 nodes 41 nps 527568 prun 0% pv e2e1q time 0
+100207 <Libra2(1): info depth 2 score cp -2305 nodes 389 nps 679166 prun 0% pv e2e1q time 0
+100209 <Libra2(1): info depth 3 score cp -2430 nodes 1438 nps 618692 prun 89% pv g8g5 time 2
+100216 <Libra2(1): info depth 4 score cp -2340 nodes 4537 nps 715843 prun 77% pv e2e1q time 6
+100252 <Libra2(1): info depth 5 score cp -2450 nodes 34610 nps 957546 prun 72% pv e2e1q time 36
+100413 <Libra2(1): info depth 6 score cp -2430 nodes 79792 nps 496448 prun 76% pv e2e1q time 160
+101222 <Libra2(1): info depth 7 score cp -2510 nodes 813275 nps 1005270 prun 49% pv e2e1q time 809
+101222 <Libra2(1): bestmove e2e1q
+101222 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1 e5e4 f3g3 f8g8 g3h3 a2a1 g2g4 e4e3 c6d4 e7e5 d4f3 e3e2 h3g3 e5e4 g4g5 e4f3 g3f3 e2e1q
+101222 >Libra1(0): isready
+101223 <Libra1(0): readyok
+101223 >Libra1(0): go wtime 12217 btime 15640 winc 1000 binc 1000
+101223 <Libra1(0): info depth 1 score cp -2305 nodes 6 nps 55761 prun 0% pv f3g2 time 0
+101224 <Libra1(0): info depth 2 score cp -2410 nodes 72 nps 245466 prun 0% pv f3g2 time 0
+101224 <Libra1(0): info depth 3 score cp -2340 nodes 198 nps 434896 prun 49% pv f3g4 time 0
+101229 <Libra1(0): info depth 4 score cp -2445 nodes 4448 nps 1028621 prun 39% pv f3g2 time 4
+101246 <Libra1(0): info depth 5 score cp -2430 nodes 9321 nps 525947 prun 67% pv h2h4 time 17
+101357 <Libra1(0): info depth 6 score cp -2550 nodes 115754 nps 1047468 prun 26% pv f3f4 time 110
+101450 <Libra1(0): info depth 7 score cp -1000000 nodes 34308 nps 368301 prun 65% pv f3f4 time 93
+101451 <Libra1(0): info depth 8 score cp -1000000 nodes 86 nps 91529 prun 97% pv f3f4 time 0
+101452 <Libra1(0): info depth 9 score cp -1000000 nodes 86 nps 98416 prun 97% pv f3f4 time 0
+101453 <Libra1(0): info depth 10 score cp -1000000 nodes 86 nps 131822 prun 97% pv f3f4 time 0
+101453 <Libra1(0): info depth 11 score cp -1000000 nodes 86 nps 93459 prun 97% pv f3f4 time 0
+101454 <Libra1(0): info depth 12 score cp -1000000 nodes 86 nps 119888 prun 97% pv f3f4 time 0
+101455 <Libra1(0): info depth 13 score cp -1000000 nodes 86 nps 165291 prun 97% pv f3f4 time 0
+101455 <Libra1(0): info depth 14 score cp -1000000 nodes 86 nps 168941 prun 97% pv f3f4 time 0
+101456 <Libra1(0): info depth 15 score cp -1000000 nodes 86 nps 194087 prun 97% pv f3f4 time 0
+101456 <Libra1(0): info depth 16 score cp -1000000 nodes 86 nps 289274 prun 97% pv f3f4 time 0
+101456 <Libra1(0): bestmove f3f4
+101456 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1 e5e4 f3g3 f8g8 g3h3 a2a1 g2g4 e4e3 c6d4 e7e5 d4f3 e3e2 h3g3 e5e4 g4g5 e4f3 g3f3 e2e1q f3f4
+101456 >Libra2(1): isready
+101457 <Libra2(1): readyok
+101457 >Libra2(1): go wtime 12984 btime 15640 winc 1000 binc 1000
+101457 <Libra2(1): info depth 1 score cp -2460 nodes 55 nps 518286 prun 0% pv g8g5 time 0
+101457 <Libra2(1): info depth 2 score cp -2360 nodes 321 nps 1039618 prun 0% pv e1f2 time 0
+101459 <Libra2(1): info depth 3 score cp -2465 nodes 1177 nps 637791 prun 90% pv e1f2 time 1
+101465 <Libra2(1): info depth 4 score cp -2445 nodes 4600 nps 791337 prun 72% pv e1f2 time 5
+101527 <Libra2(1): info depth 5 score cp -2550 nodes 56849 nps 912064 prun 64% pv e1f2 time 62
+101759 <Libra2(1): info depth 6 score cp -1000000 nodes 119277 nps 515847 prun 69% pv a1a4 time 231
+102759 <Libra2(1): info depth 7 score cp -1000000 nodes 989360 nps 989220 prun 35% pv a1a4 time 1000
+102759 <Libra2(1): bestmove a1a4
+102759 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1 e5e4 f3g3 f8g8 g3h3 a2a1 g2g4 e4e3 c6d4 e7e5 d4f3 e3e2 h3g3 e5e4 g4g5 e4f3 g3f3 e2e1q f3f4 a1a4
+102759 >Libra1(0): isready
+102760 <Libra1(0): readyok
+102760 >Libra1(0): go wtime 12984 btime 15338 winc 1000 binc 1000
+102760 <Libra1(0): info depth 1 score cp -2340 nodes 1 nps 19764 prun 0% pv f4f3 time 0
+102760 <Libra1(0): info depth 2 score cp -2445 nodes 12 nps 195074 prun 0% pv f4f3 time 0
+102760 <Libra1(0): info depth 3 score cp -2445 nodes 24 nps 260016 prun 54% pv f4f3 time 0
+102761 <Libra1(0): info depth 4 score cp -2455 nodes 785 nps 552312 prun 28% pv f4f3 time 1
+102764 <Libra1(0): info depth 5 score cp -1000000 nodes 940 nps 369036 prun 61% pv f4f3 time 2
+102764 <Libra1(0): info depth 6 score cp -1000000 nodes 8 nps 69434 prun 97% pv f4f3 time 0
+102764 <Libra1(0): info depth 7 score cp -1000000 nodes 8 nps 68154 prun 97% pv f4f3 time 0
+102764 <Libra1(0): info depth 8 score cp -1000000 nodes 8 nps 71788 prun 97% pv f4f3 time 0
+102764 <Libra1(0): info depth 9 score cp -1000000 nodes 8 nps 83211 prun 97% pv f4f3 time 0
+102764 <Libra1(0): info depth 10 score cp -1000000 nodes 8 nps 67011 prun 97% pv f4f3 time 0
+102765 <Libra1(0): info depth 11 score cp -1000000 nodes 8 nps 69860 prun 97% pv f4f3 time 0
+102765 <Libra1(0): info depth 12 score cp -1000000 nodes 8 nps 78553 prun 97% pv f4f3 time 0
+102765 <Libra1(0): info depth 13 score cp -1000000 nodes 8 nps 85621 prun 97% pv f4f3 time 0
+102765 <Libra1(0): info depth 14 score cp -1000000 nodes 8 nps 86747 prun 97% pv f4f3 time 0
+102765 <Libra1(0): info depth 15 score cp -1000000 nodes 8 nps 67750 prun 97% pv f4f3 time 0
+102765 <Libra1(0): info depth 16 score cp -1000000 nodes 8 nps 89588 prun 97% pv f4f3 time 0
+102765 <Libra1(0): bestmove f4f3
+102765 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1 e5e4 f3g3 f8g8 g3h3 a2a1 g2g4 e4e3 c6d4 e7e5 d4f3 e3e2 h3g3 e5e4 g4g5 e4f3 g3f3 e2e1q f3f4 a1a4 f4f3
+102765 >Libra2(1): isready
+102766 <Libra2(1): readyok
+102766 >Libra2(1): go wtime 13979 btime 15338 winc 1000 binc 1000
+102766 <Libra2(1): info depth 1 score cp -2445 nodes 60 nps 1062416 prun 0% pv g8g5 time 0
+102766 <Libra2(1): info depth 2 score cp -2445 nodes 315 nps 1325400 prun 0% pv g8g5 time 0
+102768 <Libra2(1): info depth 3 score cp -2455 nodes 1173 nps 701455 prun 90% pv d3e4 time 1
+102774 <Libra2(1): info depth 4 score cp -1000000 nodes 4023 nps 680429 prun 74% pv a4h4 time 5
+102834 <Libra2(1): info depth 5 score cp -1000000 nodes 64643 nps 1065020 prun 52% pv a4h4 time 60
+102995 <Libra2(1): info depth 6 score cp -1000000 nodes 79046 nps 492928 prun 68% pv g8g5 time 160
+103751 <Libra2(1): info depth 7 score cp -1000000 nodes 765739 nps 1012068 prun 34% pv g8g5 time 756
+104324 <Libra2(1): info depth 8 score cp -1000000 nodes 267721 nps 467411 prun 68% pv g8g5 time 572
+105324 <Libra2(1): info depth 9 score cp -1000000 nodes 1010918 nps 1010810 prun 39% pv g8g5 time 1000
+105325 <Libra2(1): bestmove g8g5
+105325 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1 e5e4 f3g3 f8g8 g3h3 a2a1 g2g4 e4e3 c6d4 e7e5 d4f3 e3e2 h3g3 e5e4 g4g5 e4f3 g3f3 e2e1q f3f4 a1a4 f4f3 g8g5
+105325 >Libra1(0): isready
+105325 <Libra1(0): readyok
+105325 >Libra1(0): go wtime 13979 btime 13780 winc 1000 binc 1000
+105326 <Libra1(0): info depth 1 score cp -2445 nodes 2 nps 42035 prun 0% pv h2h3 time 0
+105326 <Libra1(0): info depth 2 score cp -2450 nodes 24 nps 239456 prun 0% pv h2h3 time 0
+105326 <Libra1(0): info depth 3 score cp -2455 nodes 45 nps 315444 prun 12% pv h2h3 time 0
+105327 <Libra1(0): info depth 4 score cp -1000000 nodes 538 nps 734370 prun 16% pv h2h3 time 0
+105327 <Libra1(0): info depth 5 score cp -1000000 nodes 4 nps 51810 prun 97% pv h2h3 time 0
+105327 <Libra1(0): info depth 6 score cp -1000000 nodes 4 nps 48641 prun 97% pv h2h3 time 0
+105327 <Libra1(0): info depth 7 score cp -1000000 nodes 4 nps 53021 prun 97% pv h2h3 time 0
+105327 <Libra1(0): info depth 8 score cp -1000000 nodes 4 nps 49956 prun 97% pv h2h3 time 0
+105327 <Libra1(0): info depth 9 score cp -1000000 nodes 4 nps 49738 prun 97% pv h2h3 time 0
+105327 <Libra1(0): info depth 10 score cp -1000000 nodes 4 nps 76911 prun 97% pv h2h3 time 0
+105328 <Libra1(0): info depth 11 score cp -1000000 nodes 4 nps 62874 prun 97% pv h2h3 time 0
+105328 <Libra1(0): info depth 12 score cp -1000000 nodes 4 nps 52244 prun 97% pv h2h3 time 0
+105328 <Libra1(0): info depth 13 score cp -1000000 nodes 4 nps 74822 prun 97% pv h2h3 time 0
+105328 <Libra1(0): info depth 14 score cp -1000000 nodes 4 nps 94142 prun 97% pv h2h3 time 0
+105328 <Libra1(0): info depth 15 score cp -1000000 nodes 4 nps 58250 prun 97% pv h2h3 time 0
+105328 <Libra1(0): info depth 16 score cp -1000000 nodes 4 nps 50931 prun 97% pv h2h3 time 0
+105328 <Libra1(0): bestmove h2h3
+105328 >Libra2(1): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1 e5e4 f3g3 f8g8 g3h3 a2a1 g2g4 e4e3 c6d4 e7e5 d4f3 e3e2 h3g3 e5e4 g4g5 e4f3 g3f3 e2e1q f3f4 a1a4 f4f3 g8g5 h2h3
+105328 >Libra2(1): isready
+105329 <Libra2(1): readyok
+105329 >Libra2(1): go wtime 14977 btime 13780 winc 1000 binc 1000
+105329 <Libra2(1): info depth 1 score cp -2455 nodes 66 nps 912295 prun 0% pv g5g2 time 0
+105329 <Libra2(1): info depth 2 score cp -1000000 nodes 162 nps 521655 prun 0% pv g5g3 time 0
+105330 <Libra2(1): info depth 3 score cp -1000000 nodes 959 nps 939092 prun 62% pv g5g3 time 1
+105333 <Libra2(1): info depth 4 score cp -1000000 nodes 1812 nps 659249 prun 60% pv g5g3 time 2
+105361 <Libra2(1): info depth 5 score cp -1000000 nodes 26470 nps 932216 prun 36% pv g5g3 time 28
+105384 <Libra2(1): info depth 6 score cp -1000000 nodes 11421 nps 505657 prun 69% pv g5g3 time 22
+105494 <Libra2(1): info depth 7 score cp -1000000 nodes 100317 nps 914323 prun 29% pv g5g3 time 109
+105674 <Libra2(1): info depth 8 score cp -1000000 nodes 88016 nps 488499 prun 63% pv g5g3 time 180
+106263 <Libra2(1): info depth 9 score cp -1000000 nodes 563583 nps 957139 prun 32% pv g5g3 time 588
+107263 <Libra2(1): info depth 10 score cp -1000000 nodes 580735 nps 580675 prun 59% pv g5g3 time 1000
+107263 <Libra2(1): bestmove g5g3
+107263 >Libra1(0): position fen rnbqkb1r/pppppp1p/5n2/6p1/Q7/2PP4/PP2PPPP/RNB1KBNR b KQkq - 0 1 moves f8h6 c1g5 h6g5 g1f3 g5c1 c3c4 c1b2 c4c5 b7b5 a4b4 b8a6 b4b2 a6c5 b2b5 c5e6 b1c3 c7c5 a1d1 d8b6 b5b6 a7b6 e2e4 e6d4 f3d4 c5d4 c3b5 a8a2 d1c1 e8g8 e4e5 f6g4 b5d4 g4f2 h1g1 c8a6 c1b1 f2d3 f1d3 a6d3 b1a1 a2a1 e1f2 a1a2 f2g3 d7d6 d4c6 g8h8 g3f3 d6e5 g1a1 e5e4 f3g3 f8g8 g3h3 a2a1 g2g4 e4e3 c6d4 e7e5 d4f3 e3e2 h3g3 e5e4 g4g5 e4f3 g3f3 e2e1q f3f4 a1a4 f4f3 g8g5 h2h3 g5g3
+107263 >Libra1(0): isready
+107263 >Libra2(1): isready
+107263 <Libra2(1): readyok
+107264 <Libra1(0): readyok
+Finished game 1 (Libra1 vs Libra2): 0-1 {Black mates}
+Score of Libra1 vs Libra2: 0 - 1 - 0  [0.000] 1
+...      Libra1 playing White: 0 - 1 - 0  [0.000] 1
+...      White vs Black: 0 - 1 - 0  [0.000] 1
+Elo difference: -inf +/- nan, LOS: 15.9 %, DrawRatio: 0.0 %
+SPRT: llr 0 (0.0%), lbound -inf, ubound inf
+
+Player: Libra1
+   "Loss: Black mates": 1
+Player: Libra2
+   "Win: Black mates": 1
+Finished match
+107264 >Libra1(0): quit
+107264 >Libra2(1): quit
