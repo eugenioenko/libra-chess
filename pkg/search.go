@@ -154,7 +154,6 @@ func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta 
 	moves := board.GenerateLegalMoves()
 	stats.IncMoveGeneration()
 	moves = board.SortMovesAlphaBeta(moves, depth, tt, hash, ctx, ply)
-
 	if len(moves) == 0 {
 		return board.MateOrStalemateScore(maximizing)
 	}
