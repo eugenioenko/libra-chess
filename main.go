@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	BaseSearchDepth = 5
+	SearchMaxDepth = 16
 )
 
 func main() {
@@ -19,9 +19,9 @@ func main() {
 	fmt.Println("Type 'quit' to exit the CLI at any time.")
 	fmt.Println("LibraChess is a UCI chess engine, designed to be used with a chess GUI (like CuteChess, CoreChess, PyChess, etc.)")
 	fmt.Println("For more information, visit: https://github.com/eugenioenko/libra-chess")
-
 	scanner := bufio.NewScanner(os.Stdin)
 	board := NewBoard()
+
 	for scanner.Scan() {
 		line := scanner.Text()
 		fields := strings.Fields(line)
