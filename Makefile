@@ -49,7 +49,7 @@ test-cutechess:
 		-openings file=./books/chess.epd format=epd order=random plies=8 \
 		-each proto=uci tc=180+2 \
 		-games 10 \
-		-concurrency 1 \
+		-concurrency 10 \
 		-ratinginterval 10 \
 		-draw movenumber=40 movecount=6 score=10 \
 		-debug \
