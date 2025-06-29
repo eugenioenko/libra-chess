@@ -19,6 +19,7 @@ type SearchStats struct {
 	MaxSearchDepth       int32  // Maximum depth reached in the search
 	TimeSpentNanoseconds int64  // Total time taken for the search (nanoseconds)
 	BestScore            int    // Best score found in the search
+	PVMove               string // Best move in UCI format
 
 	startTime time.Time // unexported field for tracking time
 }
@@ -137,12 +138,13 @@ func (s *SearchStats) PrintUCI() {
 	if nodesTotal > 0 {
 		prunedPercent = (float64(s.NodesPruned) / float64(nodesTotal)) * 100.0
 	}
-	fmt.Printf("info depth %d score cp %d nodes %d nps %d prun %.0f%% time %d\n",
+	fmt.Printf("info depth %d score cp %d nodes %d nps %d prun %.0f%% pv %s time %d\n",
 		s.MaxSearchDepth,
 		s.BestScore,
 		s.NodesSearched,
 		nps,
 		prunedPercent,
+		s.PVMove,
 		dur.Milliseconds(),
 	)
 }

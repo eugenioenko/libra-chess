@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	// Realistically its stopping search at level 7 currently
 	SearchMaxDepth = 16
 )
 
@@ -53,12 +54,14 @@ func main() {
 			var bestMove *Move
 			// Iterative deepening
 			for depth := 1; depth <= maxDepth; depth++ {
-				move, stats := board.Search(depth, tt)
+				move, stats := board.Search(depth, tt, bestMove)
 				stats.PrintUCI()
-				bestMove = move
+				if move != nil {
+					bestMove = move
+				}
 				timeSpent := time.Duration(stats.TimeSpentNanoseconds)
-				// Exit search if we spent more than 1 second
-				if timeSpent.Seconds() >= 1 {
+				// Exit search if we spent more than 800ms second
+				if timeSpent.Milliseconds() > 800 {
 					break
 				}
 			}

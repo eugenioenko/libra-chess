@@ -62,8 +62,8 @@ test-self:
 		-engine name=Libra2 cmd=./libra-chess \
 		-openings file=./books/chess.epd format=epd order=random plies=8 \
 		-each proto=uci tc=30+1 \
-		-games 10 \
-		-concurrency 10 \
+		-games 1 \
+		-concurrency 1 \
 		-ratinginterval 10 \
 		-draw movenumber=40 movecount=6 score=10 \
 		-debug \
@@ -89,8 +89,8 @@ test-stockfish:
 		-engine name=PullLibra cmd=./libra-chess \
 		-engine name=Stockfish cmd=./stockfish/stockfish-cli option.UCI_LimitStrength=true option.UCI_Elo=1500 \
 		-each proto=uci tc=30+0 \
-		-games 1 \
-		-concurrency 1 \
+		-games 10 \
+		-concurrency 10 \
 		-openings file=./books/chess.epd format=epd order=random plies=8 \
 		-ratinginterval 10 \
 		-draw movenumber=40 movecount=6 score=10 \
