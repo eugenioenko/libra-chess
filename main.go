@@ -41,6 +41,7 @@ func main() {
 		case "position":
 			board.ParseAndApplyPosition(fields[1:])
 		case "go":
+			// test ci
 			tt := NewTranspositionTable()
 			move, stats := board.Search(BaseSearchDepth, tt)
 			stats.PrintUCI()
