@@ -6,8 +6,9 @@ import (
 )
 
 const (
-	MaxEvaluationScore = 1000000
-	MaxSearchDepth     = 64 // or whatever your engine's max depth is
+	MaxEvaluationScore      = 1000000 // Maximum score for wining
+	MinEvaluationMoveAmount = 10      // Minimum number of moves to evaluate before skipping quiet moves
+	MinQuietSearchDepth     = 3       // Maximum depth to consider quiet moves
 )
 
 type searchResult struct {
@@ -16,33 +17,24 @@ type searchResult struct {
 	originalIndex int
 }
 
-func (board *Board) Search(maxDepth int, tt *TranspositionTable) (*Move, *SearchStats) {
+func (board *Board) Search(depth int, tt *TranspositionTable) (*Move, *SearchStats) {
 	stats := &SearchStats{}
 	stats.StartTimer()
-	defer stats.StopTimer()
 
-	maximizing := board.WhiteToMove
 	var bestMove *Move
-	bestScore := -MaxEvaluationScore
-	if !maximizing {
-		bestScore = MaxEvaluationScore
-	}
-
 	var pvMove *Move
-	for depth := 1; depth <= maxDepth; depth++ {
-		stats.SetMaxSearchDepth(int32(depth))
-		moves := board.GenerateLegalMoves()
-		stats.IncMoveGeneration()
-		// Use SortMovesRoot at root
-		ttMove := tt.BestMoveDeepest(board.ZobristHash())
-		moves = board.SortMovesRoot(moves, pvMove, ttMove)
-		ctx := &SearchContext{} // new context for each root search
-		score, move := board.ParallelRootSearch(depth, tt, moves, stats, ctx)
-		bestScore = score
-		bestMove = move
-		pvMove = move // update PV move for next iteration
-	}
-	stats.BestScore = bestScore
+	stats.SetMaxSearchDepth(int32(depth))
+	moves := board.GenerateLegalMoves()
+	stats.IncMoveGeneration()
+	ttMove := tt.BestMoveDeepest(board.ZobristHash())
+	moves = board.SortMovesRoot(moves, pvMove, ttMove)
+	ctx := &SearchContext{}
+	score, move := board.ParallelRootSearch(depth, tt, moves, stats, ctx)
+	bestMove = move
+	pvMove = move
+
+	stats.BestScore = score
+	stats.StopTimer()
 	return bestMove, stats
 }
 
@@ -98,7 +90,7 @@ func (board *Board) ParallelRootSearch(depth int, tt *TranspositionTable, moves 
 	}()
 
 	var bestMove *Move
-	var bestMoveOriginalIndex int = -1
+	bestMoveOriginalIndex := -1
 	for result := range resultChan {
 		if maximizing {
 			if result.score > bestScore || (result.score == bestScore && (bestMove == nil || result.originalIndex < bestMoveOriginalIndex)) {
@@ -121,19 +113,21 @@ func (board *Board) ParallelRootSearch(depth int, tt *TranspositionTable, moves 
 
 func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta int, tt *TranspositionTable, stats *SearchStats, ctx *SearchContext, ply int) int {
 	stats.IncNodesSearched()
+
 	if depth == 0 {
 		return board.Evaluate()
 	}
 
 	hash := board.ZobristHash()
-	if entry, ok := tt.Get(hash, depth); ok {
+	if score, ok := tt.Get(hash, depth); ok {
 		stats.IncTTHit()
-		return entry
+		return score
 	}
 
 	moves := board.GenerateLegalMoves()
 	stats.IncMoveGeneration()
 	moves = board.SortMovesAlphaBeta(moves, depth, tt, hash, ctx, ply)
+
 	if len(moves) == 0 {
 		return board.MateOrStalemateScore(maximizing)
 	}
@@ -142,7 +136,13 @@ func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta 
 	var bestMove Move
 	if maximizing {
 		maxEval := -MaxEvaluationScore
+		evalCount := 0
 		for i, move := range moves {
+			if depth < MinQuietSearchDepth && move.IsQuiet() && evalCount > MinEvaluationMoveAmount {
+				// Skip quiet moves at shallow depths to speed up search
+				continue
+			}
+			evalCount += 1
 			prev := board.Move(move)
 			eval := board.AlphaBetaSearch(depth-1, false, alpha, beta, tt, stats, ctx, ply+1)
 			board.UndoMove(prev)
@@ -170,7 +170,13 @@ func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta 
 		result = maxEval
 	} else {
 		minEval := MaxEvaluationScore
+		evalCount := 0
 		for i, move := range moves {
+			if depth < MinQuietSearchDepth && move.IsQuiet() && evalCount > MinEvaluationMoveAmount {
+				// Skip quiet moves at shallow depths to speed up search
+				continue
+			}
+			evalCount += 1
 			prev := board.Move(move)
 			eval := board.AlphaBetaSearch(depth-1, true, alpha, beta, tt, stats, ctx, ply+1)
 			board.UndoMove(prev)

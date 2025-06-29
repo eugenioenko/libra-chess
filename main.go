@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	. "github.com/eugenioenko/libra-chess/pkg"
 )
 
 const (
-	BaseSearchDepth = 5
+	SearchMaxDepth = 16
 )
 
 func main() {
@@ -19,9 +20,9 @@ func main() {
 	fmt.Println("Type 'quit' to exit the CLI at any time.")
 	fmt.Println("LibraChess is a UCI chess engine, designed to be used with a chess GUI (like CuteChess, CoreChess, PyChess, etc.)")
 	fmt.Println("For more information, visit: https://github.com/eugenioenko/libra-chess")
-
 	scanner := bufio.NewScanner(os.Stdin)
 	board := NewBoard()
+
 	for scanner.Scan() {
 		line := scanner.Text()
 		fields := strings.Fields(line)
@@ -42,21 +43,28 @@ func main() {
 			board.ParseAndApplyPosition(fields[1:])
 		case "go":
 			tt := NewTranspositionTable()
-			depth := BaseSearchDepth
-			material := board.CountPieces()
-			if material < 30 {
-				depth = BaseSearchDepth + 1
+
+			maxDepth := SearchMaxDepth
+			remainingTimeInMs := GetUCIRemainingTime(board.WhiteToMove, fields)
+			// Limit max depth based on remaining time
+			if remainingTimeInMs < 2500 {
+				maxDepth = 3
 			}
-			if material < 20 {
-				depth = BaseSearchDepth + 2
+			var bestMove *Move
+			// Iterative deepening
+			for depth := 1; depth <= maxDepth; depth++ {
+				move, stats := board.Search(depth, tt)
+				stats.PrintUCI()
+				bestMove = move
+				timeSpent := time.Duration(stats.TimeSpentNanoseconds)
+				// Exit search if we spent more than 1 second
+				if timeSpent.Seconds() >= 1 {
+					break
+				}
 			}
-			if material < 10 {
-				depth = BaseSearchDepth + 3
-			}
-			move, stats := board.Search(depth, tt)
-			stats.PrintUCI()
-			if move != nil {
-				fmt.Printf("bestmove %s\n", move.ToUCI())
+
+			if bestMove != nil {
+				fmt.Printf("bestmove %s\n", bestMove.ToUCI())
 			} else {
 				fmt.Println("bestmove 0000")
 			}

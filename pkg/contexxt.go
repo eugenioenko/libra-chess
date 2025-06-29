@@ -1,5 +1,7 @@
 package libra
 
+const MaxSearchDepth = 32
+
 // SearchContext holds per-search context (killer moves, history heuristic, etc.)
 type SearchContext struct {
 	KillerMoves [MaxSearchDepth][2]Move
