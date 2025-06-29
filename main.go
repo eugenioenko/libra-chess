@@ -44,8 +44,8 @@ func main() {
 			tt := NewTranspositionTable()
 			material := board.CountPieces()
 			depth := BaseSearchDepth + ((40 - material) / 4)
-			score, move := board.Search(depth, tt)
-			fmt.Printf("info score cp %d\n", score)
+			move, stats := board.Search(depth, tt)
+			stats.PrintUCI()
 			if move != nil {
 				fmt.Printf("bestmove %s\n", move.ToUCI())
 			} else {
