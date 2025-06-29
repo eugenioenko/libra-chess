@@ -52,4 +52,5 @@ jobs:
             -openings file=books/chess.epd format=epd order=random plies=8 \
             -draw movenumber=40 movecount=6 score=10 \
             -ratinginterval 10 \
+            -debug \
             -rounds 1
