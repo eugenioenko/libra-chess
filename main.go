@@ -42,17 +42,10 @@ func main() {
 			board.ParseAndApplyPosition(fields[1:])
 		case "go":
 			tt := NewTranspositionTable()
-			depth := BaseSearchDepth
 			material := board.CountPieces()
-			if material < 30 {
-				depth = BaseSearchDepth + 1
-			} else if material < 20 {
-				depth = BaseSearchDepth + 2
-			} else if material < 10 {
-				depth = BaseSearchDepth + 3
-			}
-			move, stats := board.Search(depth, tt)
-			stats.PrintUCI()
+			depth := BaseSearchDepth + ((40 - material) / 4)
+			score, move := board.Search(depth, tt)
+			fmt.Printf("info score cp %d\n", score)
 			if move != nil {
 				fmt.Printf("bestmove %s\n", move.ToUCI())
 			} else {
