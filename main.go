@@ -46,15 +46,13 @@ func main() {
 			material := board.CountPieces()
 			if material < 30 {
 				depth = BaseSearchDepth + 1
-			}
-			if material < 20 {
+			} else if material < 20 {
 				depth = BaseSearchDepth + 2
-			}
-			if material < 10 {
+			} else if material < 10 {
 				depth = BaseSearchDepth + 3
 			}
-			score, move := board.Search(depth, tt)
-			fmt.Printf("info score cp %d\n", score)
+			move, stats := board.Search(depth, tt)
+			stats.PrintUCI()
 			if move != nil {
 				fmt.Printf("bestmove %s\n", move.ToUCI())
 			} else {

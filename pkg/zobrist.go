@@ -5,7 +5,7 @@ import (
 	"math/rand"
 )
 
-type ZobristCastlingAvailability struct {
+type ZobristCastlingState struct {
 	BlackKingSide  uint64
 	BlackQueenSide uint64
 	WhiteKingSide  uint64
@@ -15,9 +15,8 @@ type ZobristCastlingAvailability struct {
 var zobristPieceTable = GenerateZobristPieceTable()
 var zobristOnPassantTable = GenerateZobristOnPassantTable()
 var zobristWhiteToMove uint64 = rand.Uint64()
-var zobristBlackToMove uint64 = rand.Uint64()
 
-var zobristCastlingAvailability ZobristCastlingAvailability = ZobristCastlingAvailability{
+var zobristCastling ZobristCastlingState = ZobristCastlingState{
 	BlackKingSide:  rand.Uint64(),
 	BlackQueenSide: rand.Uint64(),
 	WhiteKingSide:  rand.Uint64(),
@@ -130,25 +129,23 @@ func (board *Board) ZobristHash() uint64 {
 		b &= b - 1
 	}
 
-	if board.CastlingAvailability.BlackKingSide {
-		hash ^= zobristCastlingAvailability.BlackKingSide
+	if board.Castling.BlackKingSide {
+		hash ^= zobristCastling.BlackKingSide
 	}
-	if board.CastlingAvailability.BlackQueenSide {
-		hash ^= zobristCastlingAvailability.BlackQueenSide
+	if board.Castling.BlackQueenSide {
+		hash ^= zobristCastling.BlackQueenSide
 	}
-	if board.CastlingAvailability.WhiteKingSide {
-		hash ^= zobristCastlingAvailability.WhiteKingSide
+	if board.Castling.WhiteKingSide {
+		hash ^= zobristCastling.WhiteKingSide
 	}
-	if board.CastlingAvailability.WhiteQueenSide {
-		hash ^= zobristCastlingAvailability.WhiteQueenSide
+	if board.Castling.WhiteQueenSide {
+		hash ^= zobristCastling.WhiteQueenSide
 	}
 	if board.OnPassant != 0 {
 		hash ^= zobristOnPassantTable[board.OnPassant]
 	}
 	if board.WhiteToMove {
 		hash ^= zobristWhiteToMove
-	} else {
-		hash ^= zobristBlackToMove
 	}
 	return hash
 }

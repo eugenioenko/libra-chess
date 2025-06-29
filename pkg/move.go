@@ -14,10 +14,12 @@ const (
 )
 
 type Move struct {
+	Piece    byte
 	From     byte
 	To       byte
 	MoveType byte
-	Data     [2]byte
+	Promoted byte
+	Captured byte
 }
 
 type MovesCount struct {
@@ -35,33 +37,35 @@ func NewMovesCount() *MovesCount {
 	}
 }
 
-func NewMove(from byte, to byte, moveType byte, data [2]byte) Move {
+func NewMove(piece, from, to, moveType, promoted, captured byte) Move {
 	return Move{
+		Piece:    piece,
 		From:     from,
 		To:       to,
 		MoveType: moveType,
-		Data:     data,
+		Captured: captured,
+		Promoted: promoted,
 	}
 }
 
 type MoveState struct {
-	WhitePawns           uint64
-	WhiteKnights         uint64
-	WhiteBishops         uint64
-	WhiteRooks           uint64
-	WhiteQueens          uint64
-	WhiteKing            uint64
-	BlackPawns           uint64
-	BlackKnights         uint64
-	BlackBishops         uint64
-	BlackRooks           uint64
-	BlackQueens          uint64
-	BlackKing            uint64
-	CastlingAvailability CastlingAvailability
-	OnPassant            byte
-	HalfMoveClock        int
-	FullMoveCounter      int
-	WhiteToMove          bool
+	WhitePawns      uint64
+	WhiteKnights    uint64
+	WhiteBishops    uint64
+	WhiteRooks      uint64
+	WhiteQueens     uint64
+	WhiteKing       uint64
+	BlackPawns      uint64
+	BlackKnights    uint64
+	BlackBishops    uint64
+	BlackRooks      uint64
+	BlackQueens     uint64
+	BlackKing       uint64
+	Castling        CastlingState
+	OnPassant       byte
+	HalfMoveClock   int
+	FullMoveCounter int
+	WhiteToMove     bool
 }
 
 // CountMoves returns a summary of the number of moves by type in the current move list.
@@ -86,7 +90,7 @@ func (move Move) ToUCI() string {
 	uci := from + to
 	if move.MoveType == MovePromotion || move.MoveType == MovePromotionCapture {
 		promo := ""
-		switch move.Data[0] {
+		switch move.Promoted {
 		case WhiteQueen, BlackQueen:
 			promo = "q"
 		case WhiteRook, BlackRook:
@@ -104,7 +108,7 @@ func (move Move) ToUCI() string {
 func (move Move) ToMove() string {
 	from := BoardSquareNames[move.From]
 	to := BoardSquareNames[move.To]
-	piece := pieceCodeToFont[move.Data[0]]
+	piece := pieceCodeToFont[move.Piece]
 	capture := " "
 	if move.MoveType == MoveCapture || move.MoveType == MovePromotionCapture || move.MoveType == MoveEnPassant {
 		capture = "x"
@@ -116,23 +120,23 @@ func (move Move) ToMove() string {
 func (board *Board) Move(move Move) MoveState {
 	// Save current state
 	prev := MoveState{
-		WhitePawns:           board.WhitePawns,
-		WhiteKnights:         board.WhiteKnights,
-		WhiteBishops:         board.WhiteBishops,
-		WhiteRooks:           board.WhiteRooks,
-		WhiteQueens:          board.WhiteQueens,
-		WhiteKing:            board.WhiteKing,
-		BlackPawns:           board.BlackPawns,
-		BlackKnights:         board.BlackKnights,
-		BlackBishops:         board.BlackBishops,
-		BlackRooks:           board.BlackRooks,
-		BlackQueens:          board.BlackQueens,
-		BlackKing:            board.BlackKing,
-		CastlingAvailability: board.CastlingAvailability,
-		OnPassant:            board.OnPassant,
-		HalfMoveClock:        board.HalfMoveClock,
-		FullMoveCounter:      board.FullMoveCounter,
-		WhiteToMove:          board.WhiteToMove,
+		WhitePawns:      board.WhitePawns,
+		WhiteKnights:    board.WhiteKnights,
+		WhiteBishops:    board.WhiteBishops,
+		WhiteRooks:      board.WhiteRooks,
+		WhiteQueens:     board.WhiteQueens,
+		WhiteKing:       board.WhiteKing,
+		BlackPawns:      board.BlackPawns,
+		BlackKnights:    board.BlackKnights,
+		BlackBishops:    board.BlackBishops,
+		BlackRooks:      board.BlackRooks,
+		BlackQueens:     board.BlackQueens,
+		BlackKing:       board.BlackKing,
+		Castling:        board.Castling,
+		OnPassant:       board.OnPassant,
+		HalfMoveClock:   board.HalfMoveClock,
+		FullMoveCounter: board.FullMoveCounter,
+		WhiteToMove:     board.WhiteToMove,
 	}
 
 	if !board.WhiteToMove {
@@ -152,7 +156,7 @@ func (board *Board) Move(move Move) MoveState {
 	board.clearPieceAtSquare(from, piece)
 	// Place piece at 'to' square
 	if move.MoveType == MovePromotion || move.MoveType == MovePromotionCapture {
-		board.setPieceAtSquare(to, move.Data[0])
+		board.setPieceAtSquare(to, move.Promoted)
 	} else {
 		board.setPieceAtSquare(to, piece)
 	}
@@ -176,8 +180,8 @@ func (board *Board) Move(move Move) MoveState {
 				board.clearPieceAtSquare(SquareA1, WhiteRook)
 				board.setPieceAtSquare(SquareD1, WhiteRook)
 			}
-			board.CastlingAvailability.WhiteKingSide = false
-			board.CastlingAvailability.WhiteQueenSide = false
+			board.Castling.WhiteKingSide = false
+			board.Castling.WhiteQueenSide = false
 		} else if piece == BlackKing {
 			if to == SquareG8 {
 				board.clearPieceAtSquare(SquareH8, BlackRook)
@@ -186,8 +190,8 @@ func (board *Board) Move(move Move) MoveState {
 				board.clearPieceAtSquare(SquareA8, BlackRook)
 				board.setPieceAtSquare(SquareD8, BlackRook)
 			}
-			board.CastlingAvailability.BlackKingSide = false
-			board.CastlingAvailability.BlackQueenSide = false
+			board.Castling.BlackKingSide = false
+			board.Castling.BlackQueenSide = false
 		}
 	}
 
@@ -199,53 +203,47 @@ func (board *Board) Move(move Move) MoveState {
 	}
 
 	if piece == WhiteKing {
-		board.CastlingAvailability.WhiteKingSide = false
-		board.CastlingAvailability.WhiteQueenSide = false
+		board.Castling.WhiteKingSide = false
+		board.Castling.WhiteQueenSide = false
 	}
 	if piece == BlackKing {
-		board.CastlingAvailability.BlackKingSide = false
-		board.CastlingAvailability.BlackQueenSide = false
+		board.Castling.BlackKingSide = false
+		board.Castling.BlackQueenSide = false
 	}
 	if piece == WhiteRook {
 		if from == SquareH1 {
-			board.CastlingAvailability.WhiteKingSide = false
+			board.Castling.WhiteKingSide = false
 		}
 		if from == SquareA1 {
-			board.CastlingAvailability.WhiteQueenSide = false
+			board.Castling.WhiteQueenSide = false
 		}
 	}
 	if piece == BlackRook {
 		if from == SquareH8 {
-			board.CastlingAvailability.BlackKingSide = false
+			board.Castling.BlackKingSide = false
 		}
 		if from == SquareA8 {
-			board.CastlingAvailability.BlackQueenSide = false
+			board.Castling.BlackQueenSide = false
 		}
 	}
 
 	if move.MoveType == MoveCapture || move.MoveType == MovePromotionCapture {
 		capturedPieceSquare := move.To
-		var capturedPiece byte
-		if move.MoveType == MovePromotionCapture {
-			capturedPiece = move.Data[1]
-		} else {
-			capturedPiece = move.Data[0]
-		}
-		board.clearPieceAtSquare(capturedPieceSquare, capturedPiece)
-		if capturedPiece == WhiteRook {
+		board.clearPieceAtSquare(capturedPieceSquare, move.Captured)
+		if move.Captured == WhiteRook {
 			if capturedPieceSquare == SquareH1 {
-				board.CastlingAvailability.WhiteKingSide = false
+				board.Castling.WhiteKingSide = false
 			}
 			if capturedPieceSquare == SquareA1 {
-				board.CastlingAvailability.WhiteQueenSide = false
+				board.Castling.WhiteQueenSide = false
 			}
 		}
-		if capturedPiece == BlackRook {
+		if move.Captured == BlackRook {
 			if capturedPieceSquare == SquareH8 {
-				board.CastlingAvailability.BlackKingSide = false
+				board.Castling.BlackKingSide = false
 			}
 			if capturedPieceSquare == SquareA8 {
-				board.CastlingAvailability.BlackQueenSide = false
+				board.Castling.BlackQueenSide = false
 			}
 		}
 	}
@@ -330,7 +328,7 @@ func (board *Board) UndoMove(state MoveState) {
 	board.BlackRooks = state.BlackRooks
 	board.BlackQueens = state.BlackQueens
 	board.BlackKing = state.BlackKing
-	board.CastlingAvailability = state.CastlingAvailability
+	board.Castling = state.Castling
 	board.OnPassant = state.OnPassant
 	board.HalfMoveClock = state.HalfMoveClock
 	board.FullMoveCounter = state.FullMoveCounter
