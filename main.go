@@ -5,14 +5,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	. "github.com/eugenioenko/libra-chess/pkg"
-)
-
-const (
-	// Realistically its stopping search at level 7 currently
-	SearchMaxDepth = 16
 )
 
 func main() {
@@ -43,29 +37,11 @@ func main() {
 		case "position":
 			board.ParseAndApplyPosition(fields[1:])
 		case "go":
-			tt := NewTranspositionTable()
-
-			maxDepth := SearchMaxDepth
 			remainingTimeInMs := GetUCIRemainingTime(board.WhiteToMove, fields)
-			// Limit max depth based on remaining time
-			if remainingTimeInMs < 2500 {
-				maxDepth = 3
-			}
-			var bestMove *Move
-			// Iterative deepening
-			for depth := 1; depth <= maxDepth; depth++ {
-				move, stats := board.Search(depth, tt, bestMove)
-				stats.PrintUCI()
-				if move != nil {
-					bestMove = move
-				}
-				timeSpent := time.Duration(stats.TimeSpentNanoseconds)
-				// Exit search if we spent more than 800ms second
-				if timeSpent.Milliseconds() > 800 {
-					break
-				}
-			}
-
+			bestMove := board.IterativeDeepeningSearch(SearchOptions{
+				RemainingTimeInMs:  remainingTimeInMs,
+				TimeDepthLimitInMs: 1500,
+			})
 			if bestMove != nil {
 				fmt.Printf("bestmove %s\n", bestMove.ToUCI())
 			} else {

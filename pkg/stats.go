@@ -6,9 +6,7 @@ import (
 	"time"
 )
 
-// SearchStats holds only statistics for a search
-// (thread-safe via atomic operations)
-type SearchStats struct {
+type SearchResult struct {
 	NodesSearched        uint64 // Total nodes visited
 	NodesPruned          uint64 // Nodes cut off by alpha-beta pruning
 	TTHits               uint64 // Transposition table hits
@@ -19,42 +17,44 @@ type SearchStats struct {
 	MaxSearchDepth       int32  // Maximum depth reached in the search
 	TimeSpentNanoseconds int64  // Total time taken for the search (nanoseconds)
 	BestScore            int    // Best score found in the search
-	PVMove               string // Best move in UCI format
+	PVMove               string // Best move line in UCI format
+	BestMove             *Move  // Best	move in UCI format
+	IsInterrupted        bool   // Whether the search was interrupted
 
 	startTime time.Time // unexported field for tracking time
 }
 
 // Increment functions for thread-safe updates
-func (s *SearchStats) IncNodesSearched() {
+func (s *SearchResult) IncNodesSearched() {
 	atomic.AddUint64(&s.NodesSearched, 1)
 }
 
-func (s *SearchStats) IncNodesPruned() {
+func (s *SearchResult) IncNodesPruned() {
 	atomic.AddUint64(&s.NodesPruned, 1)
 }
 
-func (s *SearchStats) IncTTHit() {
+func (s *SearchResult) IncTTHit() {
 	atomic.AddUint64(&s.TTHits, 1)
 }
 
-func (s *SearchStats) IncTTStore() {
+func (s *SearchResult) IncTTStore() {
 	atomic.AddUint64(&s.TTStores, 1)
 }
 
-func (s *SearchStats) IncBetaCutoff() {
+func (s *SearchResult) IncBetaCutoff() {
 	atomic.AddUint64(&s.BetaCutoffs, 1)
 }
 
-func (s *SearchStats) IncNullMovePrune() {
+func (s *SearchResult) IncNullMovePrune() {
 	atomic.AddUint64(&s.NullMovePrunes, 1)
 }
 
-func (s *SearchStats) IncMoveGeneration() {
+func (s *SearchResult) IncMoveGeneration() {
 	atomic.AddUint64(&s.MoveGenerations, 1)
 }
 
 // SetMaxSearchDepth sets the maximum search depth reached (thread-safe)
-func (s *SearchStats) SetMaxSearchDepth(depth int32) {
+func (s *SearchResult) SetMaxSearchDepth(depth int32) {
 	for {
 		current := atomic.LoadInt32(&s.MaxSearchDepth)
 		if depth > current {
@@ -68,16 +68,16 @@ func (s *SearchStats) SetMaxSearchDepth(depth int32) {
 }
 
 // AddTimeSpent adds duration to TimeSpentNanoseconds (thread-safe)
-func (s *SearchStats) AddTimeSpent(d time.Duration) {
+func (s *SearchResult) AddTimeSpent(d time.Duration) {
 	atomic.AddInt64(&s.TimeSpentNanoseconds, d.Nanoseconds())
 }
 
 // For timing
-func (s *SearchStats) StartTimer() {
+func (s *SearchResult) StartTimer() {
 	s.startTime = time.Now()
 }
 
-func (s *SearchStats) StopTimer() {
+func (s *SearchResult) StopTimer() {
 	if !s.startTime.IsZero() {
 		d := time.Since(s.startTime)
 		s.AddTimeSpent(d)
@@ -85,7 +85,7 @@ func (s *SearchStats) StopTimer() {
 	}
 }
 
-func (s *SearchStats) String() string {
+func (s *SearchResult) String() string {
 	dur := time.Duration(s.TimeSpentNanoseconds)
 	nodesTotal := s.NodesSearched + s.NodesPruned
 	prunedPercent := 0.0
@@ -122,12 +122,12 @@ Time Spent:            %s
 	)
 }
 
-func (s *SearchStats) Print() {
+func (s *SearchResult) Print() {
 	fmt.Print(s.String())
 }
 
 // PrintUCI prints the search stats in UCI info format
-func (s *SearchStats) PrintUCI() {
+func (s *SearchResult) PrintUCI() {
 	dur := time.Duration(s.TimeSpentNanoseconds)
 	nps := int64(0)
 	if dur > 0 {
@@ -144,7 +144,7 @@ func (s *SearchStats) PrintUCI() {
 		s.NodesSearched,
 		nps,
 		prunedPercent,
-		s.PVMove,
+		s.BestMove.ToUCI(),
 		dur.Milliseconds(),
 	)
 }
