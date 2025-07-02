@@ -24,6 +24,8 @@ build-release:
 	GOOS=windows GOARCH=arm64 go build -o release/$(APP_NAME)-windows-arm64.exe main.go
 	GOOS=windows GOARCH=386 go build -o release/$(APP_NAME)-windows-386.exe main.go
 
+build-wasm:
+		GOOS=js GOARCH=wasm go build -o wasm/libra.wasm ./wasm/libra.go
 # Run the application
 run:
 	go run main.go
@@ -52,7 +54,6 @@ test-cutechess:
 		-concurrency 10 \
 		-ratinginterval 10 \
 		-draw movenumber=40 movecount=6 score=10 \
-		-debug \
 		-rounds 1
 
 test-self:

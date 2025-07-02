@@ -3,6 +3,8 @@
 # ⚖️ Libra Chess Engine
 
 > A UCI-Compliant Chess Engine in Go
+>
+> ## [Play against Libra Chess live!](https://eugenioenko.github.io/libra-chess-ui)
 
 ---
 

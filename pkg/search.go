@@ -9,7 +9,7 @@ import (
 const (
 	SearchMaxDepth           = 16        // Maximum depth to search
 	MaxEvaluationScore       = 1_000_000 // Maximum score for wining
-	MaxEvaluationDepthTimeMs = 5_000     // Maximum time for a search at the root level
+	MaxEvaluationDepthTimeMs = 1_000     // Maximum time for a search at the root level
 )
 
 type SearchOptions struct {
