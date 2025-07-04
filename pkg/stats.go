@@ -7,19 +7,19 @@ import (
 )
 
 type SearchResult struct {
-	NodesSearched        uint64 // Total nodes visited
-	NodesPruned          uint64 // Nodes cut off by alpha-beta pruning
-	TTHits               uint64 // Transposition table hits
-	TTStores             uint64 // Transposition table stores
-	BetaCutoffs          uint64 // Beta cutoffs (prunes)
-	NullMovePrunes       uint64 // Null move pruning occurrences
-	MoveGenerations      uint64 // Number of times legal moves were generated
-	MaxSearchDepth       int32  // Maximum depth reached in the search
-	TimeSpentNanoseconds int64  // Total time taken for the search (nanoseconds)
-	BestScore            int    // Best score found in the search
-	PVMove               string // Best move line in UCI format
-	BestMove             *Move  // Best	move in UCI format
-	IsInterrupted        bool   // Whether the search was interrupted
+	NodesSearched   uint64 // Total nodes visited
+	NodesPruned     uint64 // Nodes cut off by alpha-beta pruning
+	TTHits          uint64 // Transposition table hits
+	TTStores        uint64 // Transposition table stores
+	BetaCutoffs     uint64 // Beta cutoffs (prunes)
+	NullMovePrunes  uint64 // Null move pruning occurrences
+	MoveGenerations uint64 // Number of times legal moves were generated
+	MaxSearchDepth  int32  // Maximum depth reached in the search
+	TimeSpentInMs   int64  // Total time taken for the search (milliseconds)
+	BestScore       int    // Best score found in the search
+	PVMove          string // Best move line in UCI format
+	BestMove        *Move  // Best	move in UCI format
+	IsInterrupted   bool   // Whether the search was interrupted
 
 	startTime time.Time // unexported field for tracking time
 }
@@ -67,9 +67,9 @@ func (s *SearchResult) SetMaxSearchDepth(depth int32) {
 	}
 }
 
-// AddTimeSpent adds duration to TimeSpentNanoseconds (thread-safe)
+// AddTimeSpent adds duration to TimeSpentInMs (thread-safe)
 func (s *SearchResult) AddTimeSpent(d time.Duration) {
-	atomic.AddInt64(&s.TimeSpentNanoseconds, d.Nanoseconds())
+	atomic.AddInt64(&s.TimeSpentInMs, d.Milliseconds())
 }
 
 // For timing
@@ -86,7 +86,6 @@ func (s *SearchResult) StopTimer() {
 }
 
 func (s *SearchResult) String() string {
-	dur := time.Duration(s.TimeSpentNanoseconds)
 	nodesTotal := s.NodesSearched + s.NodesPruned
 	prunedPercent := 0.0
 	if nodesTotal > 0 {
@@ -105,7 +104,7 @@ Null Move Prunes:      %d
 Move Generations:      %d
 Max Search Depth:      %d
 Best Score:            %d
-Time Spent:            %s
+Time Spent:            %dms
 `,
 		s.NodesSearched,
 		s.NodesPruned,
@@ -118,7 +117,7 @@ Time Spent:            %s
 		s.MoveGenerations,
 		s.MaxSearchDepth,
 		s.BestScore,
-		dur.String(),
+		s.TimeSpentInMs,
 	)
 }
 
@@ -128,23 +127,26 @@ func (s *SearchResult) Print() {
 
 // PrintUCI prints the search stats in UCI info format
 func (s *SearchResult) PrintUCI() {
-	dur := time.Duration(s.TimeSpentNanoseconds)
 	nps := int64(0)
-	if dur > 0 {
-		nps = int64(float64(s.NodesSearched) / dur.Seconds())
+	if s.TimeSpentInMs > 0 {
+		nps = int64(s.NodesSearched) * 1000 / s.TimeSpentInMs
 	}
 	nodesTotal := s.NodesSearched + s.NodesPruned
 	prunedPercent := 0.0
 	if nodesTotal > 0 {
 		prunedPercent = (float64(s.NodesPruned) / float64(nodesTotal)) * 100.0
 	}
-	fmt.Printf("info depth %d score cp %d nodes %d nps %d prun %.0f%% pv %s time %d\n",
+	bestMove := "0000"
+	if s.BestMove != nil {
+		bestMove = s.BestMove.ToUCI()
+	}
+	fmt.Printf("info depth %d score cp %d nodes %d nps %d prun %.0f%% pv %s time %dms\n",
 		s.MaxSearchDepth,
 		s.BestScore,
 		s.NodesSearched,
 		nps,
 		prunedPercent,
-		s.BestMove.ToUCI(),
-		dur.Milliseconds(),
+		bestMove,
+		s.TimeSpentInMs,
 	)
 }

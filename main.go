@@ -39,8 +39,8 @@ func main() {
 		case "go":
 			remainingTimeInMs := GetUCIRemainingTime(board.WhiteToMove, fields)
 			bestMove := board.IterativeDeepeningSearch(SearchOptions{
-				RemainingTimeInMs:  remainingTimeInMs,
-				TimeDepthLimitInMs: 1500,
+				RemainingTimeInMs: remainingTimeInMs,
+				TimeLimitInMs:     3000,
 			})
 			if bestMove != nil {
 				fmt.Printf("bestmove %s\n", bestMove.ToUCI())

@@ -137,7 +137,7 @@ func TestSearch123(t *testing.T) {
 	board.ParseAndApplyPosition(strings.Fields("fen rnbqkbnr/ppp2ppp/4p3/3p4/3P4/1P5P/P1P1PPP1/RNBQKBNR b KQkq - 0 1 moves b8c6 e2e3 d8f6 f1a6 b7a6 d1g4 f8b4 c1d2 b4d6 g4f4 d6f4 e3f4 c6d4 b1a3 d4f3 e1e2 f6a1 e2f3 g8f6 d2a5 a1a2 a5b4 d5d4 b4e1 a2a3"))
 	fmt.Println(board.ToFEN())
 	move := board.IterativeDeepeningSearch(SearchOptions{
-		TimeDepthLimitInMs: 1_000,
+		TimeLimitInMs: 1_000,
 	})
 	fmt.Printf("Best move: %s\n", move.ToUCI())
 }

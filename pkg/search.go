@@ -7,19 +7,23 @@ import (
 )
 
 const (
-	SearchMaxDepth           = 16        // Maximum depth to search
-	MaxEvaluationScore       = 1_000_000 // Maximum score for wining
-	MaxEvaluationDepthTimeMs = 1_000     // Maximum time for a search at the root level
+	SearchMaxDepth      = 16        // Maximum depth to search
+	MaxEvaluationScore  = 1_000_000 // Maximum score for wining
+	MaxEvaluationTimeMs = 3_000     // Maximum time for a search at the root level
 )
 
 type SearchOptions struct {
-	MaxDepth           int // Maximum search depth (plies)
-	RemainingTimeInMs  int // Time remaining for the game
-	TimeDepthLimitInMs int // Maximum time allowed for the search on each depth. Defaults MaxEvaluationDepthTimeMs
+	MaxDepth           int                 // Maximum search depth (plies)
+	RemainingTimeInMs  int                 // Time remaining for the game
+	TimeLimitInMs      int                 // Maximum time allowed for the search. Defaults MaxEvaluationDepthTimeMs
+	TranspositionTable *TranspositionTable // Optional transposition table to use for search
 }
 
 func (board *Board) IterativeDeepeningSearch(options SearchOptions) *Move {
-	tt := NewTranspositionTable()
+	tt := options.TranspositionTable
+	if tt == nil {
+		tt = NewTranspositionTable()
+	}
 
 	maxDepth := SearchMaxDepth
 
@@ -32,26 +36,25 @@ func (board *Board) IterativeDeepeningSearch(options SearchOptions) *Move {
 		maxDepth = 3
 	}
 
-	maxSearchTimeMs := MaxEvaluationDepthTimeMs
-	if options.TimeDepthLimitInMs != 0 {
-		maxSearchTimeMs = options.TimeDepthLimitInMs
+	maxSearchTimeMs := MaxEvaluationTimeMs
+	if options.TimeLimitInMs != 0 {
+		maxSearchTimeMs = options.TimeLimitInMs
 	}
 
 	var bestMove *Move
-
+	totalTimeSpentInMs := 0
 	// Iterative deepening
 	for depth := 1; depth <= maxDepth; depth++ {
-		result := board.Search(depth, tt, options.TimeDepthLimitInMs, bestMove)
+		searchTimeLimit := maxSearchTimeMs - totalTimeSpentInMs
+		if searchTimeLimit <= 0 {
+			break
+		}
+		result := board.Search(depth, tt, searchTimeLimit, bestMove)
 		result.PrintUCI()
 		if result.BestMove != nil && (!result.IsInterrupted || bestMove == nil) {
 			bestMove = result.BestMove
 		}
-		timeSpent := time.Duration(result.TimeSpentNanoseconds)
-		// Exit search loop if last search spent more than TimeLimitInMs
-		if options.TimeDepthLimitInMs != 0 &&
-			timeSpent.Milliseconds() >= int64(maxSearchTimeMs) {
-			break
-		}
+		totalTimeSpentInMs += int(result.TimeSpentInMs)
 	}
 
 	return bestMove
@@ -67,7 +70,7 @@ func (board *Board) Search(depth int, tt *TranspositionTable, timeLimitInMs int,
 	moves = board.SortMovesRoot(moves, pvMove, ttMove)
 	ctx := &SearchContext{Done: make(chan struct{})}
 
-	timeoutTime := MaxEvaluationDepthTimeMs * time.Millisecond
+	timeoutTime := MaxEvaluationTimeMs * time.Millisecond
 	if timeLimitInMs != 0 {
 		timeoutTime = time.Duration(time.Duration(timeLimitInMs)) * time.Millisecond
 	}
@@ -126,6 +129,9 @@ func (board *Board) ParallelRootSearch(depth int, tt *TranspositionTable, moves 
 		go func() {
 			defer wg.Done()
 			for job := range moveChan {
+				if runtime.GOARCH == "wasm" {
+					runtime.Gosched()
+				}
 				select {
 				case <-ctx.Done:
 					return
@@ -187,6 +193,11 @@ func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta 
 	default:
 	}
 
+	// Yield to scheduler in WASM to allow cancellation
+	if runtime.GOARCH == "wasm" {
+		runtime.Gosched()
+	}
+
 	stats.IncNodesSearched()
 
 	if depth == 0 {
@@ -211,6 +222,9 @@ func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta 
 	if maximizing {
 		maxEval := -MaxEvaluationScore
 		for i, move := range moves {
+			if runtime.GOARCH == "wasm" {
+				runtime.Gosched()
+			}
 			prev := board.Move(move)
 			eval := board.AlphaBetaSearch(depth-1, false, alpha, beta, tt, stats, ctx, ply+1)
 			board.UndoMove(prev)
@@ -239,6 +253,9 @@ func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta 
 	} else {
 		minEval := MaxEvaluationScore
 		for i, move := range moves {
+			if runtime.GOARCH == "wasm" {
+				runtime.Gosched()
+			}
 			prev := board.Move(move)
 			eval := board.AlphaBetaSearch(depth-1, true, alpha, beta, tt, stats, ctx, ply+1)
 			board.UndoMove(prev)

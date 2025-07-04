@@ -43,7 +43,11 @@ func jsIterativeDeepeningSearch(this js.Value, args []js.Value) interface{} {
 	if len(args) > 0 {
 		ms = args[0].Int()
 	}
-	move := board.IterativeDeepeningSearch(SearchOptions{TimeDepthLimitInMs: ms})
+	tt := NewTranspositionTable()
+	move := board.IterativeDeepeningSearch(SearchOptions{
+		TimeLimitInMs:      ms,
+		TranspositionTable: tt,
+	})
 	if move == nil {
 		return js.ValueOf("")
 	}
@@ -78,7 +82,6 @@ func jsPerftParallel(this js.Value, args []js.Value) interface{} {
 		return js.ValueOf(-1)
 	}
 	depth := args[0].Int()
-	// Use PerftParallel for better performance if available
 	nodes := board.PerftParallel(depth)
 	return js.ValueOf(nodes)
 }
@@ -91,20 +94,22 @@ func jsPerft(this js.Value, args []js.Value) interface{} {
 		return js.ValueOf(-1)
 	}
 	depth := args[0].Int()
-	// Use PerftParallel for better performance if available
 	nodes := board.Perft(depth)
 	return js.ValueOf(nodes)
 }
 
 func registerCallbacks() {
-	js.Global().Set("libraNewBoard", js.FuncOf(jsNewBoard))
-	js.Global().Set("libraLoadInitial", js.FuncOf(jsLoadInitial))
-	js.Global().Set("libraFromFEN", js.FuncOf(jsFromFEN))
-	js.Global().Set("libraIterativeDeepeningSearch", js.FuncOf(jsIterativeDeepeningSearch))
-	js.Global().Set("libraToFEN", js.FuncOf(jsToFEN))
-	js.Global().Set("libraMove", js.FuncOf(jsMove))
-	js.Global().Set("libraPerft", js.FuncOf(jsPerft))
-	js.Global().Set("libraPerftParallel", js.FuncOf(jsPerftParallel))
+	libra := js.Global().Get("Object").New()
+	libra.Set("version", "1.0.1")
+	libra.Set("newBoard", js.FuncOf(jsNewBoard))
+	libra.Set("loadInitial", js.FuncOf(jsLoadInitial))
+	libra.Set("fromFEN", js.FuncOf(jsFromFEN))
+	libra.Set("iterativeDeepeningSearch", js.FuncOf(jsIterativeDeepeningSearch))
+	libra.Set("toFEN", js.FuncOf(jsToFEN))
+	libra.Set("move", js.FuncOf(jsMove))
+	libra.Set("perft", js.FuncOf(jsPerft))
+	libra.Set("perftParallel", js.FuncOf(jsPerftParallel))
+	js.Global().Set("libra", libra)
 }
 
 func main() {
