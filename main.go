@@ -9,19 +9,15 @@ import (
 	. "github.com/eugenioenko/libra-chess/pkg"
 )
 
-const (
-	BaseSearchDepth = 5
-)
-
 func main() {
 	fmt.Println("Welcome to LibraChess v1.0.1!")
 	fmt.Println("Ready to play? Type 'uci' to begin your chess adventure!")
 	fmt.Println("Type 'quit' to exit the CLI at any time.")
 	fmt.Println("LibraChess is a UCI chess engine, designed to be used with a chess GUI (like CuteChess, CoreChess, PyChess, etc.)")
 	fmt.Println("For more information, visit: https://github.com/eugenioenko/libra-chess")
-
 	scanner := bufio.NewScanner(os.Stdin)
 	board := NewBoard()
+
 	for scanner.Scan() {
 		line := scanner.Text()
 		fields := strings.Fields(line)
@@ -41,11 +37,13 @@ func main() {
 		case "position":
 			board.ParseAndApplyPosition(fields[1:])
 		case "go":
-			tt := NewTranspositionTable()
-			move, stats := board.Search(BaseSearchDepth, tt)
-			stats.PrintUCI()
-			if move != nil {
-				fmt.Printf("bestmove %s\n", move.ToUCI())
+			remainingTimeInMs := GetUCIRemainingTime(board.WhiteToMove, fields)
+			bestMove := board.IterativeDeepeningSearch(SearchOptions{
+				RemainingTimeInMs: remainingTimeInMs,
+				TimeLimitInMs:     3000,
+			})
+			if bestMove != nil {
+				fmt.Printf("bestmove %s\n", bestMove.ToUCI())
 			} else {
 				fmt.Println("bestmove 0000")
 			}

@@ -3,51 +3,109 @@ package libra
 import (
 	"runtime"
 	"sync"
+	"time"
 )
 
 const (
-	MaxEvaluationScore = 1000000
-	MaxSearchDepth     = 64 // or whatever your engine's max depth is
+	SearchMaxDepth      = 16        // Maximum depth to search
+	MaxEvaluationScore  = 1_000_000 // Maximum score for wining
+	MaxEvaluationTimeMs = 3_000     // Maximum time for a search at the root level
 )
 
-type searchResult struct {
+type SearchOptions struct {
+	MaxDepth           int                 // Maximum search depth (plies)
+	RemainingTimeInMs  int                 // Time remaining for the game
+	TimeLimitInMs      int                 // Maximum time allowed for the search. Defaults MaxEvaluationDepthTimeMs
+	TranspositionTable *TranspositionTable // Optional transposition table to use for search
+}
+
+func (board *Board) IterativeDeepeningSearch(options SearchOptions) *Move {
+	tt := options.TranspositionTable
+	if tt == nil {
+		tt = NewTranspositionTable()
+	}
+
+	maxDepth := SearchMaxDepth
+
+	if options.MaxDepth != 0 {
+		maxDepth = options.MaxDepth
+	}
+
+	// Limit depth search when running out of time
+	if options.RemainingTimeInMs != 0 && options.RemainingTimeInMs < 2500 {
+		maxDepth = 3
+	}
+
+	maxSearchTimeMs := MaxEvaluationTimeMs
+	if options.TimeLimitInMs != 0 {
+		maxSearchTimeMs = options.TimeLimitInMs
+	}
+
+	var bestMove *Move
+	totalTimeSpentInMs := 0
+	// Iterative deepening
+	for depth := 1; depth <= maxDepth; depth++ {
+		searchTimeLimit := maxSearchTimeMs - totalTimeSpentInMs
+		if searchTimeLimit <= 0 {
+			break
+		}
+		result := board.Search(depth, tt, searchTimeLimit, bestMove)
+		result.PrintUCI()
+		if result.BestMove != nil && (!result.IsInterrupted || bestMove == nil) {
+			bestMove = result.BestMove
+		}
+		totalTimeSpentInMs += int(result.TimeSpentInMs)
+	}
+
+	return bestMove
+}
+
+func (board *Board) Search(depth int, tt *TranspositionTable, timeLimitInMs int, pvMove *Move) *SearchResult {
+	result := &SearchResult{}
+	result.StartTimer()
+	result.SetMaxSearchDepth(int32(depth))
+	moves := board.GenerateLegalMoves()
+	result.IncMoveGeneration()
+	ttMove := tt.BestMoveDeepest(board.ZobristHash())
+	moves = board.SortMovesRoot(moves, pvMove, ttMove)
+	ctx := &SearchContext{Done: make(chan struct{})}
+
+	timeoutTime := MaxEvaluationTimeMs * time.Millisecond
+	if timeLimitInMs != 0 {
+		timeoutTime = time.Duration(time.Duration(timeLimitInMs)) * time.Millisecond
+	}
+	timeout := time.After(timeoutTime)
+
+	var score int
+	var move *Move
+	finished := make(chan struct{})
+	go func() {
+		score, move = board.ParallelRootSearch(depth, tt, moves, result, ctx)
+		close(finished)
+	}()
+
+	select {
+	case <-timeout:
+		close(ctx.Done)
+		<-finished
+		result.IsInterrupted = true
+	case <-finished:
+	}
+
+	result.BestScore = score
+	result.StopTimer()
+	result.BestMove = move
+	return result
+}
+
+type ConcurrentSearch struct {
 	score         int
 	move          Move
 	originalIndex int
 }
 
-func (board *Board) Search(maxDepth int, tt *TranspositionTable) (*Move, *SearchStats) {
-	stats := &SearchStats{}
-	stats.StartTimer()
-	defer stats.StopTimer()
-
-	maximizing := board.WhiteToMove
-	var bestMove *Move
-	bestScore := -MaxEvaluationScore
-	if !maximizing {
-		bestScore = MaxEvaluationScore
-	}
-
-	var pvMove *Move
-	for depth := 1; depth <= maxDepth; depth++ {
-		stats.SetMaxSearchDepth(int32(depth))
-		moves := board.GenerateLegalMoves()
-		stats.IncMoveGeneration()
-		// Use SortMovesRoot at root
-		ttMove := tt.BestMoveDeepest(board.ZobristHash())
-		moves = board.SortMovesRoot(moves, pvMove, ttMove)
-		ctx := &SearchContext{} // new context for each root search
-		score, move := board.ParallelRootSearch(depth, tt, moves, stats, ctx)
-		bestScore = score
-		bestMove = move
-		pvMove = move // update PV move for next iteration
-	}
-	stats.BestScore = bestScore
-	return bestMove, stats
-}
-
 // ParallelRootSearch allows passing in a pre-sorted move list
-func (board *Board) ParallelRootSearch(depth int, tt *TranspositionTable, moves []Move, stats *SearchStats, ctx *SearchContext) (int, *Move) {
+func (board *Board) ParallelRootSearch(depth int, tt *TranspositionTable, moves []Move, stats *SearchResult, ctx *SearchContext) (int, *Move) {
 	maximizing := board.WhiteToMove
 	bestScore := -MaxEvaluationScore
 	if !maximizing {
@@ -62,7 +120,7 @@ func (board *Board) ParallelRootSearch(depth int, tt *TranspositionTable, moves 
 		move  Move
 		index int
 	}, len(moves))
-	resultChan := make(chan searchResult, len(moves))
+	resultChan := make(chan ConcurrentSearch, len(moves))
 	var wg sync.WaitGroup
 
 	// Start workers
@@ -71,13 +129,21 @@ func (board *Board) ParallelRootSearch(depth int, tt *TranspositionTable, moves 
 		go func() {
 			defer wg.Done()
 			for job := range moveChan {
+				if runtime.GOARCH == "wasm" {
+					runtime.Gosched()
+				}
+				select {
+				case <-ctx.Done:
+					return
+				default:
+				}
 				clone := board.Clone()
 				clone.Move(job.move)
 				score := clone.AlphaBetaSearch(
 					depth-1, !maximizing,
 					-MaxEvaluationScore, MaxEvaluationScore, tt, stats, ctx, 1,
 				)
-				resultChan <- searchResult{score: score, move: job.move, originalIndex: job.index}
+				resultChan <- ConcurrentSearch{score: score, move: job.move, originalIndex: job.index}
 			}
 		}()
 	}
@@ -98,7 +164,7 @@ func (board *Board) ParallelRootSearch(depth int, tt *TranspositionTable, moves 
 	}()
 
 	var bestMove *Move
-	var bestMoveOriginalIndex int = -1
+	bestMoveOriginalIndex := -1
 	for result := range resultChan {
 		if maximizing {
 			if result.score > bestScore || (result.score == bestScore && (bestMove == nil || result.originalIndex < bestMoveOriginalIndex)) {
@@ -119,16 +185,29 @@ func (board *Board) ParallelRootSearch(depth int, tt *TranspositionTable, moves 
 	return bestScore, bestMove
 }
 
-func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta int, tt *TranspositionTable, stats *SearchStats, ctx *SearchContext, ply int) int {
+func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta int, tt *TranspositionTable, stats *SearchResult, ctx *SearchContext, ply int) int {
+	// Check for cancellation at every node
+	select {
+	case <-ctx.Done:
+		return 0 // or a sentinel value indicating cancellation
+	default:
+	}
+
+	// Yield to scheduler in WASM to allow cancellation
+	if runtime.GOARCH == "wasm" {
+		runtime.Gosched()
+	}
+
 	stats.IncNodesSearched()
+
 	if depth == 0 {
 		return board.Evaluate()
 	}
 
 	hash := board.ZobristHash()
-	if entry, ok := tt.Get(hash, depth); ok {
+	if score, ok := tt.Get(hash, depth); ok {
 		stats.IncTTHit()
-		return entry
+		return score
 	}
 
 	moves := board.GenerateLegalMoves()
@@ -143,6 +222,9 @@ func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta 
 	if maximizing {
 		maxEval := -MaxEvaluationScore
 		for i, move := range moves {
+			if runtime.GOARCH == "wasm" {
+				runtime.Gosched()
+			}
 			prev := board.Move(move)
 			eval := board.AlphaBetaSearch(depth-1, false, alpha, beta, tt, stats, ctx, ply+1)
 			board.UndoMove(prev)
@@ -171,6 +253,9 @@ func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta 
 	} else {
 		minEval := MaxEvaluationScore
 		for i, move := range moves {
+			if runtime.GOARCH == "wasm" {
+				runtime.Gosched()
+			}
 			prev := board.Move(move)
 			eval := board.AlphaBetaSearch(depth-1, true, alpha, beta, tt, stats, ctx, ply+1)
 			board.UndoMove(prev)
