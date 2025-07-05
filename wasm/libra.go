@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"syscall/js"
 
 	. "github.com/eugenioenko/libra-chess/pkg"
@@ -33,6 +34,15 @@ func jsFromFEN(this js.Value, args []js.Value) interface{} {
 		return js.ValueOf(err.Error())
 	}
 	return js.ValueOf(true)
+}
+
+func jsZobristHash(this js.Value, args []js.Value) interface{} {
+	if board == nil {
+		board = NewBoard()
+	}
+
+	hash := board.ZobristHashWasm()
+	return js.ValueOf(fmt.Sprintf("%#x", hash))
 }
 
 func jsIterativeDeepeningSearch(this js.Value, args []js.Value) interface{} {
@@ -105,6 +115,7 @@ func registerCallbacks() {
 	libra.Set("loadInitial", js.FuncOf(jsLoadInitial))
 	libra.Set("fromFEN", js.FuncOf(jsFromFEN))
 	libra.Set("iterativeDeepeningSearch", js.FuncOf(jsIterativeDeepeningSearch))
+	libra.Set("zobristHash", js.FuncOf(jsZobristHash))
 	libra.Set("toFEN", js.FuncOf(jsToFEN))
 	libra.Set("move", js.FuncOf(jsMove))
 	libra.Set("perft", js.FuncOf(jsPerft))

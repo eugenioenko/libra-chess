@@ -5,6 +5,9 @@ import (
 	"math/rand"
 )
 
+// Use a deterministic RNG for Zobrist hashing
+var zobristRNG = rand.New(rand.NewSource(0))
+
 type ZobristCastlingState struct {
 	BlackKingSide  uint64
 	BlackQueenSide uint64
@@ -14,31 +17,31 @@ type ZobristCastlingState struct {
 
 var zobristPieceTable = GenerateZobristPieceTable()
 var zobristOnPassantTable = GenerateZobristOnPassantTable()
-var zobristWhiteToMove uint64 = rand.Uint64()
 
+var zobristWhiteToMove uint64 = zobristRNG.Uint64()
 var zobristCastling ZobristCastlingState = ZobristCastlingState{
-	BlackKingSide:  rand.Uint64(),
-	BlackQueenSide: rand.Uint64(),
-	WhiteKingSide:  rand.Uint64(),
-	WhiteQueenSide: rand.Uint64(),
+	BlackKingSide:  zobristRNG.Uint64(),
+	BlackQueenSide: zobristRNG.Uint64(),
+	WhiteKingSide:  zobristRNG.Uint64(),
+	WhiteQueenSide: zobristRNG.Uint64(),
 }
 
 func GenerateZobristPieceTable() [64]map[byte]uint64 {
 	table := [64]map[byte]uint64{}
 	for index := 0; index < 64; index++ {
 		cell := map[byte]uint64{
-			WhitePawn:   rand.Uint64(),
-			WhiteKnight: rand.Uint64(),
-			WhiteBishop: rand.Uint64(),
-			WhiteRook:   rand.Uint64(),
-			WhiteQueen:  rand.Uint64(),
-			WhiteKing:   rand.Uint64(),
-			BlackPawn:   rand.Uint64(),
-			BlackKnight: rand.Uint64(),
-			BlackBishop: rand.Uint64(),
-			BlackRook:   rand.Uint64(),
-			BlackQueen:  rand.Uint64(),
-			BlackKing:   rand.Uint64(),
+			WhitePawn:   zobristRNG.Uint64(),
+			WhiteKnight: zobristRNG.Uint64(),
+			WhiteBishop: zobristRNG.Uint64(),
+			WhiteRook:   zobristRNG.Uint64(),
+			WhiteQueen:  zobristRNG.Uint64(),
+			WhiteKing:   zobristRNG.Uint64(),
+			BlackPawn:   zobristRNG.Uint64(),
+			BlackKnight: zobristRNG.Uint64(),
+			BlackBishop: zobristRNG.Uint64(),
+			BlackRook:   zobristRNG.Uint64(),
+			BlackQueen:  zobristRNG.Uint64(),
+			BlackKing:   zobristRNG.Uint64(),
 		}
 		table[index] = cell
 	}
@@ -48,12 +51,20 @@ func GenerateZobristPieceTable() [64]map[byte]uint64 {
 func GenerateZobristOnPassantTable() [64]uint64 {
 	table := [64]uint64{}
 	for index := 0; index < 64; index++ {
-		table[index] = rand.Uint64()
+		table[index] = zobristRNG.Uint64()
 	}
 	return table
 }
 
 func (board *Board) ZobristHash() uint64 {
+	hash := board.ZobristHashWasm()
+	if board.OnPassant != 0 {
+		hash ^= zobristOnPassantTable[board.OnPassant]
+	}
+	return hash
+}
+
+func (board *Board) ZobristHashWasm() uint64 {
 	var hash uint64 = 0
 
 	b := board.WhitePawns
@@ -140,9 +151,6 @@ func (board *Board) ZobristHash() uint64 {
 	}
 	if board.Castling.WhiteQueenSide {
 		hash ^= zobristCastling.WhiteQueenSide
-	}
-	if board.OnPassant != 0 {
-		hash ^= zobristOnPassantTable[board.OnPassant]
 	}
 	if board.WhiteToMove {
 		hash ^= zobristWhiteToMove

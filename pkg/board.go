@@ -97,15 +97,12 @@ func (board *Board) Reset() {
 
 // LoadInitial sets up the board to the standard chess starting position.
 func (board *Board) LoadInitial() {
-	board.Reset()
 	board.FromFEN(BoardInitialFEN)
 }
 
 // FromFEN loads a position from a FEN string. Returns false and error if the FEN is invalid.
 func (board *Board) FromFEN(fen string) (bool, error) {
-	// Reset all bitboards
-	board.WhitePawns, board.WhiteKnights, board.WhiteBishops, board.WhiteRooks, board.WhiteQueens, board.WhiteKing = 0, 0, 0, 0, 0, 0
-	board.BlackPawns, board.BlackKnights, board.BlackBishops, board.BlackRooks, board.BlackQueens, board.BlackKing = 0, 0, 0, 0, 0, 0
+	board.Reset()
 
 	parts := strings.Split(fen, " ")
 	if len(parts) == 0 {

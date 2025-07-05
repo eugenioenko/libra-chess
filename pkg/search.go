@@ -17,6 +17,7 @@ type SearchOptions struct {
 	RemainingTimeInMs  int                 // Time remaining for the game
 	TimeLimitInMs      int                 // Maximum time allowed for the search. Defaults MaxEvaluationDepthTimeMs
 	TranspositionTable *TranspositionTable // Optional transposition table to use for search
+	UseBookMoves       bool                // Optional flag to use book moves
 }
 
 func (board *Board) IterativeDeepeningSearch(options SearchOptions) *Move {
