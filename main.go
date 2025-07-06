@@ -40,7 +40,7 @@ func main() {
 			remainingTimeInMs := GetUCIRemainingTime(board.WhiteToMove, fields)
 			bestMove := board.IterativeDeepeningSearch(SearchOptions{
 				RemainingTimeInMs: remainingTimeInMs,
-				TimeLimitInMs:     3000,
+				TimeLimitInMs:     1000,
 			})
 			if bestMove != nil {
 				fmt.Printf("bestmove %s\n", bestMove.ToUCI())
