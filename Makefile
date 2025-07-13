@@ -6,7 +6,7 @@ all: build
 
 # Build the Go binary
 build:
-	go build -o $(APP_NAME) main.go
+	go build -ldflags="-s -w" -trimpath -buildmode=exe -gcflags="all=-l -B" -asmflags="all=-trimpath=$$(pwd)" -o $(APP_NAME) main.go
 
 # Build release binaries for Linux, macOS, and Windows
 .PHONY: build-release
@@ -70,6 +70,19 @@ test-self:
 		-debug \
 		-rounds 1
 
+test-self-multi:
+	make build
+	./dist/cutechess-cli/cutechess-cli \
+		-engine name=Libra1 cmd=./libra-chess \
+		-engine name=Libra2 cmd=./libra-chess \
+		-openings file=./books/chess.epd format=epd order=random plies=8 \
+		-each proto=uci tc=30+1 \
+		-games 1000 \
+		-concurrency 20 \
+		-ratinginterval 10 \
+		-draw movenumber=40 movecount=6 score=10 \
+		-rounds 1
+
 test-position:
 	make build
 	./dist/cutechess-cli/cutechess-cli \
@@ -91,11 +104,37 @@ test-stockfish:
 		-engine name=Stockfish cmd=./stockfish/stockfish-cli option.UCI_LimitStrength=true option.UCI_Elo=1500 \
 		-each proto=uci tc=30+0 \
 		-games 10 \
-		-concurrency 10 \
+		-concurrency 1 \
 		-openings file=./books/chess.epd format=epd order=random plies=8 \
 		-ratinginterval 10 \
 		-draw movenumber=40 movecount=6 score=10 \
 		-debug \
+		-rounds 1
+
+test-weasel:
+	make build
+	./dist/cutechess-cli/cutechess-cli \
+		-engine name=PullLibra cmd=./libra-chess \
+		-engine name=Weasel cmd=./dist/Chess/Chess \
+		-each proto=uci tc=30+0 \
+		-games 10 \
+		-concurrency 10 \
+		-openings file=./books/chess.epd format=epd order=random plies=8 \
+		-ratinginterval 10 \
+		-draw movenumber=40 movecount=6 score=10 \
+		-rounds 1
+
+test-weasel2:
+	make build
+	./dist/cutechess-cli/cutechess-cli \
+			-engine name=Stockfish cmd=./stockfish/stockfish-cli option.UCI_LimitStrength=true option.UCI_Elo=2500 \
+		-engine name=Weasel cmd=./dist/Chess/Chess \
+		-each proto=uci tc=30+0 \
+		-games 10 \
+		-concurrency 10 \
+		-openings file=./books/chess.epd format=epd order=random plies=8 \
+		-ratinginterval 10 \
+		-draw movenumber=40 movecount=6 score=10 \
 		-rounds 1
 
 test-debug:

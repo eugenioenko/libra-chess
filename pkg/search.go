@@ -1,6 +1,7 @@
 package libra
 
 import (
+	"math/bits"
 	"runtime"
 	"sync"
 	"time"
@@ -10,11 +11,15 @@ const (
 	SearchMaxDepth      = 16        // Maximum depth to search
 	MaxEvaluationScore  = 1_000_000 // Maximum score for wining
 	MaxEvaluationTimeMs = 3_000     // Maximum time for a search at the root level
+	LMRMinDepth         = 3         // Minimum depth for Late Move Reductions (LMR)
+	LMRMinMoves         = 3         // Minimum number of moves to apply LMR after
+	LMRReduction        = 1         // Reduction in depth for late move reductions
+	NullMoveReduction   = 3         // Reduction for null move pruning (R)
+	NullMoveMinDepth    = 3         // Minimum depth for null move pruning
 )
 
 type SearchOptions struct {
 	MaxDepth           int                 // Maximum search depth (plies)
-	RemainingTimeInMs  int                 // Time remaining for the game
 	TimeLimitInMs      int                 // Maximum time allowed for the search. Defaults MaxEvaluationDepthTimeMs
 	TranspositionTable *TranspositionTable // Optional transposition table to use for search
 	UseBookMoves       bool                // Optional flag to use book moves
@@ -30,11 +35,6 @@ func (board *Board) IterativeDeepeningSearch(options SearchOptions) *Move {
 
 	if options.MaxDepth != 0 {
 		maxDepth = options.MaxDepth
-	}
-
-	// Limit depth search when running out of time
-	if options.RemainingTimeInMs != 0 && options.RemainingTimeInMs < 2500 {
-		maxDepth = 3
 	}
 
 	maxSearchTimeMs := MaxEvaluationTimeMs
@@ -211,6 +211,41 @@ func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta 
 		return score
 	}
 
+	// --- Futility Pruning ---
+	if depth == 1 && ply > 0 {
+		standPat := board.Evaluate()
+		margin := 100 // Tune this margin as needed
+		if maximizing && standPat+margin <= alpha {
+			return standPat
+		}
+		if !maximizing && standPat-margin >= beta {
+			return standPat
+		}
+	}
+
+	// --- Null Move Pruning ---
+	if depth >= NullMoveMinDepth && ply > 0 && !board.IsInCheck(maximizing) && len(board.GenerateLegalMoves()) > 0 {
+		nullBoard := board.Clone()
+		nullBoard.WhiteToMove = !nullBoard.WhiteToMove // Switch side to move (null move)
+		nullEval := 0
+		newDepth := depth - NullMoveReduction - 1
+		if newDepth < 1 {
+			newDepth = 1
+		}
+		if maximizing {
+			nullEval = nullBoard.AlphaBetaSearch(newDepth, false, alpha, beta, tt, stats, ctx, ply+1)
+			if nullEval >= beta {
+				return beta // Fail-hard beta cutoff
+			}
+		} else {
+			nullEval = nullBoard.AlphaBetaSearch(newDepth, true, alpha, beta, tt, stats, ctx, ply+1)
+			if nullEval <= alpha {
+				return alpha // Fail-hard alpha cutoff
+			}
+		}
+	}
+
+	// --- Late Move Reductions (LMR) ---
 	moves := board.GenerateLegalMoves()
 	stats.IncMoveGeneration()
 	moves = board.SortMovesAlphaBeta(moves, depth, tt, hash, ctx, ply)
@@ -218,6 +253,7 @@ func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta 
 		return board.MateOrStalemateScore(maximizing)
 	}
 
+	// --- Alpha-Beta Search ---
 	var result int
 	var bestMove Move
 	if maximizing {
@@ -227,7 +263,15 @@ func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta 
 				runtime.Gosched()
 			}
 			prev := board.Move(move)
-			eval := board.AlphaBetaSearch(depth-1, false, alpha, beta, tt, stats, ctx, ply+1)
+			newDepth := depth - 1
+			// Apply LMR: reduce depth for late quiet moves
+			if depth >= LMRMinDepth && i >= LMRMinMoves && move.IsQuiet() {
+				newDepth -= LMRReduction
+				if newDepth < 1 {
+					newDepth = 1
+				}
+			}
+			eval := board.AlphaBetaSearch(newDepth, false, alpha, beta, tt, stats, ctx, ply+1)
 			board.UndoMove(prev)
 			if eval > maxEval {
 				maxEval = eval
@@ -240,7 +284,6 @@ func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta 
 				stats.IncBetaCutoff()
 				if move.MoveType != MoveCapture && move.MoveType != MovePromotionCapture {
 					ctx.AddKillerMove(move, ply)
-					// Update history heuristic for quiet moves
 					ctx.HistoryHeuristic[PieceToHistoryIndex[move.Piece]][move.To] += depth * depth
 				}
 				nodesPruned := len(moves) - (i + 1)
@@ -258,7 +301,15 @@ func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta 
 				runtime.Gosched()
 			}
 			prev := board.Move(move)
-			eval := board.AlphaBetaSearch(depth-1, true, alpha, beta, tt, stats, ctx, ply+1)
+			newDepth := depth - 1
+			// Apply LMR: reduce depth for late quiet moves
+			if depth >= LMRMinDepth && i >= LMRMinMoves && move.IsQuiet() {
+				newDepth -= LMRReduction
+				if newDepth < 1 {
+					newDepth = 1
+				}
+			}
+			eval := board.AlphaBetaSearch(newDepth, true, alpha, beta, tt, stats, ctx, ply+1)
 			board.UndoMove(prev)
 			if eval < minEval {
 				minEval = eval
@@ -271,7 +322,6 @@ func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta 
 				stats.IncBetaCutoff()
 				if move.MoveType != MoveCapture && move.MoveType != MovePromotionCapture {
 					ctx.AddKillerMove(move, ply)
-					// Update history heuristic for quiet moves
 					ctx.HistoryHeuristic[PieceToHistoryIndex[move.Piece]][move.To] += depth * depth
 				}
 				nodesPruned := len(moves) - (i + 1)
@@ -287,4 +337,15 @@ func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta 
 	stats.IncTTStore()
 	tt.Set(hash, depth, result, bestMove)
 	return result
+}
+
+// IsInCheck returns true if the side to move is in check.
+func (board *Board) IsInCheck(whiteToMove bool) bool {
+	var kingSq byte
+	if whiteToMove {
+		kingSq = byte(bits.TrailingZeros64(board.WhiteKing))
+	} else {
+		kingSq = byte(bits.TrailingZeros64(board.BlackKing))
+	}
+	return board.IsSquareAttacked(kingSq, !whiteToMove)
 }

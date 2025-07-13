@@ -40,17 +40,19 @@ func (board *Board) SortMovesAlphaBeta(
 			score += 90_0000 // High value for TT move
 		}
 
-		// 2. MVV-LVA for captures
+		// 2. MVV-LVA for captures, now with SEE
 		switch m.MoveType {
-		case MoveCapture:
+		case MoveCapture, MovePromotionCapture:
+			see := board.SEE(m)
 			victim := m.Captured
 			attacker := m.Piece
-			score += 70_000 + 10*PieceCodeToValue[victim] - 10*PieceCodeToValue[attacker]
-		case MovePromotionCapture:
-			victim := m.Captured
-			attacker := m.Piece
-			promoPiece := m.Promoted
-			score += 50_000 + 10*PieceCodeToValue[victim] + 10*PieceCodeToValue[promoPiece] - 10*PieceCodeToValue[attacker]
+			if see >= 0 {
+				// Good capture: high score
+				score += 70_000 + 10*PieceCodeToValue[victim] - 10*PieceCodeToValue[attacker] + 1000*see
+			} else {
+				// Bad capture: demote, but still above quiets
+				score += 10_000 + see
+			}
 		case MovePromotion:
 			promoPiece := m.Promoted
 			score += 30_000 + 10*PieceCodeToValue[promoPiece]
@@ -121,17 +123,24 @@ func (board *Board) SortMovesRoot(
 			score += 70_000
 		}
 
-		// 3. MVV-LVA for captures
+		// 3. MVV-LVA for captures, now with SEE
 		switch m.MoveType {
-		case MovePromotionCapture:
+		case MovePromotionCapture, MoveCapture:
+			see := board.SEE(m)
 			victim := m.Captured
 			attacker := m.Piece
-			promoPiece := m.Promoted
-			score += 50_000 + 10*PieceCodeToValue[victim] + 10*PieceCodeToValue[promoPiece] - 10*PieceCodeToValue[attacker]
-		case MoveCapture:
-			victim := m.Captured
-			attacker := m.Piece
-			score += 30_000 + 10*PieceCodeToValue[victim] - 10*PieceCodeToValue[attacker]
+			if see >= 0 {
+				// Good capture: high score
+				if m.MoveType == MovePromotionCapture {
+					promoPiece := m.Promoted
+					score += 50_000 + 10*PieceCodeToValue[victim] + 10*PieceCodeToValue[promoPiece] - 10*PieceCodeToValue[attacker] + 1000*see
+				} else {
+					score += 30_000 + 10*PieceCodeToValue[victim] - 10*PieceCodeToValue[attacker] + 1000*see
+				}
+			} else {
+				// Bad capture: demote, but still above quiets
+				score += 10_000 + see
+			}
 		case MovePromotion:
 			promoPiece := m.Promoted
 			score += 10_000 + 10*PieceCodeToValue[promoPiece]
@@ -148,4 +157,18 @@ func (board *Board) SortMovesRoot(
 		moves[i] = scored[i].move
 	}
 	return moves
+}
+
+// SEE (Static Exchange Evaluation) estimates the net material gain/loss for a capture move.
+// Returns the net gain (positive for winning, negative for losing, 0 for even).
+func (board *Board) SEE(move Move) int {
+	// Only evaluate captures
+	if move.MoveType != MoveCapture && move.MoveType != MovePromotionCapture {
+		return 0
+	}
+	victim := move.Captured
+	attacker := move.Piece
+	// Simple SEE: value of captured piece minus value of attacker
+	// (does not recurse, but is fast and good enough for move ordering)
+	return PieceCodeToValue[victim] - PieceCodeToValue[attacker]
 }

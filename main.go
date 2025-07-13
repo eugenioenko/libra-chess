@@ -38,9 +38,13 @@ func main() {
 			board.ParseAndApplyPosition(fields[1:])
 		case "go":
 			remainingTimeInMs := GetUCIRemainingTime(board.WhiteToMove, fields)
+			maxDepth := 16
+			if remainingTimeInMs <= 2500 {
+				maxDepth = 4 // Limit depth search when running out of time
+			}
 			bestMove := board.IterativeDeepeningSearch(SearchOptions{
-				RemainingTimeInMs: remainingTimeInMs,
-				TimeLimitInMs:     1000,
+				MaxDepth:      maxDepth,
+				TimeLimitInMs: 7000,
 			})
 			if bestMove != nil {
 				fmt.Printf("bestmove %s\n", bestMove.ToUCI())

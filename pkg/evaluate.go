@@ -126,7 +126,88 @@ func (board *Board) EvaluateMaterialAndPST() (int, int) {
 	return whiteScore, blackScore
 }
 
-// Mobility: count the number of legal moves for each side
+// EvaluatePawnStructure evaluates pawn structure for both sides: doubled, isolated, and passed pawns.
+func (board *Board) EvaluatePawnStructure() (int, int) {
+	whitePenalty := 0
+	blackPenalty := 0
+	whiteBonus := 0
+	blackBonus := 0
+
+	// Helper: get file mask for a file
+	fileMask := func(file int) uint64 {
+		return 0x0101010101010101 << file
+	}
+
+	// Doubled pawns
+	for file := 0; file < 8; file++ {
+		wPawnsOnFile := bits.OnesCount64(board.WhitePawns & fileMask(file))
+		bPawnsOnFile := bits.OnesCount64(board.BlackPawns & fileMask(file))
+		if wPawnsOnFile > 1 {
+			whitePenalty += (wPawnsOnFile - 1) * 10 // Penalty per extra pawn
+		}
+		if bPawnsOnFile > 1 {
+			blackPenalty += (bPawnsOnFile - 1) * 10
+		}
+	}
+
+	// Isolated pawns
+	for file := 0; file < 8; file++ {
+		wFilePawns := board.WhitePawns & fileMask(file)
+		bFilePawns := board.BlackPawns & fileMask(file)
+		adjWhite := uint64(0)
+		adjBlack := uint64(0)
+		if file > 0 {
+			adjWhite |= board.WhitePawns & fileMask(file-1)
+			adjBlack |= board.BlackPawns & fileMask(file-1)
+		}
+		if file < 7 {
+			adjWhite |= board.WhitePawns & fileMask(file+1)
+			adjBlack |= board.BlackPawns & fileMask(file+1)
+		}
+		if wFilePawns != 0 && adjWhite == 0 {
+			whitePenalty += bits.OnesCount64(wFilePawns) * 15 // Penalty per isolated pawn
+		}
+		if bFilePawns != 0 && adjBlack == 0 {
+			blackPenalty += bits.OnesCount64(bFilePawns) * 15
+		}
+	}
+
+	// Passed pawns
+	for file := 0; file < 8; file++ {
+		wPawns := board.WhitePawns & fileMask(file)
+		bPawns := board.BlackPawns & fileMask(file)
+		for wPawns != 0 {
+			sq := bits.TrailingZeros64(wPawns)
+			rank := sq / 8
+			// Passed if no black pawns on same or adjacent files ahead
+			mask := uint64(0)
+			for f := MathMinByte(byte(file+1), 7); f >= MathMinByte(byte(file-1), 0) && f <= 7; f-- {
+				mask |= board.BlackPawns & fileMask(int(f))
+			}
+			mask &= ^((1 << (sq + 1)) - 1) // Only pawns ahead
+			if mask == 0 {
+				whiteBonus += (7 - rank) * 12 // More bonus as pawn advances
+			}
+			wPawns &= wPawns - 1
+		}
+		for bPawns != 0 {
+			sq := bits.TrailingZeros64(bPawns)
+			rank := sq / 8
+			mask := uint64(0)
+			for f := MathMinByte(byte(file+1), 7); f >= MathMinByte(byte(file-1), 0) && f <= 7; f-- {
+				mask |= board.WhitePawns & fileMask(int(f))
+			}
+			mask &= (1 << sq) - 1 // Only pawns ahead for black
+			if mask == 0 {
+				blackBonus += rank * 12
+			}
+			bPawns &= bPawns - 1
+		}
+	}
+
+	return whiteBonus - whitePenalty, blackBonus - blackPenalty
+}
+
 func (board *Board) MateOrStalemateScore(maximizing bool) int {
 	kingSq := board.ActiveKingSquare()
 	if board.IsSquareAttacked(kingSq, board.WhiteToMove) {
@@ -140,8 +221,104 @@ func (board *Board) MateOrStalemateScore(maximizing bool) int {
 	}
 }
 
+// EvaluateKingSafety evaluates king safety for both sides in the middlegame.
+func (board *Board) EvaluateKingSafety() (int, int) {
+	whitePenalty := 0
+	blackPenalty := 0
+
+	// Only apply in middlegame (if both sides have queens or enough material)
+	material := 0
+	material += bits.OnesCount64(board.WhitePawns) + bits.OnesCount64(board.BlackPawns)
+	material += bits.OnesCount64(board.WhiteKnights)*3 + bits.OnesCount64(board.BlackKnights)*3
+	material += bits.OnesCount64(board.WhiteBishops)*3 + bits.OnesCount64(board.BlackBishops)*3
+	material += bits.OnesCount64(board.WhiteRooks)*5 + bits.OnesCount64(board.BlackRooks)*5
+	material += bits.OnesCount64(board.WhiteQueens)*9 + bits.OnesCount64(board.BlackQueens)*9
+	if material <= 20 { // skip in endgame
+		return 0, 0
+	}
+
+	// Helper: count friendly pawns in 3x3 area around king
+	countKingPawnShield := func(kingSq int, pawns uint64, isWhite bool) int {
+		file := kingSq % 8
+		rank := kingSq / 8
+		count := 0
+		for df := -1; df <= 1; df++ {
+			for dr := 0; dr <= 1; dr++ { // only in front and same rank
+				f := file + df
+				r := rank + dr*func() int {
+					if isWhite {
+						return -1
+					} else {
+						return 1
+					}
+				}()
+				if f < 0 || f > 7 || r < 0 || r > 7 {
+					continue
+				}
+				sq := r*8 + f
+				if (pawns & (1 << sq)) != 0 {
+					count++
+				}
+			}
+		}
+		return count
+	}
+
+	if board.WhiteKing != 0 {
+		wKingSq := bits.TrailingZeros64(board.WhiteKing)
+		shield := countKingPawnShield(wKingSq, board.WhitePawns, true)
+		whitePenalty -= shield * 12       // reward for pawn cover
+		whitePenalty += (3 - shield) * 18 // penalty for missing pawns
+	}
+	if board.BlackKing != 0 {
+		bKingSq := bits.TrailingZeros64(board.BlackKing)
+		shield := countKingPawnShield(bKingSq, board.BlackPawns, false)
+		blackPenalty -= shield * 12
+		blackPenalty += (3 - shield) * 18
+	}
+
+	// TODO: Add open file and enemy piece proximity checks for more accuracy
+	return whitePenalty, blackPenalty
+}
+
+// EvaluateBishopPair returns a bonus for having both bishops.
+func (board *Board) EvaluateBishopPair() (int, int) {
+	whiteBonus := 0
+	blackBonus := 0
+	if bits.OnesCount64(board.WhiteBishops) >= 2 {
+		whiteBonus = 35 // typical value, can be tuned
+	}
+	if bits.OnesCount64(board.BlackBishops) >= 2 {
+		blackBonus = 35
+	}
+	return whiteBonus, blackBonus
+}
+
+// EvaluateCenterControl rewards control of the central squares (d4, d5, e4, e5).
+func (board *Board) EvaluateCenterControl() (int, int) {
+	centerSquares := [4]byte{27, 28, 35, 36} // d4, e4, d5, e5 (0-based)
+	whiteControl := 0
+	blackControl := 0
+
+	for _, sq := range centerSquares {
+		if board.IsSquareAttacked(sq, true) {
+			whiteControl++
+		}
+		if board.IsSquareAttacked(sq, false) {
+			blackControl++
+		}
+	}
+	// Each control gets a bonus (tune as needed)
+	return whiteControl * 10, blackControl * 10
+}
+
 func (board *Board) Evaluate() int {
 	whiteScore, blackScore := board.EvaluateMaterialAndPST()
-
+	pawnStructWhite, pawnStructBlack := board.EvaluatePawnStructure()
+	kingSafeWhite, kingSafeBlack := board.EvaluateKingSafety()
+	bishopPairWhite, bishopPairBlack := board.EvaluateBishopPair()
+	centerWhite, centerBlack := board.EvaluateCenterControl()
+	whiteScore += pawnStructWhite + kingSafeWhite + bishopPairWhite + centerWhite
+	blackScore += pawnStructBlack + kingSafeBlack + bishopPairBlack + centerBlack
 	return whiteScore - blackScore
 }

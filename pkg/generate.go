@@ -333,7 +333,8 @@ func (board *Board) GeneratePseudoLegalMoves() []Move {
 }
 
 func (board *Board) GenerateLegalMoves() []Move {
-	legalMoves := []Move{}
+	// Preallocate with a reasonable capacity to reduce allocations
+	legalMoves := make([]Move, 0, 32)
 	moves := board.GeneratePseudoLegalMoves()
 	for _, move := range moves {
 		if board.IsMoveLegal(move) {
@@ -436,6 +437,7 @@ func (board *Board) IsSquareAttackedBySlidingPieces(square byte, whiteToMove boo
 		bishopsAndQueens = board.WhiteBishops | board.WhiteQueens
 	}
 	occupied := board.OccupiedSquares()
+
 	// Rook/Queen directions
 	for dir := 0; dir < 4; dir++ {
 		ray := RookRays[square][dir]
@@ -443,26 +445,22 @@ func (board *Board) IsSquareAttackedBySlidingPieces(square byte, whiteToMove boo
 		if attackers == 0 {
 			continue
 		}
-		// Find the closest attacker in this direction
-		var sqStep int
-		switch dir {
-		case 0:
-			sqStep = -8 // North
-		case 1:
-			sqStep = 1 // East
-		case 2:
-			sqStep = 8 // South
-		case 3:
-			sqStep = -1 // West
-		}
-		for s := int(square) + sqStep; s >= 0 && s < 64 && (ray&(1<<s)) != 0; s += sqStep {
-			mask := uint64(1) << s
-			if (occupied & mask) != 0 {
-				if (rooksAndQueens & mask) != 0 {
-					return true
-				}
-				break
+		blockers := ray & occupied
+		var blockerSq int = -1
+		// Direction index: 0=N, 1=E, 2=S, 3=W
+		// North or West: highest index blocker before square
+		if dir == 0 || dir == 3 {
+			if blockers != 0 {
+				blockerSq = 63 - bits.LeadingZeros64(blockers)
 			}
+		} else {
+			// East or South: lowest index blocker after square
+			if blockers != 0 {
+				blockerSq = bits.TrailingZeros64(blockers)
+			}
+		}
+		if blockerSq != -1 && ((rooksAndQueens & (uint64(1) << blockerSq)) != 0) {
+			return true
 		}
 	}
 	// Bishop/Queen directions
@@ -472,26 +470,22 @@ func (board *Board) IsSquareAttackedBySlidingPieces(square byte, whiteToMove boo
 		if attackers == 0 {
 			continue
 		}
-		// Find the closest attacker in this direction
-		var sqStep int
-		switch dir {
-		case 0:
-			sqStep = -7 // NE
-		case 1:
-			sqStep = 9 // SE
-		case 2:
-			sqStep = 7 // SW
-		case 3:
-			sqStep = -9 // NW
-		}
-		for s := int(square) + sqStep; s >= 0 && s < 64 && (ray&(1<<s)) != 0; s += sqStep {
-			mask := uint64(1) << s
-			if (occupied & mask) != 0 {
-				if (bishopsAndQueens & mask) != 0 {
-					return true
-				}
-				break
+		blockers := ray & occupied
+		var blockerSq int = -1
+		// Direction index: 0=NE, 1=SE, 2=SW, 3=NW
+		// NE or NW: highest index blocker before square
+		if dir == 0 || dir == 3 {
+			if blockers != 0 {
+				blockerSq = 63 - bits.LeadingZeros64(blockers)
 			}
+		} else {
+			// SE or SW: lowest index blocker after square
+			if blockers != 0 {
+				blockerSq = bits.TrailingZeros64(blockers)
+			}
+		}
+		if blockerSq != -1 && ((bishopsAndQueens & (uint64(1) << blockerSq)) != 0) {
+			return true
 		}
 	}
 	return false

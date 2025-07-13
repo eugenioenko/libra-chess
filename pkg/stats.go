@@ -140,7 +140,7 @@ func (s *SearchResult) PrintUCI() {
 	if s.BestMove != nil {
 		bestMove = s.BestMove.ToUCI()
 	}
-	fmt.Printf("info depth %d score cp %d nodes %d nps %d prun %.0f%% pv %s time %dms\n",
+	fmt.Printf("info depth %d score cp %d nodes %d nps %d prun %.0f%% pv %s time %d\n",
 		s.MaxSearchDepth,
 		s.BestScore,
 		s.NodesSearched,
