@@ -10,7 +10,7 @@ const (
 	SearchMaxDepth      = 16        // Maximum depth to search
 	MaxEvaluationScore  = 1_000_000 // Maximum score for wining
 	MaxEvaluationTimeMs = 3_000     // Maximum time for a search at the root level
-	NullMoveReduction   = 3         // Reduction for null move pruning (R)
+	NullMoveReduction   = 2         // Reduction for null move pruning (R)
 	NullMoveMinDepth    = 3         // Minimum depth for null mov
 )
 
