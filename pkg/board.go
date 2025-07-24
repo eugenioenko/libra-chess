@@ -371,6 +371,17 @@ func (board *Board) IsPieceAtSquareWhite(square byte) bool {
 	return (board.WhitePawns|board.WhiteKnights|board.WhiteBishops|board.WhiteRooks|board.WhiteQueens|board.WhiteKing)&mask != 0
 }
 
+// IsInCheck returns true if the side to move is in check.
+func (board *Board) IsInCheck(whiteToMove bool) bool {
+	var kingSq byte
+	if whiteToMove {
+		kingSq = byte(bits.TrailingZeros64(board.WhiteKing))
+	} else {
+		kingSq = byte(bits.TrailingZeros64(board.BlackKing))
+	}
+	return board.IsSquareAttacked(kingSq, !whiteToMove)
+}
+
 // SquareToRank returns the rank (0-7) of a square index (0 = rank 0, 7 = rank 7)
 func (board *Board) SquareToRank(square byte) byte {
 	return square / 8

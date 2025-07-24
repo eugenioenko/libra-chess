@@ -10,6 +10,8 @@ const (
 	SearchMaxDepth      = 16        // Maximum depth to search
 	MaxEvaluationScore  = 1_000_000 // Maximum score for wining
 	MaxEvaluationTimeMs = 3_000     // Maximum time for a search at the root level
+	NullMoveReduction   = 3         // Reduction for null move pruning (R)
+	NullMoveMinDepth    = 3         // Minimum depth for null mov
 )
 
 type SearchOptions struct {
@@ -218,6 +220,29 @@ func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta 
 		return board.MateOrStalemateScore(maximizing)
 	}
 
+	// --- Null Move Pruning ---
+	if depth >= NullMoveMinDepth && ply > 0 && !board.IsInCheck(maximizing) && len(board.GenerateLegalMoves()) > 0 {
+		nullBoard := board.Clone()
+		nullBoard.WhiteToMove = !nullBoard.WhiteToMove // Switch side to move (null move)
+		nullEval := 0
+		newDepth := depth - NullMoveReduction - 1
+		if newDepth < 1 {
+			newDepth = 1
+		}
+		if maximizing {
+			nullEval = nullBoard.AlphaBetaSearch(newDepth, false, alpha, beta, tt, stats, ctx, ply+1)
+			if nullEval >= beta {
+				return beta // Fail-hard beta cutoff
+			}
+		} else {
+			nullEval = nullBoard.AlphaBetaSearch(newDepth, true, alpha, beta, tt, stats, ctx, ply+1)
+			if nullEval <= alpha {
+				return alpha // Fail-hard alpha cutoff
+			}
+		}
+	}
+
+	// --- Alpha-Beta Pruning ---
 	var result int
 	var bestMove Move
 	if maximizing {
