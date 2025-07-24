@@ -260,6 +260,11 @@ func (board *Board) Move(move Move) MoveState {
 				board.Castling.BlackQueenSide = false
 			}
 		}
+		/** Defensive: king capture is illegal.
+		if move.Captured == WhiteKing || move.Captured == BlackKing {
+			panic(fmt.Sprintf("Illegal move: %s captures the king", move.ToMove()))
+		}
+		*/
 	}
 
 	board.WhiteToMove = !board.WhiteToMove

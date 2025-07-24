@@ -379,7 +379,7 @@ func (board *Board) IsInCheck(whiteToMove bool) bool {
 	} else {
 		kingSq = byte(bits.TrailingZeros64(board.BlackKing))
 	}
-	return board.IsSquareAttacked(kingSq, !whiteToMove)
+	return board.IsSquareAttacked(kingSq, whiteToMove)
 }
 
 // SquareToRank returns the rank (0-7) of a square index (0 = rank 0, 7 = rank 7)

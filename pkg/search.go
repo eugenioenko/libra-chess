@@ -189,6 +189,15 @@ func (board *Board) ParallelRootSearch(depth int, tt *TranspositionTable, moves 
 }
 
 func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta int, tt *TranspositionTable, stats *SearchResult, ctx *SearchContext, ply int) int {
+	/*
+		defer func() {
+			if r := recover(); r != nil {
+				stack := debug.Stack()
+				fmt.Printf("PANIC in AlphaBetaSearch: %v\nStacktrace:\n%s\nContext: depth=%d maximizing=%v alpha=%d beta=%d ply=%d board=%v\n", r, stack, depth, maximizing, alpha, beta, ply, board)
+				panic(r)
+			}
+		}()
+	*/
 	// Check for cancellation at every node
 	select {
 	case <-ctx.Done:
@@ -221,7 +230,7 @@ func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta 
 	}
 
 	// --- Null Move Pruning ---
-	if depth >= NullMoveMinDepth && ply > 0 && !board.IsInCheck(maximizing) && len(board.GenerateLegalMoves()) > 0 {
+	if depth >= NullMoveMinDepth && ply > 0 && !board.IsInCheck(board.WhiteToMove) && len(board.GenerateLegalMoves()) > 0 {
 		nullBoard := board.Clone()
 		nullBoard.WhiteToMove = !nullBoard.WhiteToMove // Switch side to move (null move)
 		nullEval := 0
