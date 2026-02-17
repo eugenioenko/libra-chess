@@ -304,9 +304,26 @@ func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta 
 	}
 
 	hash := board.ZobristHash()
-	if score, ok := tt.Get(hash, depth); ok {
+	if entry, ok := tt.Get(hash, depth); ok {
 		stats.IncTTHit()
-		return score
+		switch entry.Bound {
+		case BoundExact:
+			return entry.Score
+		case BoundLower:
+			if entry.Score >= beta {
+				return entry.Score
+			}
+			if entry.Score > alpha && maximizing {
+				alpha = entry.Score
+			}
+		case BoundUpper:
+			if entry.Score <= alpha {
+				return entry.Score
+			}
+			if entry.Score < beta && !maximizing {
+				beta = entry.Score
+			}
+		}
 	}
 
 	moves := board.GenerateLegalMoves()
@@ -316,6 +333,8 @@ func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta 
 		return board.MateOrStalemateScore(maximizing)
 	}
 
+	origAlpha := alpha
+	origBeta := beta
 	var result int
 	var bestMove Move
 	if maximizing {
@@ -338,7 +357,6 @@ func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta 
 				stats.IncBetaCutoff()
 				if move.MoveType != MoveCapture && move.MoveType != MovePromotionCapture {
 					ctx.AddKillerMove(move, ply)
-					// Update history heuristic for quiet moves
 					ctx.HistoryHeuristic[PieceToHistoryIndex[move.Piece]][move.To] += depth * depth
 				}
 				nodesPruned := len(moves) - (i + 1)
@@ -369,7 +387,6 @@ func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta 
 				stats.IncBetaCutoff()
 				if move.MoveType != MoveCapture && move.MoveType != MovePromotionCapture {
 					ctx.AddKillerMove(move, ply)
-					// Update history heuristic for quiet moves
 					ctx.HistoryHeuristic[PieceToHistoryIndex[move.Piece]][move.To] += depth * depth
 				}
 				nodesPruned := len(moves) - (i + 1)
@@ -382,7 +399,23 @@ func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta 
 		result = minEval
 	}
 
+	// Determine bound type
+	var bound byte = BoundExact
+	if maximizing {
+		if result <= origAlpha {
+			bound = BoundUpper
+		} else if result >= beta {
+			bound = BoundLower
+		}
+	} else {
+		if result >= origBeta {
+			bound = BoundLower
+		} else if result <= alpha {
+			bound = BoundUpper
+		}
+	}
+
 	stats.IncTTStore()
-	tt.Set(hash, depth, result, bestMove)
+	tt.Set(hash, depth, result, bestMove, bound)
 	return result
 }
