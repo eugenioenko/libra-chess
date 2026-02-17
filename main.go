@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 
 	. "github.com/eugenioenko/libra-chess/pkg"
 )
@@ -17,6 +18,9 @@ func main() {
 	fmt.Println("For more information, visit: https://github.com/eugenioenko/libra-chess")
 	scanner := bufio.NewScanner(os.Stdin)
 	board := NewBoard()
+
+	var searchMu sync.Mutex
+	var stopChan chan struct{}
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -37,17 +41,43 @@ func main() {
 		case "position":
 			board.ParseAndApplyPosition(fields[1:])
 		case "go":
-			remainingTimeInMs := GetUCIRemainingTime(board.WhiteToMove, fields)
-			bestMove := board.IterativeDeepeningSearch(SearchOptions{
-				RemainingTimeInMs: remainingTimeInMs,
-				TimeLimitInMs:     1000,
-			})
-			if bestMove != nil {
-				fmt.Printf("bestmove %s\n", bestMove.ToUCI())
-			} else {
-				fmt.Println("bestmove 0000")
+			goOpts := ParseGoOptions(fields)
+			optimalTime, maxTime := goOpts.CalcTimeLimit(board.WhiteToMove)
+
+			searchMu.Lock()
+			stopChan = make(chan struct{})
+			currentStop := stopChan
+			searchMu.Unlock()
+
+			opts := SearchOptions{
+				TimeLimitInMs:    optimalTime,
+				MaxTimeLimitInMs: maxTime,
+				MaxDepth:         goOpts.Depth,
+				StopChan:         currentStop,
 			}
+
+			go func() {
+				bestMove := board.IterativeDeepeningSearch(opts)
+				if bestMove != nil {
+					fmt.Printf("bestmove %s\n", bestMove.ToUCI())
+				} else {
+					fmt.Println("bestmove 0000")
+				}
+			}()
+		case "stop":
+			searchMu.Lock()
+			if stopChan != nil {
+				close(stopChan)
+				stopChan = nil
+			}
+			searchMu.Unlock()
 		case "quit":
+			searchMu.Lock()
+			if stopChan != nil {
+				close(stopChan)
+				stopChan = nil
+			}
+			searchMu.Unlock()
 			return
 		}
 	}

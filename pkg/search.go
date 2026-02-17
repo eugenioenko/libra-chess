@@ -14,10 +14,11 @@ const (
 
 type SearchOptions struct {
 	MaxDepth           int                 // Maximum search depth (plies)
-	RemainingTimeInMs  int                 // Time remaining for the game
-	TimeLimitInMs      int                 // Maximum time allowed for the search. Defaults MaxEvaluationDepthTimeMs
+	TimeLimitInMs      int                 // Soft time limit: stop deepening after this (ms)
+	MaxTimeLimitInMs   int                 // Hard time limit: abort in-flight search after this (ms)
 	TranspositionTable *TranspositionTable // Optional transposition table to use for search
 	UseBookMoves       bool                // Optional flag to use book moves
+	StopChan           chan struct{}        // External stop signal (e.g. UCI "stop" command)
 }
 
 func (board *Board) IterativeDeepeningSearch(options SearchOptions) *Move {
@@ -27,41 +28,61 @@ func (board *Board) IterativeDeepeningSearch(options SearchOptions) *Move {
 	}
 
 	maxDepth := SearchMaxDepth
-
 	if options.MaxDepth != 0 {
 		maxDepth = options.MaxDepth
 	}
 
-	// Limit depth search when running out of time
-	if options.RemainingTimeInMs != 0 && options.RemainingTimeInMs < 2500 {
-		maxDepth = 3
+	// Soft limit: stop starting new depths after this
+	softLimit := options.TimeLimitInMs
+	// Hard limit: abort in-flight search after this
+	hardLimit := options.MaxTimeLimitInMs
+
+	// Fall back to defaults when no time info is provided
+	if softLimit == 0 && hardLimit == 0 && options.MaxDepth == 0 {
+		softLimit = MaxEvaluationTimeMs
+		hardLimit = MaxEvaluationTimeMs
 	}
 
-	maxSearchTimeMs := MaxEvaluationTimeMs
-	if options.TimeLimitInMs != 0 {
-		maxSearchTimeMs = options.TimeLimitInMs
+	// If only one is set, use it for both
+	if softLimit == 0 && hardLimit > 0 {
+		softLimit = hardLimit
+	}
+	if hardLimit == 0 && softLimit > 0 {
+		hardLimit = softLimit
 	}
 
 	var bestMove *Move
 	totalTimeSpentInMs := 0
 	// Iterative deepening
 	for depth := 1; depth <= maxDepth; depth++ {
-		searchTimeLimit := maxSearchTimeMs - totalTimeSpentInMs
-		if searchTimeLimit <= 0 {
+		// Stop deepening if we've exceeded the soft limit
+		if softLimit > 0 && totalTimeSpentInMs >= softLimit {
 			break
 		}
-		result := board.Search(depth, tt, searchTimeLimit, bestMove)
+		// Give in-flight search up to the hard limit remaining
+		searchTimeLimit := 0
+		if hardLimit > 0 {
+			searchTimeLimit = hardLimit - totalTimeSpentInMs
+			if searchTimeLimit <= 0 {
+				break
+			}
+		}
+		result := board.Search(depth, tt, searchTimeLimit, bestMove, options.StopChan)
 		result.PrintUCI()
 		if result.BestMove != nil && (!result.IsInterrupted || bestMove == nil) {
 			bestMove = result.BestMove
 		}
 		totalTimeSpentInMs += int(result.TimeSpentInMs)
+		// If search was interrupted (timeout or stop), don't start next depth
+		if result.IsInterrupted {
+			break
+		}
 	}
 
 	return bestMove
 }
 
-func (board *Board) Search(depth int, tt *TranspositionTable, timeLimitInMs int, pvMove *Move) *SearchResult {
+func (board *Board) Search(depth int, tt *TranspositionTable, timeLimitInMs int, pvMove *Move, stopChan chan struct{}) *SearchResult {
 	result := &SearchResult{}
 	result.StartTimer()
 	result.SetMaxSearchDepth(int32(depth))
@@ -71,12 +92,6 @@ func (board *Board) Search(depth int, tt *TranspositionTable, timeLimitInMs int,
 	moves = board.SortMovesRoot(moves, pvMove, ttMove)
 	ctx := &SearchContext{Done: make(chan struct{})}
 
-	timeoutTime := MaxEvaluationTimeMs * time.Millisecond
-	if timeLimitInMs != 0 {
-		timeoutTime = time.Duration(time.Duration(timeLimitInMs)) * time.Millisecond
-	}
-	timeout := time.After(timeoutTime)
-
 	var score int
 	var move *Move
 	finished := make(chan struct{})
@@ -85,12 +100,32 @@ func (board *Board) Search(depth int, tt *TranspositionTable, timeLimitInMs int,
 		close(finished)
 	}()
 
-	select {
-	case <-timeout:
-		close(ctx.Done)
+	if timeLimitInMs > 0 {
+		// Timed search: respect both timeout and external stop
+		timeout := time.After(time.Duration(timeLimitInMs) * time.Millisecond)
+		select {
+		case <-timeout:
+			close(ctx.Done)
+			<-finished
+			result.IsInterrupted = true
+		case <-finished:
+		case <-stopChan:
+			close(ctx.Done)
+			<-finished
+			result.IsInterrupted = true
+		}
+	} else if stopChan != nil {
+		// Infinite/depth-only: wait for finish or external stop
+		select {
+		case <-finished:
+		case <-stopChan:
+			close(ctx.Done)
+			<-finished
+			result.IsInterrupted = true
+		}
+	} else {
+		// No time limit and no stop channel: just wait
 		<-finished
-		result.IsInterrupted = true
-	case <-finished:
 	}
 
 	result.BestScore = score
