@@ -97,6 +97,22 @@ func (board *Board) SortMovesAlphaBeta(
 | Promo (quiet)  | 10k+10Promo                     |11_000 |19_000 |
 | Quiet/Other    | 0                               |   0   |   0   |
 */
+// SortCaptures orders captures by MVV-LVA for quiescence search.
+func (board *Board) SortCaptures(moves []Move) []Move {
+	sort.Slice(moves, func(i, j int) bool {
+		scoreI := 10*PieceCodeToValue[moves[i].Captured] - PieceCodeToValue[moves[i].Piece]
+		scoreJ := 10*PieceCodeToValue[moves[j].Captured] - PieceCodeToValue[moves[j].Piece]
+		if moves[i].IsPromotion() {
+			scoreI += PieceCodeToValue[moves[i].Promoted]
+		}
+		if moves[j].IsPromotion() {
+			scoreJ += PieceCodeToValue[moves[j].Promoted]
+		}
+		return scoreI > scoreJ
+	})
+	return moves
+}
+
 func (board *Board) SortMovesRoot(
 	moves []Move,
 	pvMove *Move,

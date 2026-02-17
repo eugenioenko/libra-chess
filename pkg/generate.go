@@ -343,6 +343,17 @@ func (board *Board) GenerateLegalMoves() []Move {
 	return legalMoves
 }
 
+func (board *Board) GenerateLegalCaptures() []Move {
+	legalMoves := []Move{}
+	moves := board.GeneratePseudoLegalMoves()
+	for _, move := range moves {
+		if (move.IsCapture() || move.IsPromotion()) && board.IsMoveLegal(move) {
+			legalMoves = append(legalMoves, move)
+		}
+	}
+	return legalMoves
+}
+
 // Checks if the move leaves the king in check and undoes the move.
 func (board *Board) IsMoveLegal(move Move) bool {
 	prev := board.Move(move)

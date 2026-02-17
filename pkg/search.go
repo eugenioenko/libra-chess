@@ -221,6 +221,69 @@ func (board *Board) ParallelRootSearch(depth int, tt *TranspositionTable, moves 
 	return bestScore, bestMove
 }
 
+func (board *Board) QuiescenceSearch(maximizing bool, alpha int, beta int, stats *SearchResult, ctx *SearchContext) int {
+	select {
+	case <-ctx.Done:
+		return 0
+	default:
+	}
+
+	if runtime.GOARCH == "wasm" {
+		runtime.Gosched()
+	}
+
+	stats.IncNodesSearched()
+
+	standPat := board.Evaluate()
+
+	if maximizing {
+		if standPat >= beta {
+			return beta
+		}
+		if standPat > alpha {
+			alpha = standPat
+		}
+	} else {
+		if standPat <= alpha {
+			return alpha
+		}
+		if standPat < beta {
+			beta = standPat
+		}
+	}
+
+	captures := board.GenerateLegalCaptures()
+	captures = board.SortCaptures(captures)
+
+	if maximizing {
+		for _, move := range captures {
+			prev := board.Move(move)
+			score := board.QuiescenceSearch(false, alpha, beta, stats, ctx)
+			board.UndoMove(prev)
+			if score > alpha {
+				alpha = score
+			}
+			if alpha >= beta {
+				break
+			}
+		}
+		return alpha
+	}
+
+	for _, move := range captures {
+		prev := board.Move(move)
+		score := board.QuiescenceSearch(true, alpha, beta, stats, ctx)
+		board.UndoMove(prev)
+		if score < beta {
+			beta = score
+		}
+		if beta <= alpha {
+			break
+		}
+	}
+	return beta
+}
+
 func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta int, tt *TranspositionTable, stats *SearchResult, ctx *SearchContext, ply int) int {
 	// Check for cancellation at every node
 	select {
@@ -237,7 +300,7 @@ func (board *Board) AlphaBetaSearch(depth int, maximizing bool, alpha int, beta 
 	stats.IncNodesSearched()
 
 	if depth == 0 {
-		return board.Evaluate()
+		return board.QuiescenceSearch(maximizing, alpha, beta, stats, ctx)
 	}
 
 	hash := board.ZobristHash()
