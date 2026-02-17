@@ -2,19 +2,21 @@ package libra
 
 import "sync"
 
-type TTKey struct {
-	Hash  uint64
-	Depth int
-}
+const (
+	BoundExact = iota
+	BoundLower // score is a lower bound (beta cutoff)
+	BoundUpper // score is an upper bound (failed low)
+)
 
 type TTEntry struct {
 	Score    int
 	BestMove Move
 	Depth    int
+	Bound    byte
 }
 
 type TranspositionTable struct {
-	table map[uint64]TTEntry // hash -> entry
+	table map[uint64]TTEntry
 	mu    sync.RWMutex
 }
 
@@ -24,22 +26,22 @@ func NewTranspositionTable() *TranspositionTable {
 	}
 }
 
-func (tt *TranspositionTable) Get(hash uint64, depth int) (int, bool) {
+func (tt *TranspositionTable) Get(hash uint64, depth int) (TTEntry, bool) {
 	tt.mu.RLock()
 	defer tt.mu.RUnlock()
 	entry, ok := tt.table[hash]
 	if !ok || entry.Depth < depth {
-		return 0, false
+		return TTEntry{}, false
 	}
-	return entry.Score, true
+	return entry, true
 }
 
-func (tt *TranspositionTable) Set(hash uint64, depth int, value int, bestMove Move) {
+func (tt *TranspositionTable) Set(hash uint64, depth int, value int, bestMove Move, bound byte) {
 	tt.mu.Lock()
 	defer tt.mu.Unlock()
 	entry, ok := tt.table[hash]
 	if !ok || depth >= entry.Depth {
-		tt.table[hash] = TTEntry{Score: value, BestMove: bestMove, Depth: depth}
+		tt.table[hash] = TTEntry{Score: value, BestMove: bestMove, Depth: depth, Bound: bound}
 	}
 }
 
