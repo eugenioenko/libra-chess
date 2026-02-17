@@ -75,7 +75,6 @@ func main() {
 			searchMu.Lock()
 			if stopChan != nil {
 				close(stopChan)
-				stopChan = nil
 			}
 			searchMu.Unlock()
 			return
