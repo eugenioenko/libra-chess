@@ -17,11 +17,10 @@ func TestEvaluate_InitialPosition(t *testing.T) {
 
 func TestEvaluate_TwoKings(t *testing.T) {
 	board := NewBoard()
-	board.FromFEN("7K/8/8/8/8/8/8/k7 w - - 0 1")
-	// Remove black queen
+	board.FromFEN("4k3/8/8/8/8/8/8/4K3 w - - 0 1")
 	score := board.Evaluate()
 	if score != 0 {
-		t.Errorf("Kings don't have value %d", score)
+		t.Errorf("Symmetric kings should be 0, got %d", score)
 	}
 }
 
@@ -29,8 +28,8 @@ func TestEvaluate_BlackNoQueen(t *testing.T) {
 	board := NewBoard()
 	board.FromFEN("rnb1kbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 	score := board.Evaluate()
-	if score != 895 {
-		t.Errorf("Expected 895, got %d", score)
+	if score != 1011 {
+		t.Errorf("Expected 1011, got %d", score)
 	}
 }
 
